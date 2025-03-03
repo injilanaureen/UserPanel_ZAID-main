@@ -1,0 +1,340 @@
+[
+    {
+      "title": "Dashboard",
+      "icon": "Home",
+      "href": "/admin/dashboard"
+    },
+    {
+      "title": "Recharge",
+      "icon": "Battery",
+      "subMenu": [
+        {
+          "title": "Do Recharge",
+          "href": "/admin/recharge/dorecharge"
+        },
+        {
+          "title": "Status Enquiry",
+          "href": "/admin/recharge/recharge2"
+        },
+        {
+          "title": "Manage Operator",
+          "href": "/admin/recharge/manage-operator"
+        }
+      ]
+    },
+    {
+      "title": "Bus Booking",
+      "icon": "BusFront",
+      "subMenu": [
+        {
+            "title": "Get Source City",
+            "href": "/admin/busTicket/getSourceCity"
+          },
+        {
+          "title": "Get Available Trip",
+          "href": "/admin/busTicket/getAvailableTrip"
+        },
+        {
+          "title": "Get Current Trip Details",
+          "href": "/admin/busTicket/getCurrentTripDetails"
+        },
+        {
+            "title": "Book Tickets",
+            "href": "/admin/busTicket/bookTicket"
+          },
+          {
+            "title": "Get Boarding Point Details",
+            "href": "/admin/busTicket/getBoardingPointDetails"
+          },
+          {
+            "title": "Check Booked Tickets",
+            "href": "/admin/busTicket/checkBookedTickets"
+          }
+      ]
+    },
+    {
+      "title": "DMT BANK 1",
+      "icon": "IndianRupee",
+      "subMenu": [
+        {
+          "title": "Remitter",
+          "subMenu": [
+            {
+              "title": "Query Remitter",
+              "href": "/admin/remitter1/queryRemitter"
+            },
+            {
+              "title": "Remitter E-KYC",
+              "href": "/admin/remitter1/remitterEKYC"
+            },
+            {
+              "title": "Register Remitter",
+              "href": "/admin/remitter1/registerRemitter"
+            }
+          ]
+        },
+        {
+          "title": "Beneficiary",
+          "subMenu": [
+            {
+              "title": "Register Beneficiary",
+              "href": "/admin/beneficiary1/registerBeneficiary"
+            },
+            {
+              "title": "Delete Beneficiary",
+              "href": "/admin/beneficiary1/deleteBeneficiary"
+            },
+            {
+              "title": "Fetch Beneficiary",
+              "href": "/admin/beneficiary1/FetchBeneficiary"
+            },            
+            {
+              "title": "Fetch Beneficiary By Benied",
+              "href": "/admin/beneficiary1/FetchBeneficiaryByBenied"
+            }
+            
+          ]
+        },
+        {
+          "title": "Transaction",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Penny Drop",
+              "href": "/admin/transaction1/pennyDrop"
+            },
+            {
+              "title": "Transaction Sent Otp",
+              "href": "/admin/transaction1/transactionOtp"
+            },
+            {
+              "title": "Transaction",
+              "href": "/admin/transaction1/transaction"
+            },
+            {
+              "title": "Transaction Status",
+              "href": "/admin/transaction1/transactionStatus"
+            }
+          ]
+        },
+        {
+          "title": "Refund",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Refund Otp",
+              "href": "/admin/refund1/refundOtp"
+            },
+            {
+              "title": "Claim Refund",
+              "href": "/admin/refund1/claimRefund"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "DMT BANK 2",
+      "icon": "IndianRupee",
+      "subMenu": [
+        {
+          "title": "Remitter",
+          "subMenu": [
+            {
+              "title": "Query Remitter",
+              "href": "/admin/remitter2/queryRemitter"
+            },
+            {
+              "title": "Remitter Aadhar verify API",
+              "href": "/admin/remitter2/remitterAdhaarVerifyApi"
+            },
+            {
+              "title": "Register Remitter",
+              "href": "/admin/remitter2/registerRemitter"
+            }
+          ]
+        },
+        {
+          "title": "Beneficiary",
+          "subMenu": [
+            {
+              "title": "Register Beneficiary",
+              "href": "/admin/beneficiary2/registerBeneficiary"
+            },
+            {
+              "title": "Delete Beneficiary",
+              "href": "/admin/beneficiary2/deleteBeneficiary"
+            },
+            {
+              "title": "Fetch Beneficiary",
+              "href": "/admin/beneficiary2/fetchBeneficiary"
+            },
+            {
+              "title": "Fetch Beneficiary By Benied",
+              "href": "/admin/beneficiary2/fetchbyBenied"
+            }
+          ]
+        },
+        {
+          "title": "Transaction",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Penny Drop",
+              "href": "/admin/transaction2/pennyDrop"
+            },
+            {
+              "title": "Transaction Sent Otp",
+              "href": "/admin/transaction2/transactionSentOtp"
+            },
+            {
+              "title": "Transaction",
+              "href": "/admin/transaction2/transaction"
+            },
+            {
+              "title": "Transaction Status",
+              "href": "/admin/transaction2/transactionStatus"
+            }
+          ]
+        },
+        {
+          "title": "Refund",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Refund Otp",
+              "href": "/admin/refund2/refundOtp"
+            },
+            {
+              "title": "Claim Refund",
+              "href": "/admin/refund2/claimRefund"
+            }
+          ]
+        }
+      ]
+    },
+    
+  
+
+    {
+      "title": "Utilities ",
+      "icon": "Battery",
+      "subMenu": [
+        {
+          "title": "Bill Payment",
+          "subMenu": [
+            {
+              "title": "Operator List",
+              "href": "/admin/utility-bill-payment/operator-list"
+            },
+            {
+              "title": "Fetch Bill Details",
+              "href": "/admin/utility-bill-payment/fetch-bill-details"
+            },
+            {
+              "title": "Pay Bill",
+              "href": "/admin/utility-bill-payment/pay-bill"
+            },
+            {
+              "title": "Status Enquiry",
+              "href": "/admin/utility-bill-payment/utility-status-enquiry"
+            }
+          ]
+        },
+        {
+          "title": "Insurance  Payment",
+          "subMenu": [
+            {
+              "title": "Fetch Insurance Bill Details",
+              "href": "/admin/InsurancePremiumPayment/FetchInsuranceBillDetails"
+            },
+            {
+              "title": "Pay Insurance Bill",
+              "href": "/admin/InsurancePremiumPayment/PayInsuranceBill"
+            },
+            {
+              "title": "Insurance Status Enquiry",
+              "href": "/admin/InsurancePremiumPayment/InsuranceStatusEnquiry"
+            }
+           
+          ]
+        },
+        {
+          "title": "Fastag Recharge",
+          "subMenu": [
+            {
+              "title": "Operator List",
+              "href": "/admin/FastagRecharge/FastagOperatorList"
+            },
+            {
+              "title": "Fetch Consumer Details",
+              "href": "/admin/FastagRecharge/fetchConsumerDetails"
+            },
+            {
+              "title": "Recharge",
+              "href": "/admin/FastagRecharge/fastagRecharge"
+            },
+             {
+              "title": "Status",
+              "href": "/admin/FastagRecharge/FastagStatus"
+            }
+           
+          ]
+        },
+        {
+          "title": "LPG Booking & Payment",
+          "subMenu": [
+            {
+              "title": "Operator List",
+              "href": "/admin/LPG/LPGOperator"
+            },
+            {
+              "title": "Fetch LPG Details",
+              "href": "/admin/LPG/LPGDetails"
+            }
+            ,
+            {
+              "title": "Pay Bill",
+              "href": "/admin/LPG/LPGBill"
+            },
+            {
+              "title": "Status",
+              "href": "/admin/LPG/LPGStatus"
+            }
+            
+           
+          ]
+        },
+        {
+          "title": "Municipality Payment",
+          "subMenu": [
+            {
+              "title": "Operator List",
+              "href": "/admin/Municipality/MunicipalityOperator"
+            },
+            {
+              "title": "Fetch Municipality Details",
+              "href": "/admin/Municipality/FetchMunicipalityDetails"
+            }
+            ,
+            {
+              "title": "Pay Bill",
+              "href": "/admin/Municipality/MunicipalityBill"
+            },
+            {
+              "title": "Status",
+              "href": "/admin/Municipality/MunicipalityStatus"
+            }
+            
+           
+          ]
+        }
+      ]
+    }
+    
+    
+  
+
+    
+  ]
+  
