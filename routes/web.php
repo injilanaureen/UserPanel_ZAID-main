@@ -91,6 +91,9 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     //get boarding point details ...
     Route::get('/getBoardingPointDetails', [BusTicketController::class, 'getboardingpointdetails'])->name('busTicket.getAvailableTrip');
     Route::post('/fetchboardingpointdetails', [BusTicketController::class, 'fetchandstoreboardingpointdetails'])->name('busTicket.fetchandstoreboardingpointdetails');
+    //booked tickets
+    Route::get('/checkBookedTickets', [BusTicketController::class, 'getcheckBookedTickets'])->name('busTicket.checkBookedTickets');
+    Route::post('/fetchBookedTickets', [BusTicketController::class, 'fetchBookedTickets'])->name('busTicket.fetchBookedTickets');
 });
 
 //DMT Bank 2 Remitter

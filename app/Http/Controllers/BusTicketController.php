@@ -9,6 +9,7 @@ use App\Models\AvailableTrip;
 use App\Models\BusCurrentTrip;
 use App\Models\BookBusTicket;
 use App\Models\getboardingpointdetails;
+use App\Models\getBookedTickets;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -299,7 +300,7 @@ class BusTicketController extends Controller
     public function getboardingpointdetails()
     {
         return Inertia::render('Admin/busTicket/getBoardingPointDetails');
-    }
+    }   
 
     public function fetchandstoreboardingpointdetails(Request $request) {
         try {
@@ -357,7 +358,104 @@ class BusTicketController extends Controller
             ], 500);
         }
     }
+
+    public function getcheckBookedTickets()
+    {
+        return Inertia::render('Admin/busTicket/checkBookedTickets');
+    }
     
+    public function fetchBookedTickets(Request $request)
+    {
+        try {
+            $request->validate([
+                'refid' => 'required|integer',
+            ]);
+    
+            // API Call
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+                'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4'
+            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/check_booked_ticket', [
+                'refid' => $request->refid,
+            ]);
+    
+            $responseData = $response->json();
+    
+            if (!isset($responseData['data']) || !isset($responseData['status'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $responseData['message'] ?? 'Invalid response from API',
+                ], 400);
+            }
+    
+            // Extract data
+            $data = $responseData['data'];
+            $inventory = $data['inventoryItems'];
+            $passenger = $inventory['passenger'];
+    
+            // Save to database
+            getBookedTickets::updateOrCreate(
+                ['pnr' => $data['pnr']],
+                [
+                    'tin' => $data['tin'],
+                    'status' => $data['status'],
+                    'bus_type' => $data['busType'],
+                    'source_city' => $data['sourceCity'],
+                    'source_city_id' => $data['sourceCityId'],
+                    'destination_city' => $data['destinationCity'],
+                    'destination_city_id' => $data['destinationCityId'],
+                    'date_of_issue' => $data['dateOfIssue'],
+                    'doj' => $data['doj'],
+                    'pickup_location' => $data['pickupLocation'],
+                    'pickup_location_id' => $data['pickupLocationId'],
+                    'pickup_location_address' => $data['pickUpLocationAddress'],
+                    'pickup_location_landmark' => $data['pickupLocationLandmark'],
+                    'drop_location' => $data['dropLocation'],
+                    'drop_location_id' => $data['dropLocationId'],
+                    'drop_location_address' => $data['dropLocationAddress'],
+                    'drop_location_landmark' => $data['dropLocationLandmark'],
+                    'pickup_time' => $data['pickupTime'],
+                    'drop_time' => $data['dropTime'],
+                    'prime_departure_time' => $data['primeDepartureTime'],
+                    'fare' => $inventory['fare'],
+                    'seat_name' => $inventory['seatName'],
+                    'passenger_name' => $passenger['name'],
+                    'passenger_mobile' => $passenger['mobile'],
+                    'passenger_email' => $passenger['email'],
+                    'passenger_id_type' => $passenger['idType'],
+                    'passenger_id_number' => $passenger['idNumber'],
+                    'mticket_enabled' => filter_var($data['MTicketEnabled'], FILTER_VALIDATE_BOOLEAN),
+                    'partial_cancellation_allowed' => filter_var($data['partialCancellationAllowed'], FILTER_VALIDATE_BOOLEAN),
+                    'has_special_template' => filter_var($data['hasSpecialTemplate'], FILTER_VALIDATE_BOOLEAN),
+                    'has_rtc_breakup' => filter_var($data['hasRTCBreakup'], FILTER_VALIDATE_BOOLEAN),
+                    'cancellation_policy' => $data['cancellationPolicy'],
+                    'cancellation_message' => $data['cancellationMessage'],
+                    'cancellation_calculation_timestamp' => $data['cancellationCalculationTimestamp'],
+                    'primo_booking' => filter_var($data['primoBooking'], FILTER_VALIDATE_BOOLEAN),
+                    'vaccinated_bus' => filter_var($data['vaccinatedBus'], FILTER_VALIDATE_BOOLEAN),
+                    'vaccinated_staff' => filter_var($data['vaccinatedStaff'], FILTER_VALIDATE_BOOLEAN),
+                    'service_charge' => $data['serviceCharge'],
+                    'operator_service_charge' => $inventory['operatorServiceCharge'],
+                    'service_tax' => $inventory['serviceTax'],
+                    'travels' => $data['travels'],
+                ]
+            );
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Ticket details saved successfully!',
+                'data' => $responseData
+            ]);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error occurred: ' . $e->getMessage()
+            ], 500);
+        }
 
     }
+}
 

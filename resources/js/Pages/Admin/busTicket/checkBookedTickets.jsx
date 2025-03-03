@@ -1,91 +1,86 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import AdminLayout from "@/Layouts/AdminLayout";
 
 const CheckBookedTicket = () => {
   const [ticketData, setTicketData] = useState(null);
+  const [refid, setRefid] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.post("/api/bus/check-booked-ticket", {
-          refid: 5,
-        });
-        setTicketData(response.data.data);
-      } catch (error) {
-        console.error("Error fetching ticket data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (!ticketData) return <div>Loading...</div>;
+  const fetchData = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const response = await axios.post("/admin/busTicket/fetchBookedTickets", {
+        refid: refid,
+      });
+      setTicketData(response.data.data);
+      console.log(response)
+    } catch (error) {
+      console.error("Error fetching ticket data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-4">
-      <h1 className="text-2xl font-bold text-center">Booked Ticket Details</h1>
-      <div className="space-y-2">
-        <p>
-          <strong>Status:</strong> {ticketData.status}
-        </p>
-        <p>
-          <strong>Bus Type:</strong> {ticketData.busType}
-        </p>
-        <p>
-          <strong>Source:</strong> {ticketData.sourceCity}
-        </p>
-        <p>
-          <strong>Destination:</strong> {ticketData.destinationCity}
-        </p>
-        <p>
-          <strong>Pickup Location:</strong> {ticketData.pickupLocation}
-        </p>
-        <p>
-          <strong>Drop Location:</strong> {ticketData.dropLocation}
-        </p>
-        <p>
-          <strong>PNR:</strong> {ticketData.pnr}
-        </p>
-        <p>
-          <strong>Travel Date:</strong> {ticketData.doj}
-        </p>
-      </div>
-      <h2 className="text-xl font-semibold mt-4">Passengers</h2>
-      <div className="grid grid-cols-2 gap-6">
-        {ticketData.inventoryItems.map((item, index) => (
-          <div
-            key={index}
-            className="p-4 bg-gray-100 rounded-lg shadow-sm border border-gray-200"
-          >
-            <p>
-              <strong>Seat Name:</strong> {item.seatName}
-            </p>
-            <p>
-              <strong>Passenger Name:</strong> {item.passenger.name} ({item.passenger.gender})
-            </p>
-            <p>
-              <strong>Age:</strong> {item.passenger.age}
-            </p>
-            <p>
-              <strong>Email:</strong> {item.passenger.email}
-            </p>
-            <p>
-              <strong>Mobile:</strong> {item.passenger.mobile}
-            </p>
+    <AdminLayout>
+      <div className="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-4">
+        <h1 className="text-2xl font-bold text-center">Booked Ticket Details</h1>
+        <form onSubmit={fetchData} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Reference ID</label>
+            <input
+              type="text"
+              value={refid}
+              onChange={(e) => setRefid(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg"
+              required
+            />
           </div>
-        ))}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? "Searching..." : "Search Ticket"}
+          </button>
+        </form>
+
+        {ticketData && (
+          <div className="overflow-x-auto mt-6">
+            <table className="min-w-full bg-white border border-gray-300">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="py-2 px-4 border">Source</th>
+                  <th className="py-2 px-4 border">Destination</th>
+                  <th className="py-2 px-4 border">Bus Type</th>
+                  <th className="py-2 px-4 border">Travel Date</th>
+                  <th className="py-2 px-4 border">Pickup</th>
+                  <th className="py-2 px-4 border">Drop</th>
+                  <th className="py-2 px-4 border">Passenger Name</th>
+                  <th className="py-2 px-4 border">PNR</th>
+                  <th className="py-2 px-4 border">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="py-2 px-4 border">{ticketData.sourceCity}</td>
+                  <td className="py-2 px-4 border">{ticketData.destinationCity}</td>
+                  <td className="py-2 px-4 border">{ticketData.busType}</td>
+                  <td className="py-2 px-4 border">{ticketData.doj}</td>
+                  <td className="py-2 px-4 border">{ticketData.pickupLocation} ({ticketData.pickupTime})</td>
+                  <td className="py-2 px-4 border">{ticketData.dropLocation} ({ticketData.dropTime})</td>
+                  <td className="py-2 px-4 border">{ticketData.inventoryItems.passenger.name}</td>
+                  <td className="py-2 px-4 border">{ticketData.pnr}</td>
+                  <td className="py-2 px-4 border">{ticketData.status}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <h2 className="text-xl font-semibold mt-4">Other Details</h2>
-      <div className="grid grid-cols-2 gap-6"></div>
-      <div>
-        <p>
-          <strong>Service Start Time:</strong> {ticketData.serviceStartTime}
-        </p>
-        <p>
-          <strong>Cancellation Policy:</strong> {ticketData.cancellationPolicy}
-        </p>
-      </div>
-    </div>
+    </AdminLayout>
   );
 };
 
