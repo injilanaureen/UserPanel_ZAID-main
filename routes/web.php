@@ -88,7 +88,7 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     Route::get('/bookTicket', [BusTicketController::class, 'getbookTicket'])->name('busTicket.getAvailableTrip');
     Route::post('/bookticket', [BusTicketController::class, 'bookandstorebookticket'])->name('busTicket.bookandstorebookticket');
     
-    //get boarding point details
+    //get boarding point details ...
     Route::get('/getBoardingPointDetails', [BusTicketController::class, 'getboardingpointdetails'])->name('busTicket.getAvailableTrip');
     Route::post('/fetchboardingpointdetails', [BusTicketController::class, 'fetchandstoreboardingpointdetails'])->name('busTicket.fetchandstoreboardingpointdetails');
 });
