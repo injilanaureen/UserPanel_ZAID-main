@@ -37,10 +37,9 @@ class Remitter2Controller extends Controller
 
             // Make API call to the external service
             $response = Http::withHeaders([
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4',
+                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwOTAzMDgsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDkwMzA4In0.UnQeZ4g1izobgAwPFKQepiF77_WDD8Xs-NkalAj_rTs',
                 'accept' => 'application/json'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/remitter/queryremitter', [
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter', [
                 'mobile' => $request->input('mobile')
             ]);
 
@@ -108,10 +107,10 @@ class Remitter2Controller extends Controller
             $client = new Client();
     
             // Make the API request with full Aadhaar number
-            $response = $client->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
+            $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
                 'headers' => [
-                    'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                    'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4',
+      
+                    'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwOTA0MjUsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDkwNDI1In0.N0g8FPB3TegAH1VC6BlVMvVt2oM8HGiP5_kMO6IC0wA',
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
                 ],

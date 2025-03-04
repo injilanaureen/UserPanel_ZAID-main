@@ -25,8 +25,8 @@ class RechargeController extends Controller
             $validator = Validator::make($request->all(), [
                 'operator' => 'required|numeric',
                 'canumber' => 'required|string',
-                'amount' => 'required|numeric|min:1',
-                'referenceid' => 'required|string',
+                'amount' => 'required|numeric|min:1'
+                // 'referenceid' => 'required|string',
             ]);
             
             if ($validator->fails()) {
@@ -37,6 +37,8 @@ class RechargeController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
+            // Generate unique reference ID
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
             
             // Call PaySprint API
             // $apiResponse = Http::withHeaders([
@@ -48,10 +50,11 @@ class RechargeController extends Controller
             //     'operator' => (int)$request->operator,
             //     'canumber' => $request->canumber,
             //     'amount' => (int)$request->amount,
-            //     'referenceid' => $request->referenceid
+            //     'referenceid' => $referenceId
             // ]);
+
             $apiResponse = Http::withHeaders([
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwNzE2MDgsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDcxNjA4In0.sPpR40LYWnw7J3tGLiphxWe-YmcIAaJdcZl1xAjAEw4',
+                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwODY4OTEsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDg2ODkxIn0.uTuPvkqdO-Iycw4Jhh7Ceeut1UitbD0tT82w3OtUEUM',
                 'accept' => 'text/plain',
                 'Content-Type' => 'application/json',
                 'User-Agent' =>'PS005962'
@@ -59,7 +62,7 @@ class RechargeController extends Controller
                 'operator' => (int)$request->operator,
                 'canumber' => $request->canumber,
                 'amount' => (int)$request->amount,
-                'referenceid' => $request->referenceid
+                'referenceid' => $referenceid
             ]);
             
             $responseData = $apiResponse->json();
@@ -69,7 +72,7 @@ class RechargeController extends Controller
                 'operator' => $request->operator,
                 'canumber' => $request->canumber,
                 'amount' => $request->amount,
-                'referenceid' => $request->referenceid,
+                'referenceid' => $referenceId,
                 'status' => isset($responseData['status']) && $responseData['status'] ? 'success' : 'failed',
                 'message' => $responseData['message'] ?? 'Transaction processed',
                 'response_code' => $responseData['response_code'] ?? '',
@@ -155,6 +158,7 @@ class RechargeController extends Controller
             return back()->withErrors(['message' => 'Failed to fetch transactions']);
         }
     }
+    //status
     public function recharge2()
     {
         return Inertia::render('Admin/Recharge/Recharge2');
@@ -167,11 +171,10 @@ class RechargeController extends Controller
         
         try {
             $response = Http::withHeaders([
-                'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzg5MjE3NzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM4OTIxNzc3In0.6vhPb1SE1p3yvAaK_GAEz-Y0Ai1ibCbN85adKW_1Xzg',
+                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwODE5MzksInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDgxOTM5In0.-F9R2ySLbWYWO0MbawmIC01AsZ9mgu3WRZGfHawmL2Q',
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/status', [
+            ])->post('https://api.paysprint.in/api/v1/service/recharge/recharge/status', [
                 'referenceid' => $request->referenceid
             ]);
             
