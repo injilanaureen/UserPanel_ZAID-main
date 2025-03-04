@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/manage-operator', [RechargeController::class, 'manageOperator']);
         });
+        Route::get('/recharge/get-operators', [RechargeController::class, 'getOperators'])->name('admin.recharge.get-operators');
     });
 });
 

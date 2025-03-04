@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import AdminLayout from '@/Layouts/AdminLayout';
+import axios from "axios";
 
-const RechargeStatusEnquiry = () => {
+const Recharge2 = () => {
   const [referenceId, setReferenceId] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -13,25 +14,14 @@ const RechargeStatusEnquiry = () => {
     setResponse(null);
 
     try {
-      const res = await fetch(
-        "https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/status",
-        {
-          method: "POST",
-          headers: {
-            "Authorisedkey": "Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=",
-            "Token":
-              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzg5MjE3NzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM4OTIxNzc3In0.6vhPb1SE1p3yvAaK_GAEz-Y0Ai1ibCbN85adKW_1Xzg",
-            "accept": "application/json",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ referenceid: referenceId }),
-        }
-      );
+      // Call our backend controller endpoint instead of external API directly
+      const res = await axios.post('/api/recharge/status', {
+        referenceid: referenceId
+      });
 
-      const data = await res.json();
-      setResponse(data);
+      setResponse(res.data);
     } catch (err) {
-      setError("Failed to fetch data");
+      setError(err.response?.data?.message || "Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -51,8 +41,9 @@ const RechargeStatusEnquiry = () => {
         <button
           onClick={fetchRechargeStatus}
           className="bg-blue-500 text-white p-2 rounded w-full hover:bg-blue-600 transition duration-300"
+          disabled={loading}
         >
-          Fetch Status
+          {loading ? "Fetching..." : "Fetch Status"}
         </button>
 
         {loading && <p className="mt-2 text-blue-500">Loading...</p>}
@@ -123,4 +114,4 @@ const RechargeStatusEnquiry = () => {
   );
 };
 
-export default RechargeStatusEnquiry;
+export default Recharge2;

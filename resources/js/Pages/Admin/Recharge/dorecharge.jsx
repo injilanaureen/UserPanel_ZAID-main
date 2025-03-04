@@ -32,38 +32,17 @@ const DoRechargeForm = () => {
     setApiResponse(null);
 
     try {
-      // Call PaySprint API directly
-      const apiResponse = await axios.post(
-        'https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/dorecharge',
-        {
-          operator: parseInt(formData.operator),
-          canumber: formData.canumber,
-          amount: parseInt(formData.amount),
-          referenceid: formData.referenceid || Date.now().toString()
-        },
-        {
-          headers: {
-            'Authorisedkey': 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            'Token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      setApiResponse(apiResponse.data);
-
-      // Then store in local database
-      await axios.post('/admin/recharge/process', {
-        ...formData,
-        status: apiResponse.data.status ? 'success' : 'failed',
-        message: apiResponse.data.message || 'Transaction processed',
-        response_code: apiResponse.data.response_code || '',
-        operatorid: apiResponse.data.operatorid || '',
-        ackno: apiResponse.data.ackno || ''
+      // Call the backend controller endpoint instead of directly calling the API
+      const response = await axios.post('/admin/recharge/process', {
+        operator: parseInt(formData.operator),
+        canumber: formData.canumber,
+        amount: parseInt(formData.amount),
+        referenceid: formData.referenceid || Date.now().toString()
       });
 
-      if (apiResponse.data.status) {
+      setApiResponse(response.data);
+
+      if (response.data.status) {
         setSuccess("Recharge processed successfully!");
         setFormData({
           operator: "",
@@ -72,7 +51,7 @@ const DoRechargeForm = () => {
           referenceid: ""
         });
       } else {
-        setError(apiResponse.data.message || "Failed to process recharge");
+        setError(response.data.message || "Failed to process recharge");
       }
     } catch (err) {
       console.error('Error submitting form:', err);

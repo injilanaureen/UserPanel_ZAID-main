@@ -22,6 +22,27 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
             [e.target.name]: e.target.value,
         });
     };
+    const handleSendOtp = async () => {
+        if (formData.mobile.length !== 10) {
+            alert("Please enter a valid 10-digit mobile number");
+            return;
+        }
+    
+        try {
+            const response = await fetch("YOUR_OTP_API_ENDPOINT", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mobile: formData.mobile }),
+            });
+    
+            const data = await response.json();
+            alert(data.message || "OTP sent successfully!");
+        } catch (error) {
+            console.error("Error sending OTP:", error);
+            alert("Failed to send OTP. Try again.");
+        }
+    };
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -143,6 +164,13 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                                 placeholder="Enter 10 digit mobile number"
                                             />
                                         </div>
+                                        <button
+                                        type="button"
+                                        onClick={handleSendOtp}
+                                        className="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                        >
+                                            Send OTP
+                                        </button>
 
                                         <div>
                                             <label
