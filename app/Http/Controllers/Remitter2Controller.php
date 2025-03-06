@@ -9,11 +9,31 @@ use App\Models\Remitter;
 use App\Models\RemitterRegistration;
 use App\Models\RemitterAadharVerify;
 use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\Jwt; 
 use GuzzleHttp\Client;
 
 
 class Remitter2Controller extends Controller
 {
+    private $partnerId = 'PS005962'; 
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    // Method to generate JWT token
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
     public function showQueryForm()
     {
        
@@ -35,22 +55,40 @@ class Remitter2Controller extends Controller
                 ], 422);
             }
 
+            // Generate unique request ID and JWT token
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
+
             // Make API call to the external service
             $response = Http::withHeaders([
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwOTAzMDgsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDkwMzA4In0.UnQeZ4g1izobgAwPFKQepiF77_WDD8Xs-NkalAj_rTs',
-                'accept' => 'application/json'
+                'Token' => $jwtToken,
+                'accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'User-Agent' => $this->partnerId
             ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter', [
                 'mobile' => $request->input('mobile')
+            ]);
+
+            $responseData = $response->json();
+
+            // Log the successful query
+            Log::info('Remitter query successful', [
+                'mobile' => $request->input('mobile'),
+                'jwt_token' => $jwtToken,
+                'response_status' => $responseData['status'] ?? 'unknown'
             ]);
 
             // Return JSON response for the API call
             return response()->json([
                 'success' => true,
-                'data' => $response->json()
+                'data' => $responseData
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Remitter query error: ' . $e->getMessage());
+            Log::error('Remitter query error: ' . $e->getMessage(), [
+                'mobile' => $request->input('mobile') ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching remitter data'
@@ -95,7 +133,7 @@ class Remitter2Controller extends Controller
         // Validate the request
         $validator = Validator::make($request->all(), [
             'mobile' => 'required|digits:10',
-            'aadhaar_no' => 'required|digits:16',
+            'aadhaar_no' => 'required|digits:12',
         ]);
     
         if ($validator->fails()) {
@@ -105,12 +143,13 @@ class Remitter2Controller extends Controller
         try {
             // Initialize Guzzle HTTP client
             $client = new Client();
-    
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
             // Make the API request with full Aadhaar number
             $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
                 'headers' => [
       
-                    'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEwOTA0MjUsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMDkwNDI1In0.N0g8FPB3TegAH1VC6BlVMvVt2oM8HGiP5_kMO6IC0wA',
+                    'Token' => $jwtToken,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
                 ],
@@ -159,7 +198,7 @@ class Remitter2Controller extends Controller
         // Validate the incoming request
         $validator = Validator::make($request->all(), [
             'mobile' => 'required|digits:10',
-            'aadhaar_no' => 'required|digits:16',
+            'aadhaar_no' => 'required|digits:12',
         ]);
     
         if ($validator->fails()) {
@@ -201,10 +240,13 @@ class Remitter2Controller extends Controller
     {
        
         $client = new Client();
-        $response = $client->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
+        $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
             'headers' => [
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4',
+          
+               'Token' => $jwtToken,
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
             ],
@@ -235,13 +277,17 @@ class Remitter2Controller extends Controller
     {
         if ($request->isMethod('post')) {
             try {
+                // Generate unique request ID and JWT token
+                $requestId = time() . rand(1000, 9999);
+                $jwtToken = $this->generateJwtToken($requestId);
+
                 // Call external API
                 $response = Http::withHeaders([
-                    'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                    'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4',
+                    'Token' => $jwtToken,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
-                ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/remitter/registerremitter', $request->all());
+                    'User-Agent' => $this->partnerId
+                ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/registerremitter', $request->all());
 
                 $responseData = $response->json();
 
@@ -259,10 +305,17 @@ class Remitter2Controller extends Controller
                     'data' => $request->data,
                     'accessmode' => $request->accessmode,
                     'is_iris' => $request->is_iris,
-                    'limit' => $limit, // Store limit in its own column
+                    'limit' => $limit,
                     'api_response' => $responseData,
                     'status' => $status,
                     'message' => $message,
+                    'jwt_token' => $jwtToken // Added to store the used token
+                ]);
+
+                Log::info('Remitter registration successful', [
+                    'mobile' => $request->mobile,
+                    'jwt_token' => $jwtToken,
+                    'status' => $status
                 ]);
 
                 return response()->json([
@@ -288,6 +341,11 @@ class Remitter2Controller extends Controller
                     'status' => 'error',
                     'message' => $e->getMessage(),
                     'api_response' => ['error' => $e->getMessage()]
+                ]);
+
+                Log::error('Remitter registration failed: ' . $e->getMessage(), [
+                    'mobile' => $request->mobile,
+                    'trace' => $e->getTraceAsString()
                 ]);
 
                 return response()->json([
@@ -317,7 +375,6 @@ class Remitter2Controller extends Controller
             'recentRegistrations' => $recentRegistrations
         ]);
     }
-
     public function getRegistrations()
     {
         $registrations = RemitterRegistration::latest()

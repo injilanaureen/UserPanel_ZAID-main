@@ -14,6 +14,20 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 class Transaction2Controller extends Controller
 {
+    private $partnerId = 'PS005962';
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return JWT::encode($payload, $this->secretKey, 'HS256');
+    }
     public function pennyDrop(Request $request)
     {
         if ($request->isMethod('post')) {
@@ -29,16 +43,27 @@ class Transaction2Controller extends Controller
                 'gst_state' => 'required|string|max:2',
                 'bene_id' => 'required|integer',
             ]);
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
 
+            Log::info('Sending API request for penny drop', [
+                'request_data' => $validatedData,
+                'request_id' => $requestId
+            ]);
             // Send data to Paysprint API
             $apiResponse = Http::withHeaders([
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
                 'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/benenameverify', $validatedData);
+                'Token' => $jwtToken,
+                'User-Agent' => $this->partnerId
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/benenameverify', $validatedData);
 
             $responseData = $apiResponse->json();
+            Log::info('API response received for penny drop', [
+                'status' => $apiResponse->status(),
+                'body' => $responseData
+            ]);
 
             // Save request and response data to the penny_drops table
             PennyDrop::create([
@@ -102,7 +127,7 @@ class Transaction2Controller extends Controller
                 'accept'        => 'application/json',
                 'Token'         => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
                 'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/transact/transact/send_otp', [
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact/send_otp', [
                 'mobile'      => $request->mobile,
                 'referenceid' => $request->referenceid,
                 'bene_id'     => $request->bene_id,

@@ -106,7 +106,7 @@ const DoRechargeForm = () => {
               </div>
               <div className="space-y-2">
                 <label htmlFor="canumber" className="block text-sm font-medium text-gray-700">
-                  CA Number
+                   Number
                 </label>
                 <input
                   id="canumber"
