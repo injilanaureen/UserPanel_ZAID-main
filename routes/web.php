@@ -15,6 +15,10 @@ use App\Http\Controllers\Refund2Controller;
 use App\Http\Controllers\UtilitybillPaymentController;
 use App\Http\Controllers\FastagRechargeController;
 use App\Http\Controllers\MunicipalityController;
+use App\Http\Controllers\AirtelController;
+use App\Http\Controllers\BillController;
+use App\Http\Controllers\BillPaymentController;
+use App\Http\Controllers\LICEnquiryController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -324,3 +328,23 @@ Route::post('/processrefundOTP', [DMTBank1Controller::class, 'processrefundOTP']
 
 Route::get('/admin/refund1/claimRefund', [DMTBank1Controller::class, 'claimRefund'])->name('registerclaimRefund');
 Route::post('/claimRefund', [DMTBank1Controller::class, 'processclaimRefund'])->name('process.claimRefund');
+
+
+// save lic bill fetch 
+
+    Route::get('/admin/lic', [LICEnquiryController::class, 'licapi']);
+    Route::post('/save-bill-payment', [BillPaymentController::class, 'store']);
+    Route::post('/save-bill', [BillController::class, 'store']);
+    Route::post('/save-lic-status', [LICEnquiryController::class, 'store']);
+
+    Route::prefix('/cms')->group(function () {
+    Route::get('/airtel', [AirtelController::class, 'generate'])->name('airtel');
+    Route::post('/airtel', [AirtelController::class, 'process'])->name('airtel.post');
+    Route::post('/airtel/check-status', [AirtelController::class, 'check'])->name('airtel.check-status');
+  
+// routes/web.php
+Route::get('/get-csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
+});

@@ -53,6 +53,24 @@
       ]
     },
     {
+      "title":"CMS",
+      "icon": "BusFront",
+      "subMenu": [
+        {
+            "title": "Airtel",
+            "href": "/cms/airtel"
+        }]
+    },
+    {
+      "title":"API",
+      "icon": "BusFront",
+      "subMenu": [
+        {
+            "title": "Airtel",
+            "href": "/admin/lic"
+        }]
+    },
+    {
       "title": "DMT BANK 1",
       "icon": "IndianRupee",
       "subMenu": [
