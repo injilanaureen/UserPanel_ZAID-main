@@ -51,7 +51,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/transactions', [RechargeController::class, 'getTransactions']);
 
             Route::get('/recharge2', [RechargeController::class, 'recharge2']);
-
+            Route::post('/status', [RechargeController::class, 'fetchRechargeStatus']);
             Route::get('/manage-operator', [RechargeController::class, 'manageOperator']);
         });
         Route::get('/recharge/get-operators', [RechargeController::class, 'getOperators'])->name('admin.recharge.get-operators');

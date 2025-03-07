@@ -164,13 +164,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                                 placeholder="Enter 10 digit mobile number"
                                             />
                                         </div>
-                                        <button
-                                        type="button"
-                                        onClick={handleSendOtp}
-                                        className="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                        >
-                                            Send OTP
-                                        </button>
+                                     
 
                                         <div>
                                             <label
@@ -246,7 +240,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                                 <option value="SITE">
                                                     SITE
                                                 </option>
-                                                <option value="API">API</option>
+                                                <option value="APP">APP</option>
                                             </select>
                                         </div>
 

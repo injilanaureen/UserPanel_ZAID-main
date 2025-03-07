@@ -27,4 +27,9 @@ class RechargeTransaction extends Model
     protected $casts = [
         'amount' => 'decimal:2', 
     ];
+    // Relationship to JwtToken
+    public function jwtToken()
+    {
+        return $this->hasOne(JwtToken::class, 'transaction_id');
+    }
 }
