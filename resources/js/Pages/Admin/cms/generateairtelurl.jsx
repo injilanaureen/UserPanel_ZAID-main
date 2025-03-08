@@ -1,5 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
+import { Receipt,LoaderPinwheel ,ShipWheel  } from 'lucide-react';
+
 
 export default function AirtelGenerateURL() {
   const [formData, setFormData] = useState({
@@ -39,58 +41,68 @@ export default function AirtelGenerateURL() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-          Generate URL
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Ref ID:</label>
-            <input
-              type="number"
-              name="refid"
-              value={formData.refid}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+<div className="flex justify-center max-w-full min-h-screen">
+  <div className="shadow-lg  p-6 w-full ">
+    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+      Generate URL
+    </h2>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+      <div className="flex gap-1">
+          <Receipt size={20} className="text-green-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">Ref ID:</label>
           </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Latitude:</label>
-            <input
-              type="text"
-              name="latitude"
-              value={formData.latitude}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Longitude:</label>
-            <input
-              type="text"
-              name="longitude"
-              value={formData.longitude}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full px-4 py-2 text-white font-semibold rounded-lg transition ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Processing..." : "Generate URL"}
-          </button>
-        </form>
-
-        {error && <p className="text-red-500 text-center mt-3">{error}</p>}
+        <input
+          type="number"
+          name="refid"
+          value={formData.refid}
+          onChange={handleChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
+        />
       </div>
-    </div>
+      <div>
+          <div className="flex gap-1">
+          <LoaderPinwheel size={20} className="text-yellow-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">latitude:</label>
+          </div>       
+           <input
+          type="text"
+          name="latitude"
+          value={formData.latitude}
+          onChange={handleChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
+        />
+      </div>
+      <div>
+      <div className="flex gap-1">
+          <ShipWheel size={20} className="text-red-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">latitude:</label>
+          </div>   
+        <input
+          type="text"
+          name="longitude"
+          value={formData.longitude}
+          onChange={handleChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full px-4 py-2 text-white font-semibold rounded-lg transition ${
+          loading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-900 hover:bg-black"
+        }`}
+      >
+        {loading ? "Processing..." : "Generate URL"}
+      </button>
+    </form>
+
+    {error && <p className="text-red-500 text-center mt-3">{error}</p>}
+  </div>
+</div>
+
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AdminLayout from '@/Layouts/AdminLayout';
+import {PackageOpen } from 'lucide-react'
 import axios from "axios";
 
 const Recharge2 = () => {
@@ -29,7 +30,7 @@ const Recharge2 = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 max-w-full mx-auto border rounded shadow-md">
+<div className="p-4 max-w-full mx-auto border rounded shadow-md">
         <h2 className="text-xl font-semibold mb-2">Recharge Status</h2>
         <input
           type="text"
@@ -110,6 +111,7 @@ const Recharge2 = () => {
           </div>
         )}
       </div>
+
     </AdminLayout>
   );
 };

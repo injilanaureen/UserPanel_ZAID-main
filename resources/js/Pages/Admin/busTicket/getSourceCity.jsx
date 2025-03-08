@@ -83,11 +83,12 @@ const CityList = () => {
 
   return (
         <AdminLayout>
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Available Bus Source Cities</h2>
-      
+    <div className="">
+      <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+          <h2 className="text-3xl font-semibold text-white">Available Bus Source Cities</h2>
+        </div>
       {/* Filters */}
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 mt-6 flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input

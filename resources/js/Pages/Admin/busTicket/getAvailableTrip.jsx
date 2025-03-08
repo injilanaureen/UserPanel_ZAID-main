@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import AdminLayout from '@/Layouts/AdminLayout';
+import { Receipt,LoaderPinwheel ,ShipWheel  } from 'lucide-react';
+
 
 const AvailableTrips = () => {
   const [formData, setFormData] = useState({
@@ -100,12 +102,17 @@ const AvailableTrips = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-4">Search Available Bus Trips</h2>
-        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+      <div className="max-w-full">
+        <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+          <h2 className="text-3xl font-semibold text-white">Search Available Bus Trips</h2>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Source ID</label>
+            <div className="flex gap-1">
+          <Receipt size={20} className="text-green-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">Source ID:</label>
+          </div>
               <input
                 type="number"
                 name="source_id"
@@ -117,25 +124,31 @@ const AvailableTrips = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Destination ID</label>
+            <div className="flex gap-1">
+          <LoaderPinwheel size={20} className="text-yellow-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">Destination ID:</label>
+          </div>
               <input
                 type="number"
                 name="destination_id"
                 value={formData.destination_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date of Journey</label>
+            <div className="flex gap-1">
+          <ShipWheel size={20} className="text-red-500 animate-bounce"/>
+          <label className="block text-gray-700 font-medium mb-1">Date of Journey:</label>
+          </div>
               <input
                 type="date"
                 name="date_of_journey"
                 value={formData.date_of_journey}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                 required
                 min={new Date().toISOString().split("T")[0]}
               />
@@ -145,7 +158,7 @@ const AvailableTrips = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {loading ? (
               <>

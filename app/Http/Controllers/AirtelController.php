@@ -32,6 +32,9 @@ class AirtelController extends Controller
     return response($apiResponse->body(), $apiResponse->status())
         ->header('Content-Type', 'application/json');
 }
+
+
+
     public function check(Request $request)
 {
     $data = $request->validate([
@@ -46,6 +49,10 @@ class AirtelController extends Controller
         'content-type' => 'application/json',
     ])->post('https://sit.paysprint.in/service-api/api/v1/service/airtelcms/airtel/status', $data);
 
+    if ($apiResponse->failed()) {
+        return response()->json(['error' => 'Failed to fetch status'], $apiResponse->status());
+    }
+    
     // External API ka exact JSON return karna
     return response($apiResponse->body(), $apiResponse->status())
         ->header('Content-Type', 'application/json');

@@ -157,6 +157,10 @@ const GetCurrentTripDetails = () => {
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Enter Trip ID</h2>
+          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+          <h2 className="text-3xl font-semibold text-white">Enter Trip ID</h2>
+        </div>
+        
           <div className="flex space-x-4">
             <input
               type="text"
