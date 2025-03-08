@@ -4,6 +4,8 @@ import axios from "axios";
 
 const PayBill = () => {
   const [canumber, setCanumber] = useState("");
+  const [amount, setAmount] = useState("");
+  const [operator, setOperator] = useState("");
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,13 +16,25 @@ const PayBill = () => {
       return;
     }
 
+    if (!amount.trim() || isNaN(amount) || parseFloat(amount) <= 0) {
+      setError("Please enter a valid amount");
+      return;
+    }
+
+    if (!operator.trim()) {
+      setError("Please enter an operator code");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       setResponse(null);
       
       const res = await axios.post("/admin/utility-bill-payment/process-bill-payment", { 
-        canumber: canumber.trim() 
+        canumber: canumber.trim(),
+        amount: parseFloat(amount.trim()),
+        operator: operator.trim()
       });
       
       if (res.data.status === false) {
@@ -60,6 +74,12 @@ const PayBill = () => {
                   {data.status ? 'Successful' : 'Failed'}
                 </span>
               </td>
+            </tr>
+            <tr className="border-b">
+              <th className="py-3 px-4 font-medium text-gray-900 bg-gray-50">
+                Amount
+              </th>
+              <td className="py-3 px-4">₹{parseFloat(amount).toFixed(2)}</td>
             </tr>
             <tr className="border-b">
               <th className="py-3 px-4 font-medium text-gray-900 bg-gray-50">
@@ -107,6 +127,26 @@ const PayBill = () => {
         <div className="space-y-6">
           <div className="relative">
             <label 
+              htmlFor="operator" 
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Operator Code
+            </label>
+            <input
+              id="operator"
+              type="text"
+              value={operator}
+              onChange={(e) => setOperator(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                transition-all duration-200 placeholder-gray-400"
+              placeholder="Enter operator code"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="relative">
+            <label 
               htmlFor="canumber" 
               className="block text-sm font-medium text-gray-700 mb-1"
             >
@@ -125,11 +165,33 @@ const PayBill = () => {
             />
           </div>
 
+          <div className="relative">
+            <label 
+              htmlFor="amount" 
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Amount (₹)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              min="1"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                transition-all duration-200 placeholder-gray-400"
+              placeholder="Enter payment amount"
+              disabled={isLoading}
+            />
+          </div>
+
           <button
             onClick={handlePayment}
-            disabled={isLoading || !canumber.trim()}
+            disabled={isLoading || !canumber.trim() || !amount.trim() || !operator.trim() || isNaN(amount) || parseFloat(amount) <= 0}
             className={`w-full py-3 px-4 rounded-lg font-semibold text-white
-              ${isLoading || !canumber.trim() 
+              ${isLoading || !canumber.trim() || !amount.trim() || !operator.trim() || isNaN(amount) || parseFloat(amount) <= 0
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-blue-600 hover:bg-blue-700'} 
               transition-colors duration-200 flex items-center justify-center`}

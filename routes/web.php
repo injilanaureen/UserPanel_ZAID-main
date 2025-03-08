@@ -19,6 +19,7 @@ use App\Http\Controllers\AirtelController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\BillPaymentController;
 use App\Http\Controllers\LICEnquiryController;
+use App\Http\Controllers\CMSAirtelController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -318,7 +319,7 @@ Route::get('/admin/transaction1/transactionOtp', [DMTBank1Controller::class, 'tr
 Route::post('/transaction1OTP', [DMTBank1Controller::class, 'processtransaction1Otp'])->name('register.processtransaction1OTP');
 Route::redirect('/', '/admin/dashboard');
 
-//trab=nsaction status
+//transaction status
 Route::get('/admin/transaction1/transactionStatus', [DMTBank1Controller::class, 'transactionStatus'])->name('register.transactionStatus');
 Route::post('/processTransaction1Status', [DMTBank1Controller::class, 'processTransaction1Status'])->name('process.processTransaction1Status');
 
@@ -339,12 +340,19 @@ Route::post('/claimRefund', [DMTBank1Controller::class, 'processclaimRefund'])->
 
     Route::prefix('/cms')->group(function () {
     Route::get('/airtel', [AirtelController::class, 'generate'])->name('airtel');
-    Route::post('/airtel', [AirtelController::class, 'process'])->name('airtel.post');
-    Route::post('/airtel/check-status', [AirtelController::class, 'check'])->name('airtel.check-status');
+    Route::post('/airtel', [AirtelController::class, 'process'])->name('airtel.post'); //payment
+    Route::post('/airtel/check-status', [AirtelController::class, 'check'])->name('airtel.check-status');  //enquiry 
   
 // routes/web.php
 Route::get('/get-csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
 
+
+//cms airtel 
+
+
 });
+
+Route::get('/admin/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
+Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);

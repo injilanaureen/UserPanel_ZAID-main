@@ -14,6 +14,25 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 class UtilitybillPaymentController extends Controller
 {
+    private $partnerId = 'PS005962'; 
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    // Method to generate JWT token
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
     public function operatorList()
     {
         try {
@@ -21,13 +40,17 @@ class UtilitybillPaymentController extends Controller
             $shouldFetchData = UtilityOperator::count() === 0;
 
             if ($shouldFetchData) {
+
+                $referenceId = 'RECH' . time() . rand(1000, 9999); // e.g., RECH16776543211234
+                $requestId = time() . rand(1000, 9999);
+                $jwtToken = $this->generateJwtToken($requestId);
                 // Fetch data from API
                 $response = Http::withHeaders([
-                    'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                    'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
+                    'Authorisedkey' => $this->secretKey,
+                    'Token' => $jwtToken,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
-                ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/getoperator', [
+                ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/getoperator', [
                     'mode' => 'online'
                 ]);
 
@@ -177,26 +200,31 @@ class UtilitybillPaymentController extends Controller
     {
         // Validate the request
         $validated = $request->validate([
-            'canumber' => 'required|string|min:5'
+            'canumber' => 'required|string|min:5',
+            'amount' => 'required|numeric|min:1',
+            'operator' => 'required|string' // Added operator validation
         ]);
-
+    
         try {
             $apiUrl = config('services.paysprint.url', 'https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/paybill');
             
             // Generate a unique reference ID
             $referenceId = 'REF' . time() . rand(1000, 9999);
             
+            // Convert amount to string with 2 decimal places for the API
+            $formattedAmount = number_format($validated['amount'], 2, '.', '');
+            
             $payload = [
-                "operator" => "11",
+                "operator" => $validated['operator'], // Changed from hardcoded "11" to user input
                 "canumber" => $validated['canumber'],
-                "amount" => "100",
+                "amount" => $formattedAmount,
                 "referenceid" => $referenceId,
                 "latitude" => "27.2232",
                 "longitude" => "78.26535",
                 "mode" => "online",
                 "bill_fetch" => [
-                    "billAmount" => "820.0",
-                    "billnetamount" => "820.0",
+                    "billAmount" => $formattedAmount,
+                    "billnetamount" => $formattedAmount,
                     "billdate" => date('d-M-Y'),
                     "dueDate" => date('Y-m-d', strtotime('+7 days')),
                     "acceptPayment" => true,
@@ -205,73 +233,74 @@ class UtilitybillPaymentController extends Controller
                     "userName" => "SALMAN"
                 ]
             ];
-
-            // Log the request payload for debugging
+    
+            // Rest of the code remains the same...
             \Log::info('Payment API Request:', [
                 'url' => $apiUrl,
                 'payload' => $payload
             ]);
 
-            $response = Http::withHeaders([
-                'Authorisedkey' => config('services.paysprint.auth_key', 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I='),
-                'Token' => config('services.paysprint.token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M'),
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->post($apiUrl, $payload);
+        $response = Http::withHeaders([
+            'Authorisedkey' => config('services.paysprint.auth_key', 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I='),
+            'Token' => config('services.paysprint.token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M'),
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->post($apiUrl, $payload);
 
-            // Log the API response for debugging
-            \Log::info('Payment API Response:', [
-                'status' => $response->status(),
-                'body' => $response->json()
-            ]);
+        // Log the API response for debugging
+        \Log::info('Payment API Response:', [
+            'status' => $response->status(),
+            'body' => $response->json()
+        ]);
 
-            // Check if the response was successful
-            if (!$response->successful()) {
-                throw new \Exception('API request failed: ' . $response->body());
-            }
-
-            $responseData = $response->json();
-
-            // Validate response data
-            if (!isset($responseData['status'])) {
-                throw new \Exception('Invalid API response format');
-            }
-
-            // Store data in the database
-            $billPayment = UtilityBillPayment::create([
-                'consumer_number' => $validated['canumber'],
-                'amount' => 100,
-                'operator_id' => $responseData['operatorid'] ?? null,
-                'ack_no' => $responseData['ackno'] ?? null,
-                'reference_id' => $referenceId,
-                'response_code' => $responseData['response_code'] ?? null,
-                'status' => $responseData['status'] ?? false,
-                'message' => $responseData['message'] ?? null,
-            ]);
-
-            // If database storage fails, log it but don't fail the request
-            if (!$billPayment) {
-                \Log::error('Failed to store bill payment record', [
-                    'consumer_number' => $validated['canumber'],
-                    'reference_id' => $referenceId
-                ]);
-            }
-
-            return response()->json($responseData);
-            
-        } catch (\Exception $e) {
-            // Log the detailed error
-            \Log::error('Bill payment error: ' . $e->getMessage(), [
-                'consumer_number' => $validated['canumber'] ?? null,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'error' => 'Payment processing failed: ' . $e->getMessage()
-            ], 500);
+        // Check if the response was successful
+        if (!$response->successful()) {
+            throw new \Exception('API request failed: ' . $response->body());
         }
+
+        $responseData = $response->json();
+
+        // Validate response data
+        if (!isset($responseData['status'])) {
+            throw new \Exception('Invalid API response format');
+        }
+
+        // Store data in the database
+        $billPayment = UtilityBillPayment::create([
+            'consumer_number' => $validated['canumber'],
+            'amount' => $validated['amount'],
+            'operator_id' => $responseData['operatorid'] ?? null,
+            'ack_no' => $responseData['ackno'] ?? null,
+            'reference_id' => $referenceId,
+            'response_code' => $responseData['response_code'] ?? null,
+            'status' => $responseData['status'] ?? false,
+            'message' => $responseData['message'] ?? null,
+        ]);
+
+        // If database storage fails, log it but don't fail the request
+        if (!$billPayment) {
+            \Log::error('Failed to store bill payment record', [
+                'consumer_number' => $validated['canumber'],
+                'reference_id' => $referenceId
+            ]);
+        }
+
+        return response()->json($responseData);
+        
+    } catch (\Exception $e) {
+        // Log the detailed error
+        \Log::error('Bill payment error: ' . $e->getMessage(), [
+            'consumer_number' => $validated['canumber'] ?? null,
+            'amount' => $validated['amount'] ?? null,
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status' => false,
+            'error' => 'Payment processing failed: ' . $e->getMessage()
+        ], 500);
     }
+}
 
 
 

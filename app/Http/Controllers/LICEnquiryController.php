@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 class LICEnquiryController extends Controller
 {
-    public function licapi()
+    public function licapi()//licapi=paybill
     {
         return Inertia::render('Admin/api/licapi'); 
     }

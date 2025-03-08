@@ -23,6 +23,20 @@
       ]
     },
     {
+      "title": "CMS-Airtel",
+      "icon": "Battery",
+      "subMenu": [
+        {
+          "title": "Generate URL",
+          "href": "/admin/cmsairtel/GenerateUrl"
+        },
+        {
+          "title": "Transaction Enquiry",
+          "href": "/admin/cmsairtel/AirtelTransactionEnquiry"
+        }
+      ]
+    },
+    {
       "title": "Bus Booking",
       "icon": "BusFront",
       "subMenu": [
@@ -66,7 +80,7 @@
       "icon": "BusFront",
       "subMenu": [
         {
-            "title": "Airtel",
+            "title": "LIC",
             "href": "/admin/lic"
         }]
     },
