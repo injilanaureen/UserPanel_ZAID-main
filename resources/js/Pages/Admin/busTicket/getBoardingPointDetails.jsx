@@ -16,7 +16,7 @@ const BoardingPoint = () => {
     setError(null);
     setBoardingPoint(null);
     setResponseInfo(null);
-
+    
     try {
       const response = await axios.post('/admin/busTicket/fetchboardingpointdetails', {
         bpId: parseInt(bpId, 10),
@@ -27,22 +27,25 @@ const BoardingPoint = () => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       const data = response.data;
       console.log('API Response:', data);
-
+  
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid API response format');
+      }
+  
       setResponseInfo({
         status: data?.status ?? false,
         responseCode: data?.response_code ?? 'No response code',
         errorMsg: typeof data?.data === 'string' ? data.data : 'No specific error',
       });
-
-      if (data.status && data.response_code === 1 && typeof data.data === 'object') {
-        setBoardingPoint(data.data);
+  
+      // Check if API returned valid boarding point details
+      if (data.success && data.api_response?.data && typeof data.api_response.data === 'object') {
+        setBoardingPoint(data.api_response.data);
       } else {
-        throw new Error(
-          `Error: ${typeof data.data === 'string' ? data.data : 'Unknown error'}`
-        );
+        setError(data.message || 'Unknown error from API');
       }
     } catch (err) {
       console.error('Error:', err);
@@ -51,6 +54,7 @@ const BoardingPoint = () => {
       setLoading(false);
     }
   };
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();

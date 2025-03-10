@@ -3,11 +3,20 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\FastagOperatorList;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class FastagRechargeController extends Controller
 {
+    public function getOperators()
+{
+    $operators = FastagOperatorList::all(['operator_id', 'name']);
+    return response()->json($operators);
+}
+
     public function fastagRechargeOperatorList()
     {
         // Call the external API
@@ -17,16 +26,35 @@ class FastagRechargeController extends Controller
             'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
             'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
         ])->post('https://sit.paysprint.in/service-api/api/v1/service/fastag/Fastag/operatorsList');
-
-        // Convert response to JSON
+    
         $apiResponse = $response->json();
+    
+        if (isset($apiResponse['data'])) {
+            foreach ($apiResponse['data'] as $operator) {
+                FastagOperatorList::updateOrCreate(
+                    ['operator_id' => $operator['id']], // Check existing records based on operator_id
+                    [
+                        'operator_id' => $operator['id'], // Add operator_id field
+                        'name' => $operator['name'],
+                        'category' => $operator['category'],
+                        'viewbill' => $operator['viewbill'] ?? null,
+                        'displayname' => $operator['displayname'],
+                        'regex' => $operator['regex'] ?? null,
+                        'ad1_regex' => $operator['ad1_regex'] ?? null,
+                    ]
+                );
+            }
+        }
+        $operators = FastagOperatorList::all();
 
         return Inertia::render('Admin/FastagRecharge/FastagOperatorList', [
-            'operators' => $apiResponse
+            'operators' => FastagOperatorList::all()
         ]);
     }
+    
     public function fetchConsumerDetails()
     {
+        $operators = FastagOperatorList::all();
         return Inertia::render('Admin/FastagRecharge/FastagFetchConsumerDetails');
     }
     public function getConsumerDetails(Request $request)
@@ -48,6 +76,10 @@ class FastagRechargeController extends Controller
 
         return response()->json($response->json());
     }
+
+
+
+
     public function FastagRecharge(){
         return Inertia::render('Admin/FastagRecharge/FastagRecharge');
     }

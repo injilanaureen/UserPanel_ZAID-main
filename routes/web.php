@@ -184,7 +184,10 @@ Route::post('/admin/refund2/processRefund', [Refund2Controller::class, 'processR
 Route::get('/admin/utility-bill-payment/operator-list', [UtilitybillPaymentController::class, 'operatorList'])
     ->name('utilitybillPayment.operatorList');
     Route::get('/operator-list', [UtilityBillPaymentController::class, 'operatorList'])->name('operator.list');
-
+    Route::post('/admin/operator-list', [UtilityBillPaymentController::class, 'operatorList'])->middleware('auth');
+    Route::get('/api/operators', [UtilityBillPaymentController::class, 'fetchOperators']);
+// Add this to your routes/web.php file
+Route::post('/admin/get-operators', [UtilityBillPaymentController::class, 'getOperators'])->name('admin.get-operators');
 //Fetch Bill Details
 Route::get('/admin/utility-bill-payment/fetch-bill-details', [UtilitybillPaymentController::class, 'fetchBillDetails'])
     ->name('utilitybillPayment.fetchBillDetails');
@@ -221,6 +224,7 @@ Route::post('/admin/InsurancePremiumPayment/fetchInsuranceStatus', [InsurancePre
 //operator
 Route::get('/admin/FastagRecharge/FastagOperatorList',[FastagRechargeController::class,'fastagRechargeOperatorList'])->name('FastagRecharge.FastagOperatorList');
 Route::get('/admin/fastag-operators', [FastagController::class, 'fastagRechargeOperatorList'])->name('admin.fastag-operators');
+
 //consumer details 
 Route::get('/admin/FastagRecharge/fetchConsumerDetails',[FastagRechargeController::class,'fetchConsumerDetails'])->name('FastagRecharge.FastagFetchConsumerDetails');
 Route::post('/api/fetchConsumerDetails', [FastagRechargeController::class, 'getConsumerDetails'])->name('FastagRecharge.getConsumerDetails');
@@ -356,3 +360,5 @@ Route::get('/get-csrf-token', function () {
 
 Route::get('/admin/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
 Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
+Route::get('/admin/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
+    Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');

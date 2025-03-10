@@ -6,7 +6,7 @@ const FetchInsuranceBillDetails = () => {
   const [formData, setFormData] = useState({
     canumber: "",
     ad1: "",
-    ad2: "",
+    ad2: "", // Will store date as dd/mm/yyyy
     mode: "online",
   });
 
@@ -18,6 +18,14 @@ const FetchInsuranceBillDetails = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate date format before submission
+    const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    if (!datePattern.test(formData.ad2)) {
+      setError("Please enter the date in dd/mm/yyyy format.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await axios.post(
@@ -33,10 +41,23 @@ const FetchInsuranceBillDetails = () => {
   };
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+
+    if (name === "ad2") {
+      // Allow only numbers and slashes, enforce dd/mm/yyyy structure
+      let formattedValue = value.replace(/[^0-9/]/g, ""); // Remove non-numeric and non-slash characters
+      if (formattedValue.length === 2 || formattedValue.length === 5) {
+        if (!formattedValue.endsWith("/")) {
+          formattedValue += "/";
+        }
+      }
+      if (formattedValue.length > 10) {
+        formattedValue = formattedValue.slice(0, 10); // Limit to dd/mm/yyyy
+      }
+      setFormData((prev) => ({ ...prev, [name]: formattedValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   return (
@@ -63,7 +84,7 @@ const FetchInsuranceBillDetails = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Email 
+                  Email
                 </label>
                 <input
                   type="email"
@@ -77,15 +98,33 @@ const FetchInsuranceBillDetails = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Date
+                  Date (dd/mm/yyyy)
                 </label>
                 <input
-                  type="date"
+                  type="text"
                   name="ad2"
                   value={formData.ad2}
                   onChange={handleChange}
+                  placeholder="dd/mm/yyyy"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Mode
+                </label>
+                <select
+                  name="mode"
+                  value={formData.mode}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
+                >
+                  <option value="online">Online</option>
+                  <option value="offline">Offline</option>
+                </select>
               </div>
 
               <button

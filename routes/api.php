@@ -13,6 +13,9 @@ Route::get('/test-api', [ApiController::class, 'index']);
 
 Route::post('/recharge/status-enquiry', [RechargeController::class, 'storeStatusEnquiry']);
 
+Route::get('/fastag-operators', [FastagController::class, 'getOperators']);
+
 Route::prefix('recharge')->group(function () {
     Route::post('/status', [RechargeController::class, 'fetchRechargeStatus']);
 });
+

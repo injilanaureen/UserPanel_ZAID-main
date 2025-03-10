@@ -63,20 +63,6 @@ class RechargeController extends Controller
             $requestId = time() . rand(1000, 9999);
             $jwtToken = $this->generateJwtToken($requestId);
 
-            // dd($jwtToken);
-
-            // Call PaySprint API
-            // $apiResponse = Http::withHeaders([
-            //     'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            //     'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            //     'Accept' => 'application/json',
-            //     'Content-Type' => 'application/json'
-            // ])->post('https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/dorecharge', [
-            //     'operator' => (int)$request->operator,
-            //     'canumber' => $request->canumber,
-            //     'amount' => (int)$request->amount,
-            //     'referenceid' => $referenceId
-            // ]);
 
             $apiResponse = Http::withHeaders([
                 'Token' => $jwtToken,

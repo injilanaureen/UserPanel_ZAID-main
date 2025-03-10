@@ -3,20 +3,20 @@ import { usePage } from "@inertiajs/react";
 import AdminLayout from '@/Layouts/AdminLayout';
 
 const FastagOperatorList = () => {
-  const { operators } = usePage().props; // Get API response from Laravel
+  const { operators } = usePage().props; // Get data from Laravel
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredOperators, setFilteredOperators] = useState([]);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    console.log("API Response:", operators);
-    setFilteredOperators(operators?.data || []);
+    console.log("DB Data:", operators);
+    setFilteredOperators(operators || []);
   }, [operators]);
 
-  // Handle search functionality
   useEffect(() => {
-    const filtered = operators?.data?.filter(operator => 
+    const filtered = operators?.filter(operator => 
+      operator.operator_id.toString().includes(searchTerm) ||  // Search by operator_id
       operator.id.toString().includes(searchTerm) ||
       operator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       operator.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -27,7 +27,6 @@ const FastagOperatorList = () => {
     setCurrentPage(1);
   }, [searchTerm, operators]);
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredOperators.slice(indexOfFirstItem, indexOfLastItem);
@@ -48,8 +47,9 @@ const FastagOperatorList = () => {
           <table className="min-w-full bg-white border border-gray-300">
             <thead>
               <tr className="bg-gray-200">
-                <th className="py-2 px-4 border">Operator ID</th>
-                <th className="py-2 px-4 border">Operator Name</th>
+                <th className="py-2 px-4 border">ID</th>
+                <th className="py-2 px-4 border">Operator ID</th> {/* Added Operator ID */}
+                <th className="py-2 px-4 border">Name</th>
                 <th className="py-2 px-4 border">Category</th>
                 <th className="py-2 px-4 border">View Bill</th>
                 <th className="py-2 px-4 border">Display Name</th>
@@ -62,6 +62,7 @@ const FastagOperatorList = () => {
                 currentItems.map((operator, index) => (
                   <tr key={index} className="text-center border-b">
                     <td className="py-2 px-4 border">{operator.id}</td>
+                    <td className="py-2 px-4 border">{operator.operator_id}</td> {/* Show Operator ID */}
                     <td className="py-2 px-4 border">{operator.name}</td>
                     <td className="py-2 px-4 border">{operator.category}</td>
                     <td className="py-2 px-4 border">{operator.viewbill}</td>
@@ -72,7 +73,7 @@ const FastagOperatorList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-4 text-center">No matching records found</td>
+                  <td colSpan="8" className="py-4 text-center">No matching records found</td>
                 </tr>
               )}
             </tbody>

@@ -9,134 +9,78 @@ use App\Models\UtilityOperator;
 use App\Models\UtilityBillPayment;
 use App\Models\UtilityStatusEnquiry;
 use App\Models\BillDetail;
+use App\Models\JwtToken;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 class UtilitybillPaymentController extends Controller
 {
-    private $partnerId = 'PS005962'; 
-    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+    private $partnerId = 'PS005962';
+private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    // Method to generate JWT token
-    private function generateJwtToken($requestId)
-    {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
+private function generateJwtToken($requestId)
+{
+    $timestamp = time();
+    $payload = [
+        'timestamp' => $timestamp,
+        'partnerId' => $this->partnerId,
+        'reqid' => $requestId
+    ];
 
-        return Jwt::encode(
-            $payload,
-            $this->secretKey,
-            'HS256' // Using HMAC SHA-256 algorithm
-        );
-    }
-    public function operatorList()
-    {
-        try {
-            // Check if we need to fetch new data
-            $shouldFetchData = UtilityOperator::count() === 0;
+    return Jwt::encode(
+        $payload,
+        $this->secretKey,
+        'HS256' // Using HMAC SHA-256 algorithm
+    );
+}
+public function operatorList()
+{
+    return Inertia::render('Admin/UtilityBillPayment/OperatorList');
+}
+public function fetchOperators()
+{
+    $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
 
-            if ($shouldFetchData) {
+    try {
+        $response = Http::withHeaders([
+          
+            'Token' => $jwtToken,
+            'accept' => 'application/json',
+            'content-type' => 'application/json',
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/getoperator', [
+            'mode' => 'online'
+        ]);
 
-                $referenceId = 'RECH' . time() . rand(1000, 9999); // e.g., RECH16776543211234
-                $requestId = time() . rand(1000, 9999);
-                $jwtToken = $this->generateJwtToken($requestId);
-                // Fetch data from API
-                $response = Http::withHeaders([
-                    'Authorisedkey' => $this->secretKey,
-                    'Token' => $jwtToken,
-                    'accept' => 'application/json',
-                    'content-type' => 'application/json',
-                ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/getoperator', [
-                    'mode' => 'online'
-                ]);
-
-                if (!$response->successful()) {
-                    throw new \Exception('API request failed: ' . $response->status());
-                }
-
-                $apiData = $response->json();
-
-                if (!isset($apiData['data']) || !is_array($apiData['data'])) {
-                    throw new \Exception('Invalid data format received from API');
-                }
-
-                // Begin transaction
-                \DB::beginTransaction();
-
-                try {
-                    // Clear existing records
-                    UtilityOperator::truncate();
-
-                    // Insert new records
-                    foreach ($apiData['data'] as $operator) {
-                        UtilityOperator::create([
-                            'name' => $operator['name'] ?? '',
-                            'category' => $operator['category'] ?? '',
-                            'viewbill' => $operator['viewbill'] === '1',
-                            'displayname' => $operator['displayname'] ?? null,
-                            'regex' => $operator['regex'] ?? null,
-                            'ad1_d_name' => $operator['ad1_d_name'] ?? null,
-                            'ad1_name' => $operator['ad1_name'] ?? null,
-                            'ad1_regex' => $operator['ad1_regex'] ?? null,
-                            'ad2_d_name' => $operator['ad2_d_name'] ?? null,
-                            'ad2_name' => $operator['ad2_name'] ?? null,
-                            'ad2_regex' => $operator['ad2_regex'] ?? null,
-                            'ad3_d_name' => $operator['ad3_d_name'] ?? null,
-                            'ad3_name' => $operator['ad3_name'] ?? null,
-                            'ad3_regex' => $operator['ad3_regex'] ?? null,
-                        ]);
-                    }
-
-                    \DB::commit();
-
-                } catch (\Exception $e) {
-                    \DB::rollBack();
-                    throw $e;
-                }
-            }
-
-            // Fetch paginated results from database
-            $operators = UtilityOperator::orderBy('name')
-                ->paginate(10)
-                ->through(function ($operator) {
-                    // Transform the data if needed
-                    return [
-                        'id' => $operator->id,
-                        'name' => $operator->name,
-                        'category' => $operator->category,
-                        'viewbill' => $operator->viewbill,
-                        'displayname' => $operator->displayname,
-                        'regex' => $operator->regex,
-                        'ad1_d_name' => $operator->ad1_d_name,
-                        'ad1_name' => $operator->ad1_name,
-                        'ad1_regex' => $operator->ad1_regex,
-                        'ad2_d_name' => $operator->ad2_d_name,
-                        'ad2_name' => $operator->ad2_name,
-                        'ad2_regex' => $operator->ad2_regex,
-                        'ad3_d_name' => $operator->ad3_d_name,
-                        'ad3_name' => $operator->ad3_name,
-                        'ad3_regex' => $operator->ad3_regex,
-                    ];
-                });
-
-            return Inertia::render('Admin/UtilityBillPayment/OperatorList', [
-                'operators' => $operators,
-                'success' => $shouldFetchData ? 'Operators updated successfully' : null
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Operator list error: ' . $e->getMessage());
-            return Inertia::render('Admin/UtilityBillPayment/OperatorList', [
-                'error' => 'Failed to fetch operators: ' . $e->getMessage()
-            ]);
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch operators',
+                'error' => $response->body()
+            ], $response->status());
         }
+
+        $data = $response->json();
+        return response()->json([
+            'success' => true,
+            'operators' => $data['data'] ?? []
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while fetching operators',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
    public function fetchBillDetails(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
         // If it's not a POST request, just render the form
         if (!$request->isMethod('post')) {
             return Inertia::render('Admin/UtilityBillPayment/FetchBillDetails');
@@ -151,11 +95,11 @@ class UtilitybillPaymentController extends Controller
 
         try {
             $response = Http::withHeaders([
-                'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
+
+                'Token' => $jwtToken,
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/fetchbill', [
+            ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/fetchbill', [
                 'operator' => $validated['operator'],
                 'canumber' => $validated['canumber'],
                 'mode' => $validated['mode'],
@@ -198,6 +142,10 @@ class UtilitybillPaymentController extends Controller
 
     public function processBillPayment(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         // Validate the request
         $validated = $request->validate([
             'canumber' => 'required|string|min:5',
@@ -206,7 +154,7 @@ class UtilitybillPaymentController extends Controller
         ]);
     
         try {
-            $apiUrl = config('services.paysprint.url', 'https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/paybill');
+            $apiUrl = config('services.paysprint.url', 'https://api.paysprint.in/api/v1/service/bill-payment/bill/paybill');
             
             // Generate a unique reference ID
             $referenceId = 'REF' . time() . rand(1000, 9999);
@@ -215,7 +163,7 @@ class UtilitybillPaymentController extends Controller
             $formattedAmount = number_format($validated['amount'], 2, '.', '');
             
             $payload = [
-                "operator" => $validated['operator'], // Changed from hardcoded "11" to user input
+                "operator" => $validated['operator'], 
                 "canumber" => $validated['canumber'],
                 "amount" => $formattedAmount,
                 "referenceid" => $referenceId,
@@ -241,8 +189,8 @@ class UtilitybillPaymentController extends Controller
             ]);
 
         $response = Http::withHeaders([
-            'Authorisedkey' => config('services.paysprint.auth_key', 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I='),
-            'Token' => config('services.paysprint.token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M'),
+
+            'Token' => $jwtToken,
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ])->post($apiUrl, $payload);
@@ -303,15 +251,16 @@ class UtilitybillPaymentController extends Controller
 }
 
 
-
-
-
     public function utilityStatusEnquiry()
 {
     return Inertia::render('Admin/UtilityBillPayment/UtilityStatusEnquiry');
 }
 public function fetchUtilityStatus(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         try {
             $validated = $request->validate([
                 'referenceid' => 'required|string',
@@ -320,11 +269,10 @@ public function fetchUtilityStatus(Request $request)
             Log::info('Fetching utility status for reference ID: ' . $validated['referenceid']);
 
             $response = Http::withHeaders([
-                'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
+                'Token' =>     $jwtToken,
                 'accept' => 'application/json',
                 'content-type' => 'application/json'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/status', [
+            ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/status', [
                 'referenceid' => $validated['referenceid']
             ]);
 

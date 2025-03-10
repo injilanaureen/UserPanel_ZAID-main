@@ -7,33 +7,59 @@ use App\Models\InsuranceBillDetail;
 use App\Models\PayInsuranceBill;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
+use App\Models\JwtToken;
 use Illuminate\Support\Facades\Http;
 
 class InsurancePremiumPaymentController extends Controller
 {
+    private $partnerId = 'PS005962';
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+    
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+    
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
     public function fetchInsuranceBillDetails()
     {
         return Inertia::render('Admin/InsurancePremiumPayment/FetchInsuranceBillDetails');
     }
     public function fetchLICBill(Request $request)
 {
+    $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+    $requestId = time() . rand(1000, 9999);
+    $jwtToken = $this->generateJwtToken($requestId);
+
     $request->validate([
         'canumber' => 'required|numeric',
         'ad1' => 'required|email',
-        'ad2' => 'required|date',
-        'mode' => 'required|in:online'
+        'ad2' => 'required|date_format:d/m/Y', // Validate date in dd/mm/yyyy format
+        'mode' => 'required|in:online,offline'
     ]);
 
     try {
+        // If the API expects a different format, convert it here (e.g., to yyyy-mm-dd)
+        $apiFormattedDate = \DateTime::createFromFormat('d/m/Y', $request->ad2)->format('Y-m-d');
+
         $response = Http::withHeaders([
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+            'Token' => $jwtToken,
             'accept' => 'application/json',
-            'content-type' => 'application/json'
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/fetchlicbill', [
+            'content-type' => 'application/json',
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/fetchlicbill', [
             'canumber' => $request->canumber,
             'ad1' => $request->ad1,
-            'ad2' => $request->ad2,
+            'ad2' => $apiFormattedDate, // Use converted date if API expects yyyy-mm-dd
             'mode' => $request->mode
         ]);
 
@@ -43,7 +69,7 @@ class InsurancePremiumPaymentController extends Controller
             InsuranceBillDetail::create([
                 'canumber' => $request->canumber,
                 'ad1' => $request->ad1,
-                'ad2' => $request->ad2,
+                'ad2' => $request->ad2, // Store in dd/mm/yyyy as received from frontend
                 'mode' => $request->mode,
                 'status' => $data['status'],
                 'amount' => $data['amount'],

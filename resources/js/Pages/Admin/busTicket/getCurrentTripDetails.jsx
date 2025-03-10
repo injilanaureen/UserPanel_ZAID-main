@@ -14,64 +14,130 @@ const GetCurrentTripDetails = () => {
   };
 
   const transformApiResponse = (apiData) => {
-    const boardingPoints = apiData.boardingTimes?.map(bp => ({
+    // Fix for the map error - ensure boardingTimes is an array before mapping
+    let boardingPoints = [];
+    
+    // Check if boardingTimes exists and convert to array if needed
+    if (apiData.boardingTimes) {
+      // If it's an object with numeric keys, convert to array
+      if (typeof apiData.boardingTimes === 'object' && !Array.isArray(apiData.boardingTimes)) {
+        boardingPoints = Object.values(apiData.boardingTimes);
+      } 
+      // If it's already an array, use it directly
+      else if (Array.isArray(apiData.boardingTimes)) {
+        boardingPoints = apiData.boardingTimes;
+      }
+      // If it's a string (possibly JSON), try to parse it
+      else if (typeof apiData.boardingTimes === 'string') {
+        try {
+          boardingPoints = JSON.parse(apiData.boardingTimes);
+          // Check if parsed result is an object with numeric keys
+          if (typeof boardingPoints === 'object' && !Array.isArray(boardingPoints)) {
+            boardingPoints = Object.values(boardingPoints);
+          }
+        } catch (e) {
+          console.error('Failed to parse boardingTimes:', e);
+          boardingPoints = [];
+        }
+      }
+    }
+
+    // Now map the array of boarding points
+    boardingPoints = boardingPoints.map(bp => ({
       id: bp.bpId,
-      name: bp.bpName,
-      address: bp.address,
-      city: bp.city,
-      contactNumber: bp.contactNumber,
-      landmark: bp.landmark,
-      time: parseInt(bp.time),
+      name: bp.bpName || bp.name || 'Unknown Location',
+      address: bp.address || 'No address provided',
+      city: bp.city || 'Unknown City',
+      contactNumber: bp.contactNumber || bp.contact || null,
+      landmark: bp.landmark || null,
+      time: parseInt(bp.time) || 0,
       isPrime: bp.prime === 'true'
-    })).sort((a, b) => a.time - b.time) || [];
+    })).sort((a, b) => a.time - b.time);
 
     const primaryBoardingPoint = boardingPoints.find(bp => bp.isPrime) || boardingPoints[0];
 
-    const passengers = apiData.passengers?.map(passenger => ({
-      name: passenger.name,
-      age: passenger.age,
-      gender: passenger.gender,
-      seatNumber: passenger.seatNumber,
-      fare: passenger.fare,
-      status: passenger.status,
-      idType: passenger.idType,
-      idNumber: passenger.idNumber
-    })) || [];
+    // Similar fix for passengers
+    let passengers = [];
+    if (apiData.passengers) {
+      // If it's an object with numeric keys, convert to array
+      if (typeof apiData.passengers === 'object' && !Array.isArray(apiData.passengers)) {
+        passengers = Object.values(apiData.passengers);
+      } 
+      // If it's already an array, use it directly
+      else if (Array.isArray(apiData.passengers)) {
+        passengers = apiData.passengers;
+      }
+      // If it's a string (possibly JSON), try to parse it
+      else if (typeof apiData.passengers === 'string') {
+        try {
+          passengers = JSON.parse(apiData.passengers);
+          // Check if parsed result is an object with numeric keys
+          if (typeof passengers === 'object' && !Array.isArray(passengers)) {
+            passengers = Object.values(passengers);
+          }
+        } catch (e) {
+          console.error('Failed to parse passengers:', e);
+          passengers = [];
+        }
+      }
+    }
+
+    // Now map the array of passengers
+    passengers = passengers.map(passenger => ({
+      name: passenger.name || 'Unknown',
+      age: passenger.age || '0',
+      gender: passenger.gender || 'Not Specified',
+      seatNumber: passenger.seatNumber || 'Not Assigned',
+      fare: passenger.fare || '0',
+      status: passenger.status || 'Confirmed',
+      idType: passenger.idType || null,
+      idNumber: passenger.idNumber || null
+    }));
 
     return {
-      pnrNumber: apiData.pnrNumber,
-      bookingId: apiData.bookingId,
-      travelDate: apiData.travelDate,
-      status: apiData.status,
-      operatorName: apiData.operatorName,
-      busType: apiData.busType,
-      source: apiData.source,
-      destination: apiData.destination,
-      departureTime: primaryBoardingPoint?.time,
-      boardingTime: primaryBoardingPoint?.time,
-      boardingPoint: primaryBoardingPoint?.name,
-      duration: apiData.duration,
-      totalFare: apiData.totalFare,
+      pnrNumber: apiData.pnrNumber || 'N/A',
+      bookingId: apiData.bookingId || 'N/A',
+      travelDate: apiData.travelDate || 'N/A',
+      status: apiData.status || 'Unknown',
+      operatorName: apiData.operatorName || 'Unknown Operator',
+      busType: apiData.busType || 'Standard',
+      source: apiData.source || 'N/A',
+      destination: apiData.destination || 'N/A',
+      departureTime: primaryBoardingPoint?.time || 0,
+      boardingTime: primaryBoardingPoint?.time || 0,
+      boardingPoint: primaryBoardingPoint?.name || 'N/A',
+      duration: apiData.duration || '0',
+      totalFare: apiData.totalFare || '0',
       boardingPoints: boardingPoints,
       passengers: passengers,
-      additionalInfo: apiData.additionalInfo,
-      cancellationPolicy: apiData.cancellationPolicy,
-      partialCancellationAllowed: apiData.partialCancellationAllowed,
-      operatorContact: apiData.operatorContact,
-      operatorAddress: apiData.operatorAddress
+      additionalInfo: apiData.additionalInfo || null,
+      cancellationPolicy: apiData.cancellationPolicy || null,
+      partialCancellationAllowed: apiData.partialCancellationAllowed || false,
+      operatorContact: apiData.operatorContact || null,
+      operatorAddress: apiData.operatorAddress || null
     };
   };
 
   const saveTripDetails = async (transformedData) => {
     try {
-      const boardingPointsData = transformedData.boardingPoints.map(point => ({
-        location: point.name,
-        address: point.address,
-        city: point.city,
-        time: point.time,
-        landmark: point.landmark || null,
-        contact: point.contactNumber || null
-      }));
+      // Validate and ensure all required fields are present for each boarding point
+      const boardingPointsData = transformedData.boardingPoints.map(point => {
+        // Ensure each required field has a value, even if just a placeholder
+        return {
+          location: point.name || 'Unknown Location',
+          address: point.address || 'No address provided',
+          city: point.city || 'Unknown City',
+          time: point.time || 0,
+          landmark: point.landmark || 'No landmark',
+          contact: point.contactNumber || 'No contact'
+        };
+      });
+      
+      // Log the data being sent to help with debugging
+      console.log('Sending trip details:', {
+        trip_id: tripId,
+        boarding_points: boardingPointsData
+      });
 
       const response = await fetch('/admin/busTicket/storeTripDetails', {
         method: 'POST',
@@ -87,6 +153,7 @@ const GetCurrentTripDetails = () => {
       });
 
       const result = await response.json();
+      console.log('Store trip details response:', result);
       
       if (!result.status) {
         throw new Error(result.message || 'Failed to save trip details');
@@ -94,7 +161,11 @@ const GetCurrentTripDetails = () => {
 
       setSaveStatus({ type: 'success', message: 'Trip details saved successfully' });
     } catch (error) {
-      setSaveStatus({ type: 'error', message: error.message || 'Failed to save trip details' });
+      console.error('Error storing trip details:', error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: `Error storing trip details: ${error.message || 'Unknown error'}` 
+      });
     }
   };
 
@@ -133,20 +204,30 @@ const GetCurrentTripDetails = () => {
         throw new Error(data.message || 'Failed to fetch trip details');
       }
 
+      // Add debugging
+      console.log('API Response:', data);
+      console.log('API Data:', data.data);
+      console.log('Boarding Times Type:', typeof data.data.boardingTimes);
+      if (data.data.boardingTimes) {
+        console.log('Boarding Times Value:', data.data.boardingTimes);
+      }
+
       const transformedData = transformApiResponse(data.data);
+      console.log('Transformed Data:', transformedData);
       setTripDetails(transformedData);
       
       // Save the trip details after successful fetch
       await saveTripDetails(transformedData);
     } catch (error) {
+      console.error('Error details:', error);
       setError(error.message || 'Failed to load trip details');
     }
 
     setLoading(false);
-};
+  };
 
   const formatTime = (time) => {
-    if (!time) return 'N/A';
+    if (time === null || time === undefined) return 'N/A';
     const hours = Math.floor(time / 60);
     const minutes = time % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
@@ -156,10 +237,9 @@ const GetCurrentTripDetails = () => {
     <AdminLayout>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Enter Trip ID</h2>
-          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
-          <h2 className="text-3xl font-semibold text-white">Enter Trip ID</h2>
-        </div>
+          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6 mb-4">
+            <h2 className="text-3xl font-semibold text-white">Enter Trip ID</h2>
+          </div>
         
           <div className="flex space-x-4">
             <input
