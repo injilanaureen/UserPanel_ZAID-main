@@ -132,34 +132,7 @@ const Dashboard = () => {
     <AdminLayout>
 
     <div className="bg-gray-50 min-h-screen">
-      {/* Header */}
-      {/* <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm"
-              />
-              <button className="absolute right-3 top-2.5">
-                <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <button className="bg-gray-100 p-2 rounded-full">
-              <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
-            </button>
-            <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
-              <span className="text-sm font-medium">JD</span>
-            </div>
-          </div>
-        </div>
-      </div> */}
+
 
       {/* Time Filter */}
       <div className="max-w-full">

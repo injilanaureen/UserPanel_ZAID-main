@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
+use App\Models\AirtelCmsUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 
@@ -47,7 +48,51 @@ class CMSAirtelController extends Controller
             'longitude' => $longitude
         ]);
     }
-    
+    public function storeUrl(Request $request)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'refid' => 'required|string',
+            'latitude' => 'required|string',
+            'longitude' => 'required|string',
+        ]);
+        
+        // Get API settings from config
+        $apiSettings = Config::get('services.airtelcms');
+        
+        try {
+            // Make the API call to generate URL
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiSettings['token'],
+                'Content-Type' => 'application/json'
+            ])->post($apiSettings['url'], [
+                'refid' => $request->refid,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]);
+            
+            $responseData = $response->json();
+            
+            // Store the data in the database
+            $airtelUrl = new AirtelCmsUrl();
+            $airtelUrl->refid = $request->refid;
+            $airtelUrl->latitude = $request->latitude;
+            $airtelUrl->longitude = $request->longitude;
+            $airtelUrl->message = $responseData['message'] ?? null;
+            $airtelUrl->redirectionUrl = $responseData['redirectionUrl'] ?? null;
+            $airtelUrl->save();
+            
+            // Return the API response to the frontend
+            return response()->json($responseData);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error processing request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+   
 
  public function airtelTransactionEnquiry()
     {
@@ -55,49 +100,4 @@ class CMSAirtelController extends Controller
     }
 
     // API call to get operators
-    public function getBillOperators(Request $request)
-    {
-        Log::info('getBillOperators method called'); // Debug log to confirm method is hit
-        
-        try {
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-
-            Log::info('Generated JWT Token: ' . $jwtToken); // Debug token
-
-            $response = Http::withHeaders([
-                'accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Token' => $jwtToken,
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/getoperator', [
-                'mode' => 'online'
-            ]);
-
-            Log::info('API Response: ', $response->json()); // Debug API response
-
-            $responseData = $response->json();
-
-            if ($response->successful()) {
-                return response()->json([
-                    'status' => true,
-                    'data' => $responseData,
-                    'message' => 'Operators fetched successfully'
-                ]);
-            } else {
-                Log::error('API call failed:', $responseData);
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Failed to fetch operators',
-                    'error' => $responseData
-                ], 400);
-            }
-        } catch (\Exception $e) {
-            Log::error('Error fetching operators: ' . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => 'Server error: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 }

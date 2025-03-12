@@ -296,6 +296,9 @@ class BusTicketController extends Controller
             ], 500);
         }
     }
+    public function blockTicket(){
+        return Inertia::render('Admin/busTicket/blockTicket');
+    }
 
     public function getboardingpointdetails()
     {

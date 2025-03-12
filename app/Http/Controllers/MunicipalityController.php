@@ -9,11 +9,32 @@ use Illuminate\Support\Facades\Http;
 use App\Models\MunicipalityOperator;
 use App\Models\MunicipalityBill;
 use App\Models\MunicipalityPayBill;
+use App\Http\Controllers\Jwt; 
 use App\Models\MunicipalityTransaction;
 
 
 class MunicipalityController extends Controller
 {
+    private $partnerId = 'PS005962'; 
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    // Method to generate JWT token
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
+
     public function store(Request $request)
         {
             $request->validate([
@@ -56,15 +77,21 @@ class MunicipalityController extends Controller
             'municipalities' => $municipalities
         ]);
     }
+
+    
     public function fetchMunicipalityOperator(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         $mode = $request->input('mode'); // Get mode from user input
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I='
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/municipality/getoperator', [
+            'accept'=>'application/json',
+            'Token' => $jwtToken
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/municipality/getoperator', [
             'mode' => $mode
         ]);
 
@@ -78,13 +105,17 @@ class MunicipalityController extends Controller
 
     public function fetchBillDetails(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
+
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-                'accept' => 'application/json'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/municipality/fetchbill', [
+                'Token' => $jwtToken,
+                'accept' => 'application/json',
+            ])->post('https://api.paysprint.in/api/v1/service/bill-payment/municipality/fetchbill', [
                 'canumber' => $request->canumber,
                 'operator' => $request->operator
             ]);
@@ -123,31 +154,40 @@ class MunicipalityController extends Controller
 
     
     public function PayMunicipalityBill(Request $request)
-      {
+    {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+    
         // Validate user input
         $validatedData = $request->validate([
             'canumber' => 'required|numeric',
-            'operator' => 'required|integer',
+            'operator' => 'required',
             'amount' => 'required|numeric',
             'ad1' => 'required|integer',
             'ad2' => 'required|integer',
             'ad3' => 'required|numeric',
-            'referenceid' => 'required|integer',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
         ]);
+        
+        // Inject dynamically generated referenceId
+        $validatedData['referenceid'] = $referenceId;
+        
+        // Default coordinates if not provided
+        $validatedData['latitude'] = $validatedData['latitude'] ?? 28.65521;
+        $validatedData['longitude'] = $validatedData['longitude'] ?? 77.14343;
     
         // Make API request
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
+            'Token' => $jwtToken,
             'accept' => 'application/json',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I='
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/municipality/paybill', $validatedData);
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/municipality/paybill', $validatedData);
     
         $responseData = $response->json();
     
-        // Save to database
+        // Save to database with all required fields
         MunicipalityPayBill::create([
             'canumber' => $validatedData['canumber'],
             'operator' => $validatedData['operator'],
@@ -158,7 +198,7 @@ class MunicipalityController extends Controller
             'referenceid' => $validatedData['referenceid'],
             'latitude' => $validatedData['latitude'],
             'longitude' => $validatedData['longitude'],
-           'ackno' => $responseData['ackno'] ?? 'N/A', // Use a default value
+            'ackno' => $responseData['ackno'] ?? null,
             'operatorid' => $responseData['operatorid'] ?? null,
             'message' => $responseData['message'] ?? null,
             'response_code' => $responseData['response_code'] ?? null,
@@ -170,7 +210,7 @@ class MunicipalityController extends Controller
             'message' => 'Payment processed successfully',
             'data' => $responseData
         ], 200);
-      }
+    }
     
     public function MunicipalityStatus()
     {

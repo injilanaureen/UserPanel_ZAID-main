@@ -57,6 +57,10 @@
             "href": "/admin/busTicket/bookTicket"
           },
           {
+            "title": "Block Tickets",
+            "href": "/admin/busTicket/blockTicket"
+          },
+          {
             "title": "Get Boarding Point Details",
             "href": "/admin/busTicket/getBoardingPointDetails"
           },
@@ -66,15 +70,7 @@
           }
       ]
     },
-    {
-      "title":"CMS",
-      "icon": "BusFront",
-      "subMenu": [
-        {
-            "title": "Airtel",
-            "href": "/cms/airtel"
-        }]
-    },
+
     {
       "title":"API",
       "icon": "BusFront",
@@ -332,6 +328,10 @@
             {
               "title": "Status",
               "href": "/admin/LPG/LPGStatus"
+            },
+            {
+              "title": "Test",
+              "href": "/admin/LPG/Test"
             }
             
            

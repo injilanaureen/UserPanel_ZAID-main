@@ -3,7 +3,7 @@ import { usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import axios from 'axios';
 
-const AirtelTransactionEnquiry = () => {
+const OperatorList = () => {
   const [operators, setOperators] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,7 +19,8 @@ const AirtelTransactionEnquiry = () => {
     setError(null);
 
     try {
-      const response = await axios.post('/admin/get-bill-operators', {}, {
+      // Changed this endpoint to match the route in web.php
+      const response = await axios.get('/api/operators', {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -30,8 +31,9 @@ const AirtelTransactionEnquiry = () => {
       console.log('Full API Response:', response);
       console.log('Response Data:', response.data);
 
-      if (response.data.status) {
-        const operatorData = response.data.data.data || [];
+      if (response.data.success) {
+        // Updated to match the expected response structure from the controller
+        const operatorData = response.data.operators || [];
         console.log('Operator Data to be set:', operatorData);
         setOperators(Array.isArray(operatorData) ? operatorData : []);
       } else {
@@ -114,4 +116,4 @@ const AirtelTransactionEnquiry = () => {
   );
 };
 
-export default AirtelTransactionEnquiry;
+export default OperatorList;

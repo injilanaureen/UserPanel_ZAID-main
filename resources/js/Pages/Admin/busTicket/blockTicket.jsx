@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import AdminLayout from "@/Layouts/AdminLayout";
 const BlockTicket = () => {
     const [formData, setFormData] = useState({
         availableTripId: "",
@@ -127,6 +127,7 @@ const BlockTicket = () => {
     };
 
     return (
+        <AdminLayout>
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-xl font-bold mb-6">Block Ticket Form</h1>
             
@@ -335,7 +336,9 @@ const BlockTicket = () => {
                 </button>
             </form>
         </div>
+        </AdminLayout>
     );
+    
 };
 
 export default BlockTicket;

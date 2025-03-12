@@ -12,12 +12,16 @@ const FetchMunicipalityDetails = () => {
     operator: ''
   });
 
-  // ✅ Fetch Municipality Operators when component mounts
+  // Fetch Municipality Operators when component mounts
   useEffect(() => {
     const fetchMunicipalities = async () => {
       try {
-        const response = await axios.get('/municipality/operator'); // Call Laravel API
-        setMunicipalities(response.data.municipalities); // Store fetched data
+        const response = await axios.post(route("municipality.fetch"), { mode: 'online' });
+        if (response.data && response.data.data) {
+          setMunicipalities(response.data.data);
+        } else {
+          console.error("Unexpected API response format:", response.data);
+        }
       } catch (err) {
         console.error("Error fetching municipalities:", err);
       }
@@ -38,29 +42,50 @@ const FetchMunicipalityDetails = () => {
     setLoading(true);
     setError(null);
     setBillDetails(null);
-  
+    console.log("User input data:", formData);
+
     try {
+      // Step 1: Fetch the bill details
       const response = await axios.post('/api/municipality/fetch-bill', formData);
       const billData = response.data;
-  
+      console.log("Bill data from fetch:", billData);
+
+      // Display the bill details in the UI
       setBillDetails(billData);
-  
-      // Save response to the database
-      await axios.post('/municipality/save-bill', {
-        name: billData.name,
-        amount: billData.amount,
-        response_code: billData.response_code,
-        status: billData.status,
-        message: billData.message
-      });
-  
+
+      // Step 2: Prepare the data for saving
+      const saveData = {
+        ca_number: formData.canumber,
+        operator_id: formData.operator,
+        name: billData.name || 'Unknown',
+        amount: parseInt(billData.amount, 10) || 0,
+        response_code: parseInt(billData.response_code || billData.responseCode, 10) || 0,
+        status: typeof billData.status === 'boolean' ? billData.status : (billData.status === 'success' || billData.status === 'true'),
+        message: billData.message || 'No message provided'
+      };
+
+      // Step 3: Save the bill data to the database
+      try {
+        await axios.post('/municipality/save-bill', saveData);
+        console.log('Bill data saved successfully');
+      } catch (saveError) {
+        console.error('Error saving bill data:', saveError);
+        console.log('Error details:', saveError.response?.data);
+        setError(saveError.response?.data?.message || 'Failed to save bill details');
+      }
     } catch (err) {
+      console.error('Error fetching bill details:', err);
       setError(err.response?.data?.message || 'Failed to fetch bill details');
     } finally {
       setLoading(false);
     }
   };
-  
+
+  // Function to get municipality name by ID
+  const getMunicipalityNameById = (id) => {
+    const municipality = municipalities.find(muni => muni.id.toString() === id.toString());
+    return municipality ? municipality.name : 'Unknown Municipality';
+  };
 
   return (
     <AdminLayout>
@@ -101,7 +126,7 @@ const FetchMunicipalityDetails = () => {
                     </option>
                   ))
                 ) : (
-                  <option disabled>No municipalities found</option>
+                  <option disabled>Loading municipalities...</option>
                 )}
               </select>
             </div>
@@ -147,6 +172,24 @@ const FetchMunicipalityDetails = () => {
                 Bill Details
               </h3>
               
+              <div className="mb-6 bg-blue-50 p-4 rounded-md border border-blue-100">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-blue-800">
+                      Operator: <span className="font-bold">{getMunicipalityNameById(formData.operator)}</span>
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      CA Number: <span className="font-mono">{formData.canumber}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="overflow-hidden shadow-sm border border-gray-200 sm:rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
@@ -183,7 +226,7 @@ const FetchMunicipalityDetails = () => {
                               </span>
                             )
                           ) : (
-                            value
+                            value !== null && value !== undefined ? value.toString() : "—"
                           )}
                         </td>
                       </tr>

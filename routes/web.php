@@ -93,7 +93,8 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     //book ticket
     Route::get('/bookTicket', [BusTicketController::class, 'getbookTicket'])->name('busTicket.getAvailableTrip');
     Route::post('/bookticket', [BusTicketController::class, 'bookandstorebookticket'])->name('busTicket.bookandstorebookticket');
-    
+    //block ticket
+    Route::get('/blockTicket', [BusTicketController::class, 'blockTicket'])->name('busTicket.blockTicket');
     //get boarding point details ...
     Route::get('/getBoardingPointDetails', [BusTicketController::class, 'getboardingpointdetails'])->name('busTicket.getAvailableTrip');
     Route::post('/fetchboardingpointdetails', [BusTicketController::class, 'fetchandstoreboardingpointdetails'])->name('busTicket.fetchandstoreboardingpointdetails');
@@ -183,11 +184,17 @@ Route::post('/admin/refund2/processRefund', [Refund2Controller::class, 'processR
 //Utility Bill Payment
 Route::get('/admin/utility-bill-payment/operator-list', [UtilitybillPaymentController::class, 'operatorList'])
     ->name('utilitybillPayment.operatorList');
-    Route::get('/operator-list', [UtilityBillPaymentController::class, 'operatorList'])->name('operator.list');
-    Route::post('/admin/operator-list', [UtilityBillPaymentController::class, 'operatorList'])->middleware('auth');
-    Route::get('/api/operators', [UtilityBillPaymentController::class, 'fetchOperators']);
-// Add this to your routes/web.php file
-Route::post('/admin/get-operators', [UtilityBillPaymentController::class, 'getOperators'])->name('admin.get-operators');
+Route::get('/operator-list', [UtilitybillPaymentController::class, 'operatorList'])
+    ->name('operator.list');
+Route::post('/admin/operator-list', [UtilitybillPaymentController::class, 'operatorList'])
+    ->middleware('auth');
+    
+// This is the route your React component will now call
+Route::get('/api/operators', [UtilitybillPaymentController::class, 'fetchOperators']);
+
+Route::post('/admin/get-operators', [UtilitybillPaymentController::class, 'fetchOperators'])
+    ->name('admin.get-operators');
+
 //Fetch Bill Details
 Route::get('/admin/utility-bill-payment/fetch-bill-details', [UtilitybillPaymentController::class, 'fetchBillDetails'])
     ->name('utilitybillPayment.fetchBillDetails');
@@ -247,11 +254,13 @@ Route::match(['get', 'post'], '/admin/LPG/FetchLPGDetails', [LPGController::clas
 Route::get('/admin/LPG/LPGBill',[LPGController::class,'LPGBill'])->name('LPG.LPGBill');
 Route::post('/pay-lpg-bill', [LPGController::class, 'payLpgBill']);
 Route::get('/lpg-bill-history', [LPGController::class, 'getLpgBillHistory']);
+
 //status
 Route::get('/admin/LPG/LPGStatus', [LPGController::class, 'LPGStatus'])->name('LPG.LPGStatus');
 Route::post('/lpg-status', [LPGController::class, 'getLPGStatus']);
 
-
+//test
+Route::get('/admin/LPG/Test', [LPGController::class, 'Test'])->name('LPG.Test');
 //Municipality
 
 //operator
@@ -359,6 +368,7 @@ Route::get('/get-csrf-token', function () {
 });
 
 Route::get('/admin/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
+Route::post('/cms/airtel/store', [CMSAirtelController::class, 'store']);
 Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
 Route::get('/admin/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
     Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');

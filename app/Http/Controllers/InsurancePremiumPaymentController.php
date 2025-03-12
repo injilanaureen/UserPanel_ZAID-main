@@ -43,7 +43,7 @@ class InsurancePremiumPaymentController extends Controller
     $request->validate([
         'canumber' => 'required|numeric',
         'ad1' => 'required|email',
-        'ad2' => 'required|date_format:d/m/Y', // Validate date in dd/mm/yyyy format
+        'ad2' => 'required|date_format:d/m/Y', 
         'mode' => 'required|in:online,offline'
     ]);
 
@@ -101,16 +101,21 @@ class InsurancePremiumPaymentController extends Controller
 
     public function payInsuranceBill(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         if ($request->isMethod('get')) {
             return Inertia::render('Admin/InsurancePremiumPayment/PayInsuranceBill');
         }
 
         $response = Http::withHeaders([
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
+
+            'Token' => $jwtToken,
+            'User-Agent' => $this->partnerId,
             'accept' => 'application/json',
             'content-type' => 'application/json',
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/paylicbill', [
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/paylicbill', [
             'canumber' => $request->canumber,
             'mode' => 'online',
             'amount' => $request->amount,
@@ -144,7 +149,11 @@ class InsurancePremiumPaymentController extends Controller
     }
     public function fetchInsuranceStatus(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
         // Validate input
+        
         $request->validate([
             'referenceid' => 'required|string',
         ]);
@@ -153,11 +162,11 @@ class InsurancePremiumPaymentController extends Controller
 
         // API request
         $response = Http::withHeaders([
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+           'Token' => $jwtToken,
+           'User-Agent' => $this->partnerId,
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/bill/licstatus', [
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/bill/licstatus', [
             'referenceid' => $referenceId,
         ]);
 

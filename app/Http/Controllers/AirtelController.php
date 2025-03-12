@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;  
+use Illuminate\Support\Facades\DB;
 class AirtelController extends Controller
 {
     public function generate()
     {
-        return Inertia::render('Admin/cms/airtelcms'); // Renders the React component
+        return Inertia::render('Admin/cms/airtelcms'); 
     }
 
     public function process(Request $request)

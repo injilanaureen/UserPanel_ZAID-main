@@ -6,24 +6,52 @@ use Inertia\Inertia;
 use App\Models\LpgOperator;
 use App\Models\LpgBillDetail;
 use App\Models\LPGSTatus;
+use App\Models\JwtToken;
 use App\Models\LPGPayBillResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use Illuminate\Support\Facades\Http;
-
+use App\Http\Controllers\Jwt; 
 class LPGController extends Controller
 {
+    private $partnerId = 'PS005962'; 
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    // Method to generate JWT token
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
+
 
     public function LPGOperator(){
         return Inertia::render('Admin/LPG/LPGOperator');
     }
     public function fetchLPGOperator(Request $request)
     {
+        // Generate unique reference ID
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         $response = Http::withHeaders([
+            'Token' => $jwtToken,
             'Content-Type' => 'application/json',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M'
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/lpg/getoperator', [
+            'accept' => 'text/plain',
+            'Content-Type' => 'application/json',
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/lpg/getoperator', [
             'mode' => $request->mode
         ]);
 
@@ -63,69 +91,81 @@ class LPGController extends Controller
     
     public function FetchLPGDetails(Request $request)
     {
-        // If no input, just load the page
-        if (!$request->has('operator')) {
-            return Inertia::render('Admin/LPG/FetchLPGDetails', ['lpgData' => null]);
+        // Generate unique reference ID
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+    
+        // If no input, just load the page with operators
+        if (!$request->has('operator') || !$request->has('canumber')) {
+            $operators = LPGOperator::select('id', 'name', 'displayname', 'ad1_d_name', 'ad2_d_name', 'ad3_d_name')
+                ->orderBy('name')
+                ->get();
+    
+            return Inertia::render('Admin/LPG/FetchLPGDetails', [
+                'lpgData' => null,
+                'operators' => $operators
+            ]);
         }
-
-        $apiUrl = "https://sit.paysprint.in/service-api/api/v1/service/bill-payment/lpg/fetchbill";
-
-        // API Headers
-        $headers = [
-            'Content-Type'  => 'application/json',
-            'Token'         => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            'accept'        => 'application/json'
-        ];
-
-        // API Request Body (Using User Input)
-        $body = [
-            "operator"    => $request->input('operator'),
-            "canumber"    => "XXXXX",
-            "referenceid" => "XXXXX",
-            "latitude"    => "28.65521",
-            "longitude"   => "77.14343",
-            "ad1"         => "1",
-            "ad2"         => "8",
-            "ad3"         => "170",
-            "ad4"         => "41013435"
-        ];
-
-        // Make API Request
-        $response = Http::withHeaders($headers)->post($apiUrl, $body);
-
-        // Decode JSON response
-        $apiResponse = $response->json();
-
-        // Store response data into the database
-        LpgBillDetail::create([
-            'operator'     => $request->input('operator'),
-            'canumber'     => $body['canumber'],
-            'referenceid'  => $body['referenceid'],
-            'latitude'     => $body['latitude'],
-            'longitude'    => $body['longitude'],
-            'ad1'          => $body['ad1'],
-            'ad2'          => $body['ad2'],
-            'ad3'          => $body['ad3'],
-            'ad4'          => $body['ad4'],
-            'response_code'=> $apiResponse['response_code'] ?? null,
-            'status'       => $apiResponse['status'] ?? 'Failed',
-            'amount'       => $apiResponse['amount'] ?? 0.00,
-            'name'         => $apiResponse['name'] ?? 'N/A',
-            'message'      => $apiResponse['message'] ?? 'No message'
+    
+        $response = Http::withHeaders([
+            'Token' => $jwtToken,
+            'Content-Type' => 'application/json',
+            'accept' => 'application/json',
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/lpg/fetchbill', [
+            'operator' => $request->input('operator'),
+            'canumber' => $request->input('canumber'),
+            'referenceid' => $referenceId,
+            'latitude' => '28.65521',
+            'longitude' => '77.14343',
+            'ad1' => $request->input('ad1'),
+            'ad2' => $request->input('ad2'),
+            'ad3' => $request->input('ad3'),
+            'ad4' => $request->input('ad4')
         ]);
-
-        // Pass the API response to the frontend
+    
+        $apiResponse = $response->json();
+    
+        LpgBillDetail::create([
+            'operator' => $request->input('operator'),
+            'canumber' => $request->input('canumber'),
+            'referenceid' => $referenceId,
+            'latitude' => '28.65521',
+            'longitude' => '77.14343',
+            'ad1' => $request->input('ad1'),
+            'ad2' => $request->input('ad2'),
+            'ad3' => $request->input('ad3'),
+            'ad4' => $request->input('ad4'),
+            'response_code' => $apiResponse['response_code'] ?? null,
+            'status' => $apiResponse['status'] ?? 'Failed',
+            'amount' => $apiResponse['amount'] ?? 0.00,
+            'name' => $apiResponse['name'] ?? 'N/A',
+            'message' => $apiResponse['message'] ?? 'No message'
+        ]);
+    
+        // Load operators for dropdown (for after submission)
+        $operators = LPGOperator::select('id', 'name', 'displayname', 'ad1_d_name', 'ad2_d_name', 'ad3_d_name')
+            ->orderBy('name')
+            ->get();
+    
         return Inertia::render('Admin/LPG/FetchLPGDetails', [
-            'lpgData' => $apiResponse
+            'lpgData' => $apiResponse,
+            'operators' => $operators
         ]);
     }
+    
+    
 
     public function LPGBill(){
         return Inertia::render('Admin/LPG/LPGPayBill');
     }
     public function payLpgBill(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         // Validate request data
         $request->validate([
             'canumber'    => 'required|string',
@@ -138,9 +178,9 @@ class LPGController extends Controller
         $response = Http::withHeaders([
             'Content-Type'  => 'application/json',
             'Accept'        => 'application/json',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-            'Token'         => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bill-payment/lpg/paybill', [
+            'Token' => $jwtToken,
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/bill-payment/lpg/paybill', [
             "canumber"    => $request->canumber,
             "referenceid" => $request->referenceid,
             "amount"      => $request->amount,
@@ -187,6 +227,9 @@ public function getLpgBillHistory()
     }
     public function getLPGStatus(Request $request)
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
         try {
             // Validate the request
             $validated = $request->validate([
@@ -196,16 +239,15 @@ public function getLpgBillHistory()
             $referenceId = $validated['referenceid'];
 
             // API configuration
-            $apiUrl = "https://sit.paysprint.in/service-api/api/v1/service/bill-payment/lpg/status";
-            $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M";
-            $authKey = "Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=";
+            $apiUrl = "https://api.paysprint.in/api/v1/service/bill-payment/lpg/status";
+
 
             // Make API request
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Token' => $token,
-                'Authorisedkey' => $authKey,
+                'Token' => $jwtToken,
                 'Accept' => 'application/json',
+                'User-Agent' => $this->partnerId
             ])->post($apiUrl, [
                 'referenceid' => $referenceId
             ]);
@@ -267,5 +309,34 @@ public function getLpgBillHistory()
             ], 500);
         }
     }
+    public function Test()
+    {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+    
+        $url = "https://api.paysprint.in/api/v1/service/bill-payment/lpg/fetchbill";
+        
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Token' => $jwtToken,
+            'Accept' => 'application/json', 
+       
+        ])->post($url, [
+            "operator" => "286",
+            "canumber" => "7000218994",
+            "referenceid" => $referenceId,
+            "latitude" => "28.65521",
+            "longitude" => "77.14343",
+            "ad1" => "2",
+            "ad2" => "7070397689"
+    
+        ]);
+    
+        return Inertia::render('Admin/LPG/Test', [
+            'apiResponse' => $response->json()
+        ]);
+    }
+    
     
 }

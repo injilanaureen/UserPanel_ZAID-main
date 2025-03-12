@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { AlertCircle, CheckCircle, Loader2, Phone } from 'lucide-react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 function App() {
   const [mobile, setMobile] = useState("");
   const [responseData, setResponseData] = useState(null);
@@ -12,167 +15,111 @@ function App() {
     setLoading(true);
     setError("");
     setResponseData(null);
-  
+
     try {
       const response = await axios.post("/query-remitter", {
         mobile: mobile
       });
 
-      console.log(response.data);      
-      setResponseData(response.data); // Assuming API returns a similar JSON structure
+      console.log(response.data);
+      setResponseData(response.data);
     } catch (err) {
       setError("Failed to fetch data. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-  const getStatusBadge = (status) => {
-    if (status === true) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Success
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-        <AlertCircle className="w-3 h-3 mr-1" />
-        Failed
-      </span>
-    );
-  };
-
-  const getResponseCodeBadge = (code) => {
-    const badges = {
-      1: { color: "bg-green-100 text-green-800", text: "Success" },
-      2: { color: "bg-yellow-100 text-yellow-800", text: "KYC Required" },
-      3: { color: "bg-red-100 text-red-800", text: "Error" }
-    };
-    
-    const badge = badges[code] || { color: "bg-gray-100 text-gray-800", text: `Code ${code}` };
-    
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
-        {badge.text}
-      </span>
-    );
-  };
 
   return (
     <AdminLayout>
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Query Remitter
-          </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-            Enter a mobile number to query remitter details
-          </p>
-        </div>
+      <div className="max-w-full">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+            <h2 className="text-3xl font-semibold text-white">Query Remitter</h2>
+            <p className="mt-2 text-sm text-gray-200">Enter a mobile number to query remitter details</p>
+          </div>
 
-        <div className="mt-10 sm:mt-12">
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-grow">
-                <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div>
+                <label htmlFor="mobile" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Phone size={20} className="mr-2 text-yellow-500" />
                   Mobile Number
                 </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="mobile"
-                    id="mobile"
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                    placeholder="10-digit mobile number"
-                    pattern="[0-9]{10}"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 h-10"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Submit"
-                  )}
-                </button>
+                <input
+                  type="text"
+                  name="mobile"
+                  id="mobile"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  placeholder="Enter 10-digit mobile number"
+                  pattern="[0-9]{10}"
+                  required
+                />
               </div>
             </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : "Query Remitter"}
+            </button>
           </form>
 
-          {error && (
-            <div className="mt-6 rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                </div>
+          <div className="px-6 pb-6">
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg">
+                <p className="text-red-600 text-sm flex items-center">
+                  <AlertCircle size={16} className="mr-2" />
+                  {error}
+                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {responseData && (
-            <div className="mt-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Response Details</h2>
-              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div className="px-4 py-5 sm:px-6 bg-gray-50">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    Remitter Information
-                  </h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    Details and status of the remitter query.
-                  </p>
-                </div>
-                <div className="border-t border-gray-200">
-                  <dl>
-                    <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Status</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {getStatusBadge(responseData.status)}
-                      </dd>
-                    </div>
-                    <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Response Code</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {getResponseCodeBadge(responseData.response_code)}
-                      </dd>
-                    </div>
-                    <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt className="text-sm font-medium text-gray-500">Message</dt>
-                      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {responseData.message}
-                      </dd>
-                    </div>
-                    {responseData.data && (
-                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt className="text-sm font-medium text-gray-500">Mobile Number</dt>
-                        <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                          {responseData.data.mobile}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
+            {responseData && (
+              <div className="mt-4">
+                <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
+                  <CheckCircle size={16} className="mr-2 text-green-500" />
+                  Response Details:
+                </h3>
+                <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
+                  <Table className="w-full border-collapse">
+                    <TableHeader className="bg-sky-500 text-white">
+                      <TableRow>
+                        <TableHead className="px-4 py-2 text-left">Key</TableHead>
+                        <TableHead className="px-4 py-2 text-left">Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Object.entries(responseData).map(([key, value]) => (
+                        <TableRow key={key} className="border-b border-gray-200">
+                          <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
+                          <TableCell className="px-4 py-2">
+                            {typeof value === 'object' && value !== null 
+                              ? JSON.stringify(value) 
+                              : String(value)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </AdminLayout>
   );
 }
