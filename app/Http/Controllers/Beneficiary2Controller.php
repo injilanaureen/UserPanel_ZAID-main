@@ -7,7 +7,7 @@ use Inertia\Inertia;
 use App\Models\RegisterBeneficiary2;
 use App\Models\FetchBeneficiary;
 use App\Models\BeneficiaryDeletion;
-use App\Models\fetchbyBenied;
+use App\Models\FetchbyBenied;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -138,61 +138,68 @@ public function registerBeneficiary(Request $request)
 
 
 
-    public function fetchBeneficiary(Request $request)
-    {
-        $mobile = $request->input('mobile');
-
-        if ($mobile) {
-            try {
-                $requestId = time() . rand(1000, 9999);
-                $jwtToken = $this->generateJwtToken($requestId);
-
-                $response = Http::withHeaders([
-                    // 'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                    'Content-Type' => 'application/json',
-                    'Token' => $jwtToken, // Using JWT Token
-                    'accept' => 'application/json',
-                ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/fetchbeneficiary', [
-                    'mobile' => $mobile,
-                ]);
-
-                $responseData = $response->json();
-
-                if ($response->successful() && $responseData['status'] === true && !empty($responseData['data'])) {
-                    foreach ($responseData['data'] as $beneficiary) {
-                        FetchBeneficiary::updateOrCreate(
-                            ['bene_id' => $beneficiary['bene_id']], // Unique identifier
-                            [
-                                'bankid' => $beneficiary['bankid'],
-                                'bankname' => $beneficiary['bankname'],
-                                'name' => $beneficiary['name'],
-                                'accno' => $beneficiary['accno'],
-                                'ifsc' => $beneficiary['ifsc'],
-                                'verified' => $beneficiary['verified'] === "1",
-                                'banktype' => $beneficiary['banktype'],
-                                'paytm' => $beneficiary['paytm'] ?? false,
-                            ]
-                        );
-                    }
+public function fetchBeneficiary(Request $request)
+{
+    $mobile = $request->input('mobile');
+    $beneficiaries = []; // Initialize empty array
+    $error = null;
+    
+    if ($mobile) {
+        try {
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
+            
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Token' => $jwtToken,
+                'accept' => 'application/json',
+                'User-Agent' => $this->partnerId
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/fetchbeneficiary', [
+                'mobile' => $mobile,
+            ]);
+            
+            $responseData = $response->json();
+            
+            if ($response->successful() && isset($responseData['status']) && $responseData['status'] === true && !empty($responseData['data'])) {
+                // Clear existing beneficiaries for this mobile if needed
+                // FetchBeneficiary::where('mobile', $mobile)->delete();
+                
+                foreach ($responseData['data'] as $beneficiary) {
+                    FetchBeneficiary::updateOrCreate(
+                        ['bene_id' => $beneficiary['bene_id']], // Unique identifier
+                        [
+                            'mobile' => $mobile, // Store the mobile number to filter later
+                            'bankid' => $beneficiary['bankid'] ?? '',
+                            'bankname' => $beneficiary['bankname'] ?? '',
+                            'name' => $beneficiary['name'] ?? '',
+                            'accno' => $beneficiary['accno'] ?? '',
+                            'ifsc' => $beneficiary['ifsc'] ?? '',
+                            'verified' => isset($beneficiary['verified']) && $beneficiary['verified'] === "1",
+                            'banktype' => $beneficiary['banktype'] ?? '',
+                            'paytm' => isset($beneficiary['paytm']) ? $beneficiary['paytm'] : false,
+                        ]
+                    );
                 }
-            } catch (\Exception $e) {
-                Log::error('Error fetching beneficiary: ' . $e->getMessage());
-
-                return Inertia::render('Admin/beneficiary2/fetchBeneficiary', [
-                    'beneficiaryData' => [],
-                    'mobile' => $mobile,
-                    'error' => 'Failed to fetch beneficiary: ' . $e->getMessage(),
-                ]);
+                
+                // Get only beneficiaries for this mobile number
+                $beneficiaries = FetchBeneficiary::where('mobile', $mobile)->get();
+            } else {
+                // API returned failure or empty data
+                $errorMsg = $responseData['message'] ?? 'No beneficiaries found for this mobile number';
+                $error = $errorMsg;
             }
+        } catch (\Exception $e) {
+            Log::error('Error fetching beneficiary: ' . $e->getMessage());
+            $error = 'Failed to fetch beneficiary: ' . $e->getMessage();
         }
-
-        $beneficiaries = FetchBeneficiary::all();
-
-        return Inertia::render('Admin/beneficiary2/fetchBeneficiary', [
-            'beneficiaryData' => $beneficiaries,
-            'mobile' => $mobile,
-        ]);
     }
+    
+    return Inertia::render('Admin/beneficiary2/fetchBeneficiary', [
+        'beneficiaryData' => $beneficiaries,
+        'mobile' => $mobile,
+        'error' => $error,
+    ]);
+}
 
 
     public function deleteBeneficiary()
@@ -212,9 +219,9 @@ public function registerBeneficiary(Request $request)
             $jwtToken = $this->generateJwtToken($requestId);
 
             $response = Http::withHeaders([
-                // 'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
                 'Content-Type' => 'application/json',
-                'Token' => $jwtToken, // Using JWT Token
+                'Token' => $jwtToken, 
+                'User-Agent' => $this->partnerId
             ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/deletebeneficiary', [
                 'mobile' => $validated['mobile'],
                 'bene_id' => $validated['bene_id']
@@ -274,10 +281,10 @@ public function registerBeneficiary(Request $request)
             $jwtToken = $this->generateJwtToken($requestId);
 
             $response = Http::withHeaders([
-                // 'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
                 'Content-Type' => 'application/json',
-                'Token' => $jwtToken, // Using JWT Token
-                'accept' => 'application/json'
+                'Token' => $jwtToken, 
+                'accept' => 'application/json',
+                'User-Agent' => $this->partnerId
             ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/fetchbeneficiarybybeneid', [
                 'mobile' => $request->mobile,
                 'beneid' => $request->beneid

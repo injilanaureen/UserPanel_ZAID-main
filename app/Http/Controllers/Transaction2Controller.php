@@ -30,21 +30,24 @@ class Transaction2Controller extends Controller
     }
     public function pennyDrop(Request $request)
     {
+        $referenceId = 'TRAN' . time() . rand(1000, 9999); 
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         if ($request->isMethod('post')) {
             $validatedData = $request->validate([
                 'mobile' => 'required|digits:10',
                 'accno' => 'required|string',
                 'bankid' => 'required|integer',
                 'benename' => 'required|string',
-                'referenceid' => 'required|string',
                 'pincode' => 'required|digits:6',
                 'address' => 'required|string',
                 'dob' => 'required|date_format:d-m-Y',
                 'gst_state' => 'required|string|max:2',
                 'bene_id' => 'required|integer',
             ]);
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
+            $validatedData['referenceid'] = $referenceId;
+            
 
             Log::info('Sending API request for penny drop', [
                 'request_data' => $validatedData,
@@ -54,7 +57,6 @@ class Transaction2Controller extends Controller
             $apiResponse = Http::withHeaders([
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
                 'Token' => $jwtToken,
                 'User-Agent' => $this->partnerId
             ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/benenameverify', $validatedData);
@@ -71,7 +73,7 @@ class Transaction2Controller extends Controller
                 'accno' => $validatedData['accno'],
                 'bankid' => $validatedData['bankid'],
                 'benename' => $validatedData['benename'],
-                'referenceid' => $validatedData['referenceid'],
+                'referenceid' => $referenceId,
                 'pincode' => $validatedData['pincode'],
                 'address' => $validatedData['address'],
                 'dob' => date('Y-m-d', strtotime($validatedData['dob'])),
@@ -104,10 +106,13 @@ class Transaction2Controller extends Controller
 
     public function transactionSentOtp(Request $request)
     {
+        $referenceId = 'TRAN' . time() . rand(1000, 9999); 
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         if ($request->isMethod('post')) {
             $request->validate([
                 'mobile'      => 'required|digits:10',
-                'referenceid' => 'required|string',
                 'bene_id'     => 'required|string',
                 'txntype'     => 'required|string',
                 'amount'      => 'required|numeric',
@@ -125,11 +130,11 @@ class Transaction2Controller extends Controller
             $response = Http::withHeaders([
                 'Content-Type'  => 'application/json',
                 'accept'        => 'application/json',
-                'Token'         => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+                'Token' => $jwtToken,
+                'User-Agent' => $this->partnerId
             ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact/send_otp', [
                 'mobile'      => $request->mobile,
-                'referenceid' => $request->referenceid,
+                'referenceid' => $referenceId,
                 'bene_id'     => $request->bene_id,
                 'txntype'     => $request->txntype,
                 'amount'      => $request->amount,
@@ -147,7 +152,7 @@ class Transaction2Controller extends Controller
             // Save response to the database
             TransactionSentOtp::create([
                 'mobile'        => $request->mobile,
-                'referenceid'   => $request->referenceid,
+                'referenceid'   => $referenceId,
                 'bene_id'       => $request->bene_id,
                 'txntype'       => $request->txntype,
                 'amount'        => $request->amount,
