@@ -186,6 +186,10 @@ public function transaction()
 }
 public function transact(Request $request)
 {
+    $referenceId = 'TRAN' . time() . rand(1000, 9999); 
+    $requestId = time() . rand(1000, 9999);
+    $jwtToken = $this->generateJwtToken($requestId);    
+
     $validated = $request->validate([
         'mobile' => 'required|string',
         'referenceid' => 'required|string',
@@ -207,11 +211,11 @@ public function transact(Request $request)
 
     // Call external API
     $response = Http::withHeaders([
-        'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
-        'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+        'Token' => $jwtToken,
+        'User-Agent' => $this->partnerId,
         'accept' => 'application/json',
         'content-type' => 'application/json',
-    ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/transact/transact', $validated);
+    ])->post('https:/api.paysprint.in/api/v1/service/dmt-v2/transact/transact', $validated);
 
     // Log API Response
     Log::info('API Response:', $response->json());
