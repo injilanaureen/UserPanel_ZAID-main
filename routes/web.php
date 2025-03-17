@@ -168,7 +168,7 @@ Route::get('/admin/transaction2/transaction', [Transaction2Controller::class, 't
 Route::post('/admin/transaction2/transact', [Transaction2Controller::class, 'transact'])->name('transaction2.transact');
 
 Route::get('/admin/transaction2/transactionStatus', [Transaction2Controller::class, 'transactionStatus'])->name('transaction2.transactionStatus');
-Route::post('/transaction-status', [Transaction2Controller::class, 'transactionStatus']);
+Route::post('/admin/transaction2/transactionStatus', [Transaction2Controller::class, 'transactionStatus']);
 
 
 

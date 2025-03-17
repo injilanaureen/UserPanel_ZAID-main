@@ -1,5 +1,5 @@
 import React from 'react';
-import MainLayout from "@/Layouts/MainLayout";
+// import MainLayout from "@/Layouts/MainLayout";
 
 
 export default function Busapi() {

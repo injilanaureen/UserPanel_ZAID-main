@@ -215,7 +215,7 @@ public function transact(Request $request)
         'User-Agent' => $this->partnerId,
         'accept' => 'application/json',
         'content-type' => 'application/json',
-    ])->post('https:/api.paysprint.in/api/v1/service/dmt-v2/transact/transact', $validated);
+    ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact', $validated);
 
     // Log API Response
     Log::info('API Response:', $response->json());
@@ -226,30 +226,36 @@ public function transact(Request $request)
     ]);
 }
 
-
-
-
-
-
-
-
-    public function transactionStatus(Request $request)
-    {
+   public function transactionStatus(Request $request)
+{
+    // If the form is submitted with a reference ID
+    if ($request->filled('referenceid')) {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+        
         $referenceId = $request->input('referenceid');
-
+        
         $response = Http::withHeaders([
-            'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
             'Content-Type' => 'application/json',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
+            'Token' => $jwtToken,
+            'User-Agent' => $this->partnerId,
             'accept' => 'application/json',
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/transact/transact/querytransact', [
+        ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact/querytransact', [
             'referenceid' => $referenceId,
         ]);
-
+        
         $data = $response->json();
-
+        
         return Inertia::render('Admin/transaction2/transactionStatus', [
             'transactionData' => $data,
+            'referenceId' => $referenceId,
         ]);
     }
+    
+    // Initial page load without reference ID
+    return Inertia::render('Admin/transaction2/transactionStatus', [
+        'transactionData' => null,
+        'referenceId' => '',
+    ]);
+}
 }

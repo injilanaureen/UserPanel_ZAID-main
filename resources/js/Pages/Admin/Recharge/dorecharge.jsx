@@ -11,7 +11,7 @@ const DoRechargeForm = () => {
     operator: "",
     canumber: "",
     amount: "",
-    // Remove referenceid from initial state
+
   });
 
   const [loading, setLoading] = useState(false);

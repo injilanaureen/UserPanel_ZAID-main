@@ -44,6 +44,16 @@ const TransactionSentOtp = ({ response }) => {
     setSuccess("");
   };
 
+  // Format date to DD-MM-YYYY for backend
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,17 +62,28 @@ const TransactionSentOtp = ({ response }) => {
     setSuccess("");
     setApiResponse(null);
 
-    router.post('/transaction-sent-otp', formData, {
+    // Create a copy of the form data to modify the date format
+    const submissionData = {
+      ...formData,
+      dob: formatDate(formData.dob) // Format date to DD-MM-YYYY
+    };
+
+    router.post('/transaction-sent-otp', submissionData, {
       preserveState: true,
       onSuccess: (page) => {
         console.log("API Response:", page.props.response); 
         setLoading(false);
         setApiResponse(page.props.response);
-        setSuccess("OTP sent successfully!");
+        if (page.props.response && page.props.response.status === true) {
+          setSuccess("OTP sent successfully!");
+        } else {
+          setError(page.props.response?.message || 'Failed to send OTP. Please try again.');
+        }
       },
       onError: (errors) => {
+        console.error("Form errors:", errors);
         setLoading(false);
-        setError('Something went wrong. Please try again.');
+        setError(Object.values(errors).join(', ') || 'Something went wrong. Please try again.');
       },
     });
   };
@@ -71,11 +92,9 @@ const TransactionSentOtp = ({ response }) => {
     <AdminLayout>
       <div className="max-w-full">
         <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-        <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
-      <h2 className="text-3xl font-semibold text-white">Transaction Sent Otp </h2>
-        </div>
-
-
+          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+            <h2 className="text-3xl font-semibold text-white">Transaction Sent Otp</h2>
+          </div>
 
           <form onSubmit={handleSubmit} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -169,12 +188,24 @@ const TransactionSentOtp = ({ response }) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {Object.entries(apiResponse).map(([key, value]) => (
-                        <TableRow key={key} className="border-b border-gray-200">
-                          <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
-                          <TableCell className="px-4 py-2">{String(value)}</TableCell>
+                      {apiResponse && typeof apiResponse === 'object' ? (
+                        Object.entries(apiResponse).map(([key, value]) => (
+                          <TableRow key={key} className="border-b border-gray-200">
+                            <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
+                            <TableCell className="px-4 py-2">
+                              {typeof value === 'object' && value !== null 
+                                ? JSON.stringify(value) 
+                                : String(value)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} className="px-4 py-2 text-center text-gray-500">
+                            No response data available
+                          </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>

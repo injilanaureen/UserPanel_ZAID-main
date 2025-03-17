@@ -10,8 +10,26 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 class Refund2Controller extends Controller
 {
+    private $partnerId = 'PS005962';
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return JWT::encode($payload, $this->secretKey, 'HS256');
+    }
+
     public function refundOtp(Request $request)
     {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         if ($request->isMethod('get')) {
             return Inertia::render('Admin/refund2/refundOtp', [
                 'apiResponse' => null
@@ -25,11 +43,11 @@ class Refund2Controller extends Controller
             ]);
 
             $response = Http::withHeaders([
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk5NDQ3MTksInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5OTQ0NzE5In0.1bNrePHYUe-0FodOCdAMpPhL3Ivfpi7eVTT9V7xXsGI',
+                'Token' => $jwtToken,
+                'User-Agent' => $this->partnerId,
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/refund/refund/resendotp', [
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/refund/refund/resendotp', [
                 'referenceid' => $validated['referenceid'],
                 'ackno' => $validated['ackno'],
             ]);
@@ -68,21 +86,25 @@ class Refund2Controller extends Controller
     
     public function processRefund(Request $request)
     {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         $request->validate([
             'ackno'       => 'required|string',
             'referenceid' => 'required|string',
+            'otp'         => 'required|string',
         ]);
     
         try {
             $response = Http::withHeaders([
-                'AuthorisedKey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
                 'Content-Type'  => 'application/json',
-                'Token'         => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzg5MjE3NzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM4OTIxNzc3In0.6vhPb1SE1p3yvAaK_GAEz-Y0Ai1ibCbN85adKW_1Xzg',
+                 'Token' => $jwtToken,
+                'User-Agent' => $this->partnerId,
                 'accept'        => 'application/json',
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/dmt-v2/refund/refund/', [
+            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/refund/refund/', [
                 'ackno'       => $request->ackno,
                 'referenceid' => $request->referenceid,
-                'otp'         => '222111',
+                'otp'         => $request->otp,
             ]);
     
             $apiResponse = $response->json();
