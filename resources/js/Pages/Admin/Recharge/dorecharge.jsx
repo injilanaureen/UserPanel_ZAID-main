@@ -189,7 +189,7 @@ const DoRechargeForm = () => {
             <div className="mt-4">
               <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
                 <Code size={16} className="mr-2" />
-                API Response:
+                API Response :
               </h3>
               <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
                 <Table className="w-full border-collapse">
