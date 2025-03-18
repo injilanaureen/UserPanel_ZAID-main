@@ -86,7 +86,7 @@ export default function AdminLayout({ children }) {
                 <div className="p-4 flex justify-between items-center">
                     {(!isSidebarCollapsed || isMobileView) && (
                         <h1 className="text-xl font-bold tracking-tight">
-                            Admin Panel
+                            Nikatby Technologies
                         </h1>
                     )}
                     <button

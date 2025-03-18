@@ -8,6 +8,7 @@ use App\Models\ClaimRefund;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\Jwt; 
 class Refund2Controller extends Controller
 {
     private $partnerId = 'PS005962';
@@ -22,7 +23,7 @@ class Refund2Controller extends Controller
             'reqid' => $requestId
         ];
 
-        return JWT::encode($payload, $this->secretKey, 'HS256');
+        return Jwt::encode($payload, $this->secretKey, 'HS256');
     }
 
     public function refundOtp(Request $request)

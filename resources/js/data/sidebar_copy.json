@@ -22,13 +22,145 @@
         }
       ]
     },
+    {
+      "title": "CMS-Airtel",
+      "icon": "Battery",
+      "subMenu": [
+        {
+          "title": "Generate URL",
+          "href": "/admin/cmsairtel/GenerateUrl"
+        },
+        {
+          "title": "Transaction Enquiry",
+          "href": "/admin/cmsairtel/AirtelTransactionEnquiry"
+        }
+      ]
+    },
+    {
+      "title": "Bus Booking",
+      "icon": "BusFront",
+      "subMenu": [
+        {
+            "title": "Get Source City",
+            "href": "/admin/busTicket/getSourceCity"
+          },
+        {
+          "title": "Get Available Trip",
+          "href": "/admin/busTicket/getAvailableTrip"
+        },
+        {
+          "title": "Get Current Trip Details",
+          "href": "/admin/busTicket/getCurrentTripDetails"
+        },
+        {
+            "title": "Book Tickets",
+            "href": "/admin/busTicket/bookTicket"
+          },
+          {
+            "title": "Block Tickets",
+            "href": "/admin/busTicket/blockTicket"
+          },
+          {
+            "title": "Get Boarding Point Details",
+            "href": "/admin/busTicket/getBoardingPointDetails"
+          },
+          {
+            "title": "Check Booked Tickets",
+            "href": "/admin/busTicket/checkBookedTickets"
+          }
+      ]
+    },
 
     {
-      "title": "LIC",
+      "title":"API",
       "icon": "BusFront",
-      "href": "/admin/lic"
-  },  
-    
+      "subMenu": [
+        {
+            "title": "LIC",
+            "href": "/admin/lic"
+        }]
+    },
+    {
+      "title": "DMT BANK 1",
+      "icon": "IndianRupee",
+      "subMenu": [
+        {
+          "title": "Remitter",
+          "subMenu": [
+            {
+              "title": "Query Remitter",
+              "href": "/admin/remitter1/queryRemitter"
+            },
+            {
+              "title": "Remitter E-KYC",
+              "href": "/admin/remitter1/remitterEKYC"
+            },
+            {
+              "title": "Register Remitter",
+              "href": "/admin/remitter1/registerRemitter"
+            }
+          ]
+        },
+        {
+          "title": "Beneficiary",
+          "subMenu": [
+            {
+              "title": "Register Beneficiary",
+              "href": "/admin/beneficiary1/registerBeneficiary"
+            },
+            {
+              "title": "Delete Beneficiary",
+              "href": "/admin/beneficiary1/deleteBeneficiary"
+            },
+            {
+              "title": "Fetch Beneficiary",
+              "href": "/admin/beneficiary1/FetchBeneficiary"
+            },            
+            {
+              "title": "Fetch Beneficiary By Benied",
+              "href": "/admin/beneficiary1/FetchBeneficiaryByBenied"
+            }
+            
+          ]
+        },
+        {
+          "title": "Transaction",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Penny Drop",
+              "href": "/admin/transaction1/pennyDrop"
+            },
+            {
+              "title": "Transaction Sent Otp",
+              "href": "/admin/transaction1/transactionOtp"
+            },
+            {
+              "title": "Transaction",
+              "href": "/admin/transaction1/transaction"
+            },
+            {
+              "title": "Transaction Status",
+              "href": "/admin/transaction1/transactionStatus"
+            }
+          ]
+        },
+        {
+          "title": "Refund",
+          "icon": "Battery",
+          "subMenu": [
+            {
+              "title": "Refund Otp",
+              "href": "/admin/refund1/refundOtp"
+            },
+            {
+              "title": "Claim Refund",
+              "href": "/admin/refund1/claimRefund"
+            }
+          ]
+        }
+      ]
+    },
     {
       "title": "DMT BANK 2",
       "icon": "IndianRupee",

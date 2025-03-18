@@ -10,6 +10,7 @@ use App\Models\JwtToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Jwt; 
 class RechargeController extends Controller
 {
@@ -227,6 +228,26 @@ class RechargeController extends Controller
             ], 500);
         }
     }
+    public function getRechargeTransactions()
+{
+    try {
+        // Fetch all transactions from the database
+        $transactions = DB::table('recharge_transactions')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'transactions' => $transactions
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Failed to fetch recharge transactions: ' . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to fetch recharge transactions: ' . $e->getMessage()
+        ], 500);
+    }
+}
   
     public function manageOperator()
     {

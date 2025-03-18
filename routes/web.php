@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-
+Route::get('/rechargetransactions', [RechargeController::class, 'getRechargeTransactions']);
 
 
 
