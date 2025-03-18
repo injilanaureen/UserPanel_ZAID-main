@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Jwt; 
 
 class Beneficiary2Controller extends Controller
 {
@@ -27,7 +28,7 @@ class Beneficiary2Controller extends Controller
             'reqid' => $requestId
         ];
 
-        return JWT::encode($payload, $this->secretKey, 'HS256');
+        return Jwt::encode($payload, $this->secretKey, 'HS256');
     }
 
 

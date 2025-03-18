@@ -41,7 +41,7 @@ class LPGController extends Controller
     public function fetchLPGOperator(Request $request)
     {
         // Generate unique reference ID
-        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $referenceId = 'RECH' . time() . rand(1000, 9999); 
         $requestId = time() . rand(1000, 9999);
         $jwtToken = $this->generateJwtToken($requestId);
 
