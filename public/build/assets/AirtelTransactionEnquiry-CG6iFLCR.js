@@ -1,1 +1,0 @@
-import{r as t,j as r}from"./app-BHbAvUQu.js";import{A as i}from"./AdminLayout-Cf-UMrdq.js";import"./x-DsxzDIZw.js";import"./createLucideIcon-DFKxodXL.js";const a=()=>(t.useEffect(()=>{console.log("hii")},[]),r.jsx(i,{children:r.jsx("div",{children:"Airtel Transaction Enquiry"})}));export{a as default};
