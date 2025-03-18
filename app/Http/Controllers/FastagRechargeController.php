@@ -9,8 +9,30 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Http\Controllers\Jwt; 
 class FastagRechargeController extends Controller
 {
+    private $partnerId = 'PS005962'; 
+    private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
+
+    // Method to generate JWT token
+    private function generateJwtToken($requestId)
+    {
+        $timestamp = time();
+        $payload = [
+            'timestamp' => $timestamp,
+            'partnerId' => $this->partnerId,
+            'reqid' => $requestId
+        ];
+
+        return Jwt::encode(
+            $payload,
+            $this->secretKey,
+            'HS256' // Using HMAC SHA-256 algorithm
+        );
+    }
+
+
     public function getOperators()
 {
     $operators = FastagOperatorList::all(['operator_id', 'name']);
@@ -19,13 +41,16 @@ class FastagRechargeController extends Controller
 
     public function fastagRechargeOperatorList()
     {
+        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
         // Call the external API
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'accept' => 'application/json',
-            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3Mzk3OTc1MzUsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5Nzk3NTM1In0.d-5zd_d8YTFYC0pF68wG6qqlyrfNUIBEuvxZ77Rxc0M',
-            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-        ])->post('https://sit.paysprint.in/service-api/api/v1/service/fastag/Fastag/operatorsList');
+            'Token' => $jwtToken,
+            'User-Agent' => $this->partnerId
+        ])->post('https://api.paysprint.in/api/v1/service/fastag/Fastag/operatorsList');
     
         $apiResponse = $response->json();
     
