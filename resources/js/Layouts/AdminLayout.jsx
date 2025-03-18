@@ -278,13 +278,13 @@ export default function AdminLayout({ children }) {
                             className="cursor-pointer flex-1"
                             onClick={() => router.get(route("admin.onboarding"))}
                         >
-                            <marquee
+                            {/* <marquee
                                 className="text-red-500 font-bold text-sm lg:text-lg"
                                 scrollamount="5"
                             >
                                 Onboarding: Please complete your profile and set
                                 up your preferences!
-                            </marquee>
+                            </marquee> */}
                         </div>
                         <div className="relative flex items-center">
                             <button

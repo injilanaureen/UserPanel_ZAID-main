@@ -268,11 +268,6 @@ class Remitter2Controller extends Controller
     }
 
 
-    //Register Remitter    
-    // public function registerRemitter() 
-    // {     
-    //     return Inertia::render('Admin/remitter2/RegisterRemitter'); 
-    // }
     public function registerRemitter(Request $request)
     {
         if ($request->isMethod('post')) {

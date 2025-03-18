@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid, ResponsiveContainer, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ScatterChart, Scatter, ZAxis, Legend } from 'recharts';
-
+import axios from 'axios';
 const Dashboard = () => {
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -18,21 +18,18 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchWalletBalance = async () => {
       try {
-        const response = await fetch('/api/proxy/wallet-balance', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        const data = await response.json();
-        console.log('Wallet Balance API Response:', data);
-        setWalletBalance(data.balance || '0'); // Adjust based on actual API response structure
-        setIsLoadingBalance(false);
+        setIsLoadingBalance(true);
+        const response = await axios.get('/admin/api/proxy/wallet-balance');
+        if (response.data.success) {
+          setWalletBalance(response.data.balance);
+        } else {
+          setWalletBalance('Error');
+          console.error('Wallet Balance API Error:', response.data.message);
+        }
       } catch (error) {
-        console.error('Error fetching wallet balance:', error);
         setWalletBalance('Error');
+        console.error('Wallet Balance API Response:', error);
+      } finally {
         setIsLoadingBalance(false);
       }
     };
@@ -155,7 +152,7 @@ const Dashboard = () => {
       <div className="bg-gray-50 min-h-screen">
         {/* Wallet Balance Box */}
         <div className="flex justify-end mb-4 pr-6">
-          {/* <div className="bg-white rounded-xl shadow p-6 w-64">
+          <div className="bg-white rounded-xl shadow p-6 w-64">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Wallet Balance</h3>
@@ -167,7 +164,7 @@ const Dashboard = () => {
               </div>
               <div className="text-2xl">💳</div>
             </div>
-          </div> */}
+          </div>
         </div>
 
         {/* Time Filter */}

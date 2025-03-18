@@ -67,27 +67,30 @@ class InsurancePremiumPaymentController extends Controller
         $data = $response->json();
 
         if ($data['response_code'] == 1 && $data['status'] === true) {
+                // Create a bill_fetch array for safe access with defaults if keys don't exist
+    $billFetch = $data['bill_fetch'] ?? [];
+
             InsuranceBillDetail::create([
                 'canumber' => $request->canumber,
                 'ad1' => $request->ad1,
                 'ad2' => $request->ad2, // Store in dd/mm/yyyy as received from frontend
                 'mode' => $request->mode,
                 'status' => $data['status'],
-                'amount' => $data['amount'],
-                'name' => $data['name'],
-                'duedate' => $data['duedate'],
+                'amount' => $data['amount'] ?? null,
+                'name' => $data['name'] ?? null,
+                'duedate' => $data['duedate'] ?? null,
                 'bill_fetch' => json_encode($data['bill_fetch']),
                 'ad3' => $data['ad3'] ?? null,
-                'message' => $data['message'],
-                'billAmount' => $data['bill_fetch']['billAmount'],
-                'billnetamount' => $data['bill_fetch']['billnetamount'],
-                'bill_dueDate' => $data['bill_fetch']['dueDate'],
-                'maxBillAmount' => $data['bill_fetch']['maxBillAmount'],
-                'acceptPayment' => $data['bill_fetch']['acceptPayment'],
-                'acceptPartPay' => $data['bill_fetch']['acceptPartPay'],
-                'cellNumber' => $data['bill_fetch']['cellNumber'],
-                'userName' => $data['bill_fetch']['userName'],
-            ]);
+                'message' => $data['message'] ?? null,
+                'billAmount' => $billFetch['billAmount'] ?? null,
+                'billnetamount' => $billFetch['billnetamount'] ?? null,
+                'bill_dueDate' => $billFetch['dueDate'] ?? null,
+                'maxBillAmount' => $billFetch['maxBillAmount'] ?? null,
+                'acceptPayment' => $billFetch['acceptPayment'] ?? false,
+                'acceptPartPay' => $billFetch['acceptPartPay'] ?? false,
+                'cellNumber' => $billFetch['cellNumber'] ?? null,
+                'userName' => $billFetch['userName'] ?? null,
+                    ]);
         }
 
         return response()->json($data);

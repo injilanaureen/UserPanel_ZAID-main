@@ -1,68 +1,72 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import axios from "axios";
+import { Signal, Phone, AlertCircle, CheckCircle, Code } from 'lucide-react';
 
 const PayBill = () => {
   const [canumber, setCanumber] = useState("");
   const [amount, setAmount] = useState("");
-  const [operator, setOperator] = useState("");
   const [operators, setOperators] = useState([]);
+  const [loadingOperators, setLoadingOperators] = useState(true);
+  const [operatorError, setOperatorError] = useState(null);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOperators, setIsLoadingOperators] = useState(false);
+  const [selectedOperator, setSelectedOperator] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    operator: '',
+    canumber: '',
+    amount: ''
+  });
 
-  // Fetch operators on component mount
+  // Fetch operators on component mount - using the same approach as FetchBillDetails.jsx
   useEffect(() => {
-    fetchOperators();
+    setLoadingOperators(true);
+    axios.get("/api/operators")
+      .then(response => {
+        if (response.data.success) {
+          setOperators(response.data.operators);
+        } else {
+          setOperatorError(response.data.message);
+        }
+      })
+      .catch(err => setOperatorError("Failed to fetch operators"))
+      .finally(() => setLoadingOperators(false));
   }, []);
 
-  const getCsrfToken = () => {
-    const token = document.querySelector('meta[name="csrf-token"]');
-    return token ? token.content : '';
-  };
-
-  const fetchOperators = async () => {
-    setIsLoadingOperators(true);
-    setError(null);
-
-    try {
-      const response = await axios.post('/admin/get-bill-operators', {}, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': getCsrfToken(),
-        },
-      });
-
-      if (response.data.success || response.data.status) {
-        // Handle different response structures
-        const operatorData = response.data.operators || response.data.data?.data || [];
-        setOperators(Array.isArray(operatorData) ? operatorData : []);
-      } else {
-        console.error('Failed to fetch operators:', response.data);
-        setError('Failed to load operators. Please try again later.');
-      }
-    } catch (err) {
-      console.error('Fetch Operators Error:', err);
-      setError('An error occurred while fetching operators. Please try again later.');
-    } finally {
-      setIsLoadingOperators(false);
+  // Update selected operator when operator changes
+  useEffect(() => {
+    if (formData.operator) {
+      const selected = operators.find(op => op.id === formData.operator);
+      setSelectedOperator(selected || null);
+    } else {
+      setSelectedOperator(null);
     }
+  }, [formData.operator, operators]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handlePayment = async () => {
-    if (!operator) {
+  const handlePayment = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.operator) {
       setError("Please select an operator");
       return;
     }
 
-    if (!canumber.trim()) {
+    if (!formData.canumber.trim()) {
       setError("Please enter a consumer number");
       return;
     }
 
-    if (!amount.trim() || isNaN(amount) || parseFloat(amount) <= 0) {
+    if (!formData.amount.trim() || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
       setError("Please enter a valid amount");
       return;
     }
@@ -73,9 +77,9 @@ const PayBill = () => {
       setResponse(null);
       
       const res = await axios.post("/admin/utility-bill-payment/process-bill-payment", { 
-        canumber: canumber.trim(),
-        amount: parseFloat(amount.trim()),
-        operator: operator
+        canumber: formData.canumber.trim(),
+        amount: parseFloat(formData.amount.trim()),
+        operator: formData.operator
       });
       
       if (res.data.status === false) {
@@ -120,14 +124,14 @@ const PayBill = () => {
               <th className="py-3 px-4 font-medium text-gray-900 bg-gray-50">
                 Amount
               </th>
-              <td className="py-3 px-4">₹{parseFloat(amount).toFixed(2)}</td>
+              <td className="py-3 px-4">₹{parseFloat(formData.amount).toFixed(2)}</td>
             </tr>
             <tr className="border-b">
               <th className="py-3 px-4 font-medium text-gray-900 bg-gray-50">
                 Operator
               </th>
               <td className="py-3 px-4">
-                {operators.find(op => op.id === operator)?.name || operator}
+                {operators.find(op => op.id === formData.operator)?.name || formData.operator}
               </td>
             </tr>
             <tr className="border-b">
@@ -168,160 +172,131 @@ const PayBill = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Pay Utility Bill
-        </h2>
+      <div className="max-w-full p-6">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+            <h2 className="text-3xl font-semibold text-white">Pay Utility Bill</h2>
+          </div>
 
-        <div className="space-y-6">
-          <div className="relative">
-            <label 
-              htmlFor="operator" 
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Operator
-            </label>
-            {isLoadingOperators ? (
-              <div className="flex items-center space-x-2 py-2">
-                <svg 
-                  className="animate-spin h-5 w-5 text-blue-500" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24"
-                >
-                  <circle 
-                    className="opacity-25" 
-                    cx="12" 
-                    cy="12" 
-                    r="10" 
-                    stroke="currentColor" 
-                    strokeWidth="4"
-                  />
-                  <path 
-                    className="opacity-75" 
-                    fill="currentColor" 
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-                <span className="text-sm text-gray-500">Loading operators...</span>
+          <form onSubmit={handlePayment} className="p-6">
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div>
+                <label htmlFor="operator" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Signal size={20} className="mr-2 text-green-500" />
+                  Operator :
+                </label>
+                {loadingOperators ? (
+                  <div className="text-gray-500">Loading operators...</div>
+                ) : operatorError ? (
+                  <div className="text-red-500">{operatorError}</div>
+                ) : (
+                  <select
+                    id="operator"
+                    name="operator"
+                    value={formData.operator}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                    required
+                  >
+                    <option value="">Select Operator</option>
+                    {operators.map(operator => (
+                      <option key={operator.id} value={operator.id}>
+                        {operator.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
-            ) : (
-              <div className="relative">
-                <select
-                  id="operator"
-                  value={operator}
-                  onChange={(e) => setOperator(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 
-                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                    transition-all duration-200 placeholder-gray-400 appearance-none"
-                  disabled={isLoading}
-                >
-                  <option value="">Select an operator</option>
-                  {operators.map((op) => (
-                    <option key={op.id} value={op.id}>
-                      {op.name || op.displayname}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                  </svg>
+
+              {selectedOperator && (
+                <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                  <h3 className="font-medium text-blue-700 mb-2 flex items-center">
+                    <Code size={16} className="mr-2" />
+                    Operator Details
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div><span className="font-medium">Category:</span> {selectedOperator.category}</div>
+                    <div><span className="font-medium">Field Name:</span> {selectedOperator.displayname}</div>
+                    <div><span className="font-medium">Regex:</span> <span className="text-gray-600 text-xs">{selectedOperator.regex}</span></div>
+                  </div>
                 </div>
+              )}
+
+              <div>
+                <label htmlFor="canumber" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Phone size={20} className="mr-2 text-yellow-500" />
+                  {selectedOperator ? selectedOperator.displayname : 'Consumer Number'}
+                </label>
+                <input
+                  id="canumber"
+                  name="canumber"
+                  value={formData.canumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  pattern={selectedOperator?.regex}
+                  title={selectedOperator ? `Format must match: ${selectedOperator.regex}` : ''}
+                  placeholder={`Enter ${selectedOperator ? selectedOperator.displayname : 'Consumer Number'}`}
+                />
+                {selectedOperator && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Format: {selectedOperator.regex}
+                  </p>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="relative">
-            <label 
-              htmlFor="canumber" 
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Consumer Number
-            </label>
-            <input
-              id="canumber"
-              type="text"
-              value={canumber}
-              onChange={(e) => setCanumber(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 
-                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                transition-all duration-200 placeholder-gray-400"
-              placeholder="Enter your consumer number"
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="relative">
-            <label 
-              htmlFor="amount" 
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Amount (₹)
-            </label>
-            <input
-              id="amount"
-              type="number"
-              min="1"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 
-                focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                transition-all duration-200 placeholder-gray-400"
-              placeholder="Enter payment amount"
-              disabled={isLoading}
-            />
-          </div>
-
-          <button
-            onClick={handlePayment}
-            disabled={isLoading || !canumber.trim() || !amount.trim() || !operator || isNaN(amount) || parseFloat(amount) <= 0}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white
-              ${isLoading || !canumber.trim() || !amount.trim() || !operator || isNaN(amount) || parseFloat(amount) <= 0
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'} 
-              transition-colors duration-200 flex items-center justify-center`}
-          >
-            {isLoading ? (
-              <>
-                <svg 
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24"
-                >
-                  <circle 
-                    className="opacity-25" 
-                    cx="12" 
-                    cy="12" 
-                    r="10" 
-                    stroke="currentColor" 
-                    strokeWidth="4"
-                  />
-                  <path 
-                    className="opacity-75" 
-                    fill="currentColor" 
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-                Processing...
-              </>
-            ) : (
-              'Pay Bill'
-            )}
-          </button>
-
-          {response && <ResponseTable data={response} />}
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-              <div className="text-lg font-semibold text-red-800 mb-2">
-                Error
+              <div>
+                <label htmlFor="amount" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Signal size={20} className="mr-2 text-blue-500" />
+                  Amount (₹)
+                </label>
+                <input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter payment amount"
+                />
               </div>
-              <p className="text-sm text-red-700">{error}</p>
             </div>
-          )}
+
+            <button
+              type="submit"
+              disabled={isLoading || !formData.operator || !formData.canumber || !formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0}
+              className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : "Pay Bill"}
+            </button>
+          </form>
+
+          <div className="px-6 pb-6">
+            {response && <ResponseTable data={response} />}
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                <div className="flex items-center">
+                  <AlertCircle size={20} className="mr-2 text-red-500" />
+                  <div className="text-lg font-semibold text-red-800">
+                    Error
+                  </div>
+                </div>
+                <p className="text-sm text-red-700 mt-2">{error}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </AdminLayout>

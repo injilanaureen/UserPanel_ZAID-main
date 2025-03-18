@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Phone, Send, Key, FileText, Monitor, AlertCircle, CheckCircle, Code } from 'lucide-react';
+import { Phone, Send, Key, FileText, AlertCircle, CheckCircle, Code } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const RegisterRemitter = ({ recentRegistrations = [] }) => {
@@ -9,7 +9,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
         otp: "",
         stateresp: "",
         data: "",
-        accessmode: "SITE",
+        accessmode: "SITE", 
         is_iris: 2,
     });
 
@@ -18,7 +18,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
     const [apiData, setApiData] = useState(null);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState("");
-    const [activeTab, setActiveTab] = useState("form"); // 'form' or 'history'
+    const [activeTab, setActiveTab] = useState("form"); 
 
     const handleChange = (e) => {
         setFormData({
@@ -88,7 +88,6 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                 setApiData(result.data);
                 setSuccess("Remitter registered successfully!");
                 // Optional: Reset form or keep as is
-                // window.location.reload(); // Consider removing this for better UX
             } else {
                 setError(result.error || "Failed to register remitter");
             }
@@ -173,11 +172,10 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                             maxLength="10"
                                             value={formData.mobile}
                                             onChange={handleChange}
-                                            className="flex-grow px-4 py-2 bg-gray-50 border border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                                            className="flex-grow px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
                                             required
                                             placeholder="Enter 10 digit mobile number"
                                         />
-                          
                                     </div>
                                 </div>
 
@@ -199,7 +197,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                         onChange={handleChange}
                                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
                                         required
-                                        placeholder="Enter 6 digit OTP"
+                                        placeholder="Enter 6 digit OTP recieved while verifying Aadhar"
                                     />
                                 </div>
 
@@ -243,25 +241,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                     />
                                 </div>
 
-                                <div>
-                                    <label
-                                        htmlFor="accessmode"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
-                                        <Monitor size={20} className="mr-2 text-blue-500" />
-                                        Access Mode
-                                    </label>
-                                    <select
-                                        id="accessmode"
-                                        name="accessmode"
-                                        value={formData.accessmode}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                                    >
-                                        <option value="SITE">SITE</option>
-                                        <option value="APP">APP</option>
-                                    </select>
-                                </div>
+                                {/* Access Mode field removed */}
 
                                 <div>
                                     <label

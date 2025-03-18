@@ -169,7 +169,7 @@ public function fetchOperators()
                 "referenceid" => $referenceId,
                 "latitude" => "27.2232",
                 "longitude" => "78.26535",
-                "mode" => "online",
+                "mode" => "offline",
                 "bill_fetch" => [
                     "billAmount" => $formattedAmount,
                     "billnetamount" => $formattedAmount,

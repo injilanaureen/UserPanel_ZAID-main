@@ -21,12 +21,12 @@ Route::prefix('recharge')->group(function () {
     Route::post('/status', [RechargeController::class, 'fetchRechargeStatus']);
 });
 
-Route::post('/proxy/wallet-balance', function (Request $request) {
-    $response = Http::withHeaders([
-        'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDIyNzYzODEsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQyMjc2MzgxICAgIn0.-oqTdf3CqHB5ToCMgXSD-C4MLHyq0FiGjjaa5_Eox5s',
-        'accept' => 'application/json',
-        'Content-Type' => 'application/json',
-    ])->post('https://api.paysprint.in/api/v1/service/balance/balance/cashbalance');
+// Route::post('/proxy/wallet-balance', function (Request $request) {
+//     $response = Http::withHeaders([
+//         'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDIyNzYzODEsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQyMjc2MzgxICAgIn0.-oqTdf3CqHB5ToCMgXSD-C4MLHyq0FiGjjaa5_Eox5s',
+//         'accept' => 'application/json',
+//         'Content-Type' => 'application/json',
+//     ])->post('https://api.paysprint.in/api/v1/service/balance/balance/cashbalance');
     
-    return $response->json();
-});
+//     return $response->json();
+// });

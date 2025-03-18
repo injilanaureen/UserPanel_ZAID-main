@@ -35,6 +35,9 @@ Route::middleware('guest')->group(function () {
     Route::post('register', [AuthenticatedSessionController::class, 'storeRegister']);
 });
 
+Route::get('/admin/api/proxy/wallet-balance', [AdminController::class, 'getWalletBalance'])
+->name('admin.wallet.balance');
+
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
@@ -43,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])
             ->name('dashboard');
+            
             
         // Recharge Routes
         Route::prefix('recharge')->group(function () {

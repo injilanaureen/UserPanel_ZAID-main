@@ -74,7 +74,7 @@ const FetchBillDetails = () => {
                             <div>
                                 <label htmlFor="operator" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                     <Signal size={20} className="mr-2 text-green-500" />
-                                    Operator
+                                    Operator :
                                 </label>
                                 {loadingOperators ? (
                                     <div className="text-gray-500">Loading operators...</div>

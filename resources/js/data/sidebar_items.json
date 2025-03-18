@@ -23,11 +23,7 @@
       ]
     },
 
-    {
-      "title": "LIC",
-      "icon": "BusFront",
-      "href": "/admin/lic"
-  },  
+  
     
     {
       "title": "DMT BANK 2",
@@ -172,6 +168,11 @@
           }
         ]
       },
+      {
+        "title": "LIC",
+        "icon": "BusFront",
+        "href": "/admin/lic"
+    },  
       {
         "title": "LPG Booking & Payment",
         "subMenu": [
