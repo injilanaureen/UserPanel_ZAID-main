@@ -112,121 +112,109 @@
     
   
 
-    {
-      "title": "Utilities ",
-      "icon": "Battery",
-      "subMenu": [
-        {
-          "title": "Bill Payment",
-          "subMenu": [
-            {
-              "title": "Operator List",
-              "href": "/admin/utility-bill-payment/operator-list"
-            },
-            {
-              "title": "Fetch Bill Details",
-              "href": "/admin/utility-bill-payment/fetch-bill-details"
-            },
-            {
-              "title": "Pay Bill",
-              "href": "/admin/utility-bill-payment/pay-bill"
-            },
-            {
-              "title": "Status Enquiry",
-              "href": "/admin/utility-bill-payment/utility-status-enquiry"
-            }
-          ]
-        },
-        {
-          "title": "Insurance  Payment",
-          "subMenu": [
-            {
-              "title": "Fetch Insurance Bill Details",
-              "href": "/admin/InsurancePremiumPayment/FetchInsuranceBillDetails"
-            },
-            {
-              "title": "Pay Insurance Bill",
-              "href": "/admin/InsurancePremiumPayment/PayInsuranceBill"
-            },
-            {
-              "title": "Insurance Status Enquiry",
-              "href": "/admin/InsurancePremiumPayment/InsuranceStatusEnquiry"
-            }
-           
-          ]
-        },
-        {
-          "title": "Fastag Recharge",
-          "subMenu": [
-            {
-              "title": "Operator List",
-              "href": "/admin/FastagRecharge/FastagOperatorList"
-            },
-            {
-              "title": "Fetch Consumer Details",
-              "href": "/admin/FastagRecharge/fetchConsumerDetails"
-            },
-            {
-              "title": "Recharge",
-              "href": "/admin/FastagRecharge/fastagRecharge"
-            },
-             {
-              "title": "Status",
-              "href": "/admin/FastagRecharge/FastagStatus"
-            }
-           
-          ]
-        },
-        {
-          "title": "LPG Booking & Payment",
-          "subMenu": [
-            {
-              "title": "Operator List",
-              "href": "/admin/LPG/LPGOperator"
-            },
-            {
-              "title": "Fetch LPG Details",
-              "href": "/admin/LPG/LPGDetails"
-            }
-            ,
-            {
-              "title": "Pay Bill",
-              "href": "/admin/LPG/LPGBill"
-            },
-            {
-              "title": "Status",
-              "href": "/admin/LPG/LPGStatus"
-            }
-            
-           
-          ]
-        },
-        {
-          "title": "Municipality Payment",
-          "subMenu": [
-            {
-              "title": "Operator List",
-              "href": "/admin/Municipality/MunicipalityOperator"
-            },
-            {
-              "title": "Fetch Municipality Details",
-              "href": "/admin/Municipality/FetchMunicipalityDetails"
-            }
-            ,
-            {
-              "title": "Pay Bill",
-              "href": "/admin/Municipality/MunicipalityBill"
-            },
-            {
-              "title": "Status",
-              "href": "/admin/Municipality/MunicipalityStatus"
-            }
-            
-           
-          ]
-        }
-      ]
-    }
+    
+      {
+        "title": "Bill Payment",
+        "subMenu": [
+          {
+            "title": "Operator List",
+            "href": "/admin/utility-bill-payment/operator-list"
+          },
+          {
+            "title": "Fetch Bill Details",
+            "href": "/admin/utility-bill-payment/fetch-bill-details"
+          },
+          {
+            "title": "Pay Bill",
+            "href": "/admin/utility-bill-payment/pay-bill"
+          },
+          {
+            "title": "Status Enquiry",
+            "href": "/admin/utility-bill-payment/utility-status-enquiry"
+          }
+        ]
+      },
+      {
+        "title": "Insurance Payment",
+        "subMenu": [
+          {
+            "title": "Fetch Insurance Bill Details",
+            "href": "/admin/InsurancePremiumPayment/FetchInsuranceBillDetails"
+          },
+          {
+            "title": "Pay Insurance Bill",
+            "href": "/admin/InsurancePremiumPayment/PayInsuranceBill"
+          },
+          {
+            "title": "Insurance Status Enquiry",
+            "href": "/admin/InsurancePremiumPayment/InsuranceStatusEnquiry"
+          }
+        ]
+      },
+      {
+        "title": "Fastag Recharge",
+        "subMenu": [
+          {
+            "title": "Operator List",
+            "href": "/admin/FastagRecharge/FastagOperatorList"
+          },
+          {
+            "title": "Fetch Consumer Details",
+            "href": "/admin/FastagRecharge/fetchConsumerDetails"
+          },
+          {
+            "title": "Recharge",
+            "href": "/admin/FastagRecharge/fastagRecharge"
+          },
+          {
+            "title": "Status",
+            "href": "/admin/FastagRecharge/FastagStatus"
+          }
+        ]
+      },
+      {
+        "title": "LPG Booking & Payment",
+        "subMenu": [
+          {
+            "title": "Operator List",
+            "href": "/admin/LPG/LPGOperator"
+          },
+          {
+            "title": "Fetch LPG Details",
+            "href": "/admin/LPG/LPGDetails"
+          },
+          {
+            "title": "Pay Bill",
+            "href": "/admin/LPG/LPGBill"
+          },
+          {
+            "title": "Status",
+            "href": "/admin/LPG/LPGStatus"
+          }
+        ]
+      },
+      {
+        "title": "Municipality Payment",
+        "subMenu": [
+          {
+            "title": "Operator List",
+            "href": "/admin/Municipality/MunicipalityOperator"
+          },
+          {
+            "title": "Fetch Municipality Details",
+            "href": "/admin/Municipality/FetchMunicipalityDetails"
+          },
+          {
+            "title": "Pay Bill",
+            "href": "/admin/Municipality/MunicipalityBill"
+          },
+          {
+            "title": "Status",
+            "href": "/admin/Municipality/MunicipalityStatus"
+          }
+        ]
+      }
+    
     
     
   

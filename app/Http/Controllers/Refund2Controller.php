@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-use App\Models\refundOtp;
+use App\Models\RefundOtp;
 use App\Models\ClaimRefund;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
