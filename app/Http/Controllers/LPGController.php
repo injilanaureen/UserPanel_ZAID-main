@@ -309,34 +309,7 @@ public function getLpgBillHistory()
             ], 500);
         }
     }
-    public function Test()
-    {
-        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-    
-        $url = "https://api.paysprint.in/api/v1/service/bill-payment/lpg/fetchbill";
-        
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Token' => $jwtToken,
-            'Accept' => 'application/json', 
-       
-        ])->post($url, [
-            "operator" => "286",
-            "canumber" => "7000218994",
-            "referenceid" => $referenceId,
-            "latitude" => "28.65521",
-            "longitude" => "77.14343",
-            "ad1" => "2",
-            "ad2" => "7070397689"
-    
-        ]);
-    
-        return Inertia::render('Admin/LPG/Test', [
-            'apiResponse' => $response->json()
-        ]);
-    }
+   
     
     
 }

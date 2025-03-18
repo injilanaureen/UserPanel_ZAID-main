@@ -36,20 +36,21 @@ class InsurancePremiumPaymentController extends Controller
     }
     public function fetchLICBill(Request $request)
 {
-    $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
+    $referenceId = 'RECH' . time() . rand(1000, 9999); 
     $requestId = time() . rand(1000, 9999);
     $jwtToken = $this->generateJwtToken($requestId);
 
     $request->validate([
         'canumber' => 'required|numeric',
         'ad1' => 'required|email',
-        'ad2' => 'required|date_format:d/m/Y', 
+        'ad2' => 'required|regex:/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/', // Validates dd/mm/yyyy format
         'mode' => 'required|in:online,offline'
     ]);
 
     try {
-        // If the API expects a different format, convert it here (e.g., to yyyy-mm-dd)
-        $apiFormattedDate = \DateTime::createFromFormat('d/m/Y', $request->ad2)->format('Y-m-d');
+
+        $apiFormattedDate = \DateTime::createFromFormat('d/m/Y', $request->ad2)->format('d/m/Y');
+
 
         $response = Http::withHeaders([
             'Token' => $jwtToken,

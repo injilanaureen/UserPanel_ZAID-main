@@ -3,9 +3,9 @@ import AdminLayout from "@/Layouts/AdminLayout";
 const FastagRecharge = () => {
   return (
 <AdminLayout>
-    <div>
-      <h1>Hello</h1>
-    </div>
+<div className="flex items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold">Coming Soon</h1>
+      </div>
     </AdminLayout>
   );
 };

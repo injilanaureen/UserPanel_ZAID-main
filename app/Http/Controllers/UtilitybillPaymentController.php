@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 class UtilitybillPaymentController extends Controller
 {
-    private $partnerId = 'PS005962';
+private $partnerId = 'PS005962';
 private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
 private function generateJwtToken($requestId)

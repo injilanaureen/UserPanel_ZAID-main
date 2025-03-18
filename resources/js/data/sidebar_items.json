@@ -328,10 +328,6 @@
             {
               "title": "Status",
               "href": "/admin/LPG/LPGStatus"
-            },
-            {
-              "title": "Test",
-              "href": "/admin/LPG/Test"
             }
             
            

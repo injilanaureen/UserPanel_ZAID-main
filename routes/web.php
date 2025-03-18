@@ -259,8 +259,7 @@ Route::get('/lpg-bill-history', [LPGController::class, 'getLpgBillHistory']);
 Route::get('/admin/LPG/LPGStatus', [LPGController::class, 'LPGStatus'])->name('LPG.LPGStatus');
 Route::post('/lpg-status', [LPGController::class, 'getLPGStatus']);
 
-//test
-Route::get('/admin/LPG/Test', [LPGController::class, 'Test'])->name('LPG.Test');
+
 //Municipality
 
 //operator
