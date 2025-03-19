@@ -106,7 +106,40 @@
       ]
     },
     
-  
+    {
+      "title": "Bus Booking",
+      "icon": "BusFront",
+      "subMenu": [
+        {
+            "title": "Get Source City",
+            "href": "/admin/busTicket/getSourceCity"
+          },
+        {
+          "title": "Get Available Trip",
+          "href": "/admin/busTicket/getAvailableTrip"
+        },
+        {
+          "title": "Get Current Trip Details",
+          "href": "/admin/busTicket/getCurrentTripDetails"
+        },
+        {
+            "title": "Book Tickets",
+            "href": "/admin/busTicket/bookTicket"
+          },
+          {
+            "title": "Block Tickets",
+            "href": "/admin/busTicket/blockTicket"
+          },
+          {
+            "title": "Get Boarding Point Details",
+            "href": "/admin/busTicket/getBoardingPointDetails"
+          },
+          {
+            "title": "Check Booked Tickets",
+            "href": "/admin/busTicket/checkBookedTickets"
+          }
+      ]
+    },
 
     
       {
@@ -168,11 +201,7 @@
           }
         ]
       },
-      {
-        "title": "LIC",
-        "icon": "BusFront",
-        "href": "/admin/lic"
-    },  
+
       {
         "title": "LPG Booking & Payment",
         "subMenu": [

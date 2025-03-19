@@ -14,6 +14,7 @@ const RemitterAdhaarApiVerify = ({ apiData: initialApiData, dbData: initialDbDat
   const [apiData, setApiData] = useState(initialApiData);
   const [dbData, setDbData] = useState(initialDbData);
   const [error, setError] = useState(initialError);
+  const [activeTab, setActiveTab] = useState('api'); // Add state for active tab
 
   useEffect(() => {
     if (initialMobile) {
@@ -163,67 +164,102 @@ const RemitterAdhaarApiVerify = ({ apiData: initialApiData, dbData: initialDbDat
               </div>
             )}
 
-            {apiData && (
+            {(apiData || dbData) && (
               <div className="mt-4">
-                <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
-                  <Code size={16} className="mr-2" />
-                  API Response:
-                </h3>
-                <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
-                  <Table className="w-full border-collapse">
-                    <TableHeader className="bg-sky-500 text-white">
-                      <TableRow>
-                        <TableHead className="px-4 py-2 text-left">Field</TableHead>
-                        <TableHead className="px-4 py-2 text-left">Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(apiData).map(([key, value]) => (
-                        <TableRow key={key} className="border-b border-gray-200">
-                          <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
-                          <TableCell className="px-4 py-2">{formatValue(value)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                {/* Tab Navigation */}
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex space-x-8">
+                    {apiData && (
+                      <button
+                        onClick={() => setActiveTab('api')}
+                        className={`${
+                          activeTab === 'api'
+                            ? 'border-sky-500 text-sky-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                      >
+                        API Response
+                      </button>
+                    )}
+                    {/* {dbData && (
+                      <button
+                        onClick={() => setActiveTab('db')}
+                        className={`${
+                          activeTab === 'db'
+                            ? 'border-sky-500 text-sky-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                      >
+                        Database Record
+                      </button>
+                    )} */}
+                  </nav>
                 </div>
-              </div>
-            )}
 
-            {dbData && (
-              <div className="mt-4">
-                <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
-                  <CheckCircle size={16} className="mr-2" />
-                  Stored Database Record:
-                </h3>
-                <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
-                  <Table className="w-full border-collapse">
-                    <TableHeader className="bg-sky-500 text-white">
-                      <TableRow>
-                        <TableHead className="px-4 py-2 text-left">Field</TableHead>
-                        <TableHead className="px-4 py-2 text-left">Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(dbData).map(([key, value]) => (
-                        <TableRow key={key} className="border-b border-gray-200">
-                          <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
-                          <TableCell className="px-4 py-2">
-                            {key.includes('_at') 
-                              ? new Date(value).toLocaleString()
-                              : formatValue(value)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                <button
-                  onClick={handleNextStep}
-                  className="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
-                >
-                  Next Step: Register Remitter
-                </button>
+                {/* Tab Content */}
+                {activeTab === 'api' && apiData && (
+                  <div className="mt-4">
+                    <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
+                      <Code size={16} className="mr-2" />
+                      API Response:
+                    </h3>
+                    <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
+                      <Table className="w-full border-collapse">
+                        <TableHeader className="bg-sky-500 text-white">
+                          <TableRow>
+                            <TableHead className="px-4 py-2 text-left">Field</TableHead>
+                            <TableHead className="px-4 py-2 text-left">Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(apiData).map(([key, value]) => (
+                            <TableRow key={key} className="border-b border-gray-200">
+                              <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
+                              <TableCell className="px-4 py-2">{formatValue(value)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'db' && dbData && (
+                  <div className="mt-4">
+                    <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
+                      <CheckCircle size={16} className="mr-2" />
+                      Stored Database Record:
+                    </h3>
+                    <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
+                      <Table className="w-full border-collapse">
+                        <TableHeader className="bg-sky-500 text-white">
+                          <TableRow>
+                            <TableHead className="px-4 py-2 text-left">Field</TableHead>
+                            <TableHead className="px-4 py-2 text-left">Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(dbData).map(([key, value]) => (
+                            <TableRow key={key} className="border-b border-gray-200">
+                              <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
+                              <TableCell className="px-4 py-2">
+                                {key.includes('_at') 
+                                  ? new Date(value).toLocaleString()
+                                  : formatValue(value)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <button
+                      onClick={handleNextStep}
+                      className="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                    >
+                      Next Step: Register Remitter
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
