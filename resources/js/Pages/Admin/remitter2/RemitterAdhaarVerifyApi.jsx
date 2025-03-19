@@ -1,16 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { router } from '@inertiajs/react';
 import { Phone, AlertCircle, CheckCircle, Code } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const RemitterAdhaarApiVerify = ({ apiData, dbData, error }) => {
+const RemitterAdhaarApiVerify = ({ apiData: initialApiData, dbData: initialDbData, error: initialError, mobile: initialMobile = '', queryData = null }) => {
   const [formData, setFormData] = useState({
-    mobile: '',
+    mobile: initialMobile || '',
     aadhaar_no: ''
   });
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  const [apiData, setApiData] = useState(initialApiData);
+  const [dbData, setDbData] = useState(initialDbData);
+  const [error, setError] = useState(initialError);
+
+  useEffect(() => {
+    if (initialMobile) {
+      setFormData((prev) => ({ ...prev, mobile: initialMobile }));
+    }
+  }, [initialMobile]);
 
   const validateForm = () => {
     const errors = {};
@@ -34,22 +43,33 @@ const RemitterAdhaarApiVerify = ({ apiData, dbData, error }) => {
 
     setLoading(true);
     setValidationErrors({});
+    setError(null);
 
     router.post('/admin/remitter-adhaar-verify', formData, {
       preserveState: true,
       preserveScroll: true,
-      onFinish: () => setLoading(false)
+      onSuccess: (page) => {
+        setApiData(page.props.apiData);
+        setDbData(page.props.dbData);
+      },
+      onError: (errors) => {
+        setError('Failed to verify Aadhaar');
+      },
+      onFinish: () => setLoading(false),
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (/^\d*$/.test(value)) {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+  const handleNextStep = () => {
+    router.visit('/admin/remitter2/register-remitter', {
+      method: 'get',
+      data: {
+        mobile: formData.mobile,
+        aadhaarData: apiData,
+        dbData: dbData,
+      },
+      preserveState: true,
+      preserveScroll: true,
+    });
   };
 
   const formatValue = (value) => {
@@ -79,7 +99,7 @@ const RemitterAdhaarApiVerify = ({ apiData, dbData, error }) => {
                   type="text"
                   name="mobile"
                   value={formData.mobile}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
                   className={`w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
                     validationErrors.mobile ? 'border-red-500' : ''
                   }`}
@@ -102,7 +122,7 @@ const RemitterAdhaarApiVerify = ({ apiData, dbData, error }) => {
                   type="text"
                   name="aadhaar_no"
                   value={formData.aadhaar_no}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, aadhaar_no: e.target.value }))}
                   className={`w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
                     validationErrors.aadhaar_no ? 'border-red-500' : ''
                   }`}
@@ -198,6 +218,12 @@ const RemitterAdhaarApiVerify = ({ apiData, dbData, error }) => {
                     </TableBody>
                   </Table>
                 </div>
+                <button
+                  onClick={handleNextStep}
+                  className="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                >
+                  Next Step: Register Remitter
+                </button>
               </div>
             )}
 

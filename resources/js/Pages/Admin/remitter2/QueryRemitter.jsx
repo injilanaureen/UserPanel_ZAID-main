@@ -3,6 +3,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 import { Phone, AlertCircle, CheckCircle, Code } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { router } from '@inertiajs/react';
 
 const QueryRemitter = () => {
   const [mobile, setMobile] = useState('');
@@ -48,6 +49,18 @@ const QueryRemitter = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save remitter data');
     }
+  };
+
+  const handleNextStep = () => {
+    router.visit('/admin/remitter2/remitter-adhaar-verify', {
+      method: 'get',
+      data: {
+        mobile: mobile,
+        queryData: data,
+      },
+      preserveState: true,
+      preserveScroll: true,
+    });
   };
 
   const formatValue = (value) => {
@@ -145,6 +158,12 @@ const QueryRemitter = () => {
                     </TableBody>
                   </Table>
                 </div>
+                <button
+                  onClick={handleNextStep}
+                  className="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                >
+                  Next Step: Verify Aadhaar
+                </button>
               </div>
             )}
 

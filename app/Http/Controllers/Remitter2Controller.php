@@ -12,13 +12,11 @@ use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Jwt; 
 use GuzzleHttp\Client;
 
-
 class Remitter2Controller extends Controller
 {
     private $partnerId = 'PS005962'; 
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    // Method to generate JWT token
     private function generateJwtToken($requestId)
     {
         $timestamp = time();
@@ -27,39 +25,28 @@ class Remitter2Controller extends Controller
             'partnerId' => $this->partnerId,
             'reqid' => $requestId
         ];
-
-        return Jwt::encode(
-            $payload,
-            $this->secretKey,
-            'HS256' // Using HMAC SHA-256 algorithm
-        );
+        return Jwt::encode($payload, $this->secretKey, 'HS256');
     }
+
     public function showQueryForm()
     {
-       
         return Inertia::render('Admin/remitter2/QueryRemitter');
     }
 
     public function queryRemitter(Request $request)
     {
         try {
-            // Validate the mobile number
             $validator = Validator::make($request->all(), [
                 'mobile' => 'required|digits:10'
             ]);
 
             if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors()
-                ], 422);
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
 
-            // Generate unique request ID and JWT token
             $requestId = time() . rand(1000, 9999);
             $jwtToken = $this->generateJwtToken($requestId);
 
-            // Make API call to the external service
             $response = Http::withHeaders([
                 'Token' => $jwtToken,
                 'accept' => 'application/json',
@@ -71,84 +58,68 @@ class Remitter2Controller extends Controller
 
             $responseData = $response->json();
 
-            // Log the successful query
             Log::info('Remitter query successful', [
                 'mobile' => $request->input('mobile'),
                 'jwt_token' => $jwtToken,
                 'response_status' => $responseData['status'] ?? 'unknown'
             ]);
 
-            // Return JSON response for the API call
-            return response()->json([
-                'success' => true,
-                'data' => $responseData
-            ]);
-
+            return response()->json(['success' => true, 'data' => $responseData]);
         } catch (\Exception $e) {
             Log::error('Remitter query error: ' . $e->getMessage(), [
                 'mobile' => $request->input('mobile') ?? 'unknown',
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while fetching remitter data'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'An error occurred while fetching remitter data'], 500);
         }
     }
+
     public function storeRemitterData(Request $request)
     {
-        // Validate incoming data
         $request->validate([
             'mobile' => 'required|unique:remitters,mobile',
             'limit' => 'required|numeric',
         ]);
-    
-        // Store the remitter data in the database
+
         $remitter = Remitter::create([
             'mobile' => $request->mobile,
             'limit' => $request->limit,
         ]);
-    
-        return response()->json([
-            'success' => true,
-            'message' => 'Remitter data stored successfully',
-            'data' => $remitter,
-        ]);
-    }
 
+        return response()->json(['success' => true, 'message' => 'Remitter data stored successfully', 'data' => $remitter]);
+    }
 
     public function maskAadhaar($aadhaar)
     {
-        
         return 'XXXX-XXXX-XXXX-' . substr($aadhaar, -4);
     }
 
-    public function showRemitterAdhaarVerifyApi()
+    public function showRemitterAdhaarVerifyApi(Request $request)
     {
-        return Inertia::render('Admin/remitter2/RemitterAdhaarVerifyApi');
+        return Inertia::render('Admin/remitter2/RemitterAdhaarVerifyApi', [
+            'mobile' => $request->query('mobile'),
+            'queryData' => $request->query('queryData'),
+        ]);
     }
-    
+
     public function verifyAadhaar(Request $request)
     {
-        // Validate the request
         $validator = Validator::make($request->all(), [
             'mobile' => 'required|digits:10',
             'aadhaar_no' => 'required|digits:12',
         ]);
-    
+
         if ($validator->fails()) {
             return back()->withErrors($validator);
         }
-    
+
         try {
-            // Initialize Guzzle HTTP client
             $client = new Client();
             $requestId = time() . rand(1000, 9999);
             $jwtToken = $this->generateJwtToken($requestId);
-            // Make the API request with full Aadhaar number
+
             $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
                 'headers' => [
-      
                     'Token' => $jwtToken,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
@@ -158,30 +129,26 @@ class Remitter2Controller extends Controller
                     'aadhaar_no' => $request->aadhaar_no,
                 ],
             ]);
-    
 
             $apiResponse = json_decode($response->getBody()->getContents(), true);
-
             $maskedAadhaar = $this->maskAadhaar($request->aadhaar_no);
- 
+
             $verification = RemitterAadharVerify::create([
                 'mobile' => $request->mobile,
-                'masked_aadhaar' => $maskedAadhaar, 
+                'masked_aadhaar' => $maskedAadhaar,
                 'status' => $apiResponse['status'] ?? 'FAILED',
                 'response_code' => $apiResponse['response_code'] ?? 'ERROR',
                 'message' => $apiResponse['message'] ?? 'API call failed',
             ]);
-    
-            // Return both API response and DB record
+
             return Inertia::render('Admin/remitter2/RemitterAdhaarVerifyApi', [
                 'apiData' => $apiResponse,
                 'dbData' => $verification,
-                'error' => null
+                'error' => null,
+                'mobile' => $request->mobile, // Pass mobile back for redirection
             ]);
-    
         } catch (\Exception $e) {
             Log::error('Aadhaar verification error: ' . $e->getMessage());
-            
             return Inertia::render('Admin/remitter2/RemitterAdhaarVerifyApi', [
                 'apiData' => null,
                 'dbData' => null,
@@ -190,72 +157,57 @@ class Remitter2Controller extends Controller
         }
     }
 
-
-
-
     public function registerAdhaarRemitter(Request $request)
     {
-        // Validate the incoming request
         $validator = Validator::make($request->all(), [
             'mobile' => 'required|digits:10',
             'aadhaar_no' => 'required|digits:12',
         ]);
-    
+
         if ($validator->fails()) {
-            return response()->json([
-                'error' => $validator->errors()->first()
-            ], 422);
+            return response()->json(['error' => $validator->errors()->first()], 422);
         }
-    
+
         try {
             $apiResponse = $this->verifyAadhaarWithAPI($request->mobile, $request->aadhaar_no);
-    
-            // Mask the Aadhaar number
             $maskedAadhaar = $this->maskAadhaar($request->aadhaar_no);
-    
-            // Store the verification result with masked Aadhaar
+
             $verification = RemitterAadharVerify::create([
                 'status' => $apiResponse['status'] ?? 'FAILED',
                 'response_code' => $apiResponse['response_code'] ?? 'ERROR',
                 'message' => $apiResponse['message'] ?? 'API call failed',
                 'mobile' => $request->mobile,
-                'masked_aadhaar' => $maskedAadhaar, // Store masked version
+                'masked_aadhaar' => $maskedAadhaar,
             ]);
-    
-            // Return the response to the frontend
+
             return response()->json([
                 'status' => $apiResponse['status'] ?? 'FAILED',
                 'message' => $apiResponse['message'] ?? 'Verification failed',
                 'data' => $verification
             ]);
-    
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'An error occurred during verification: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'An error occurred during verification: ' . $e->getMessage()], 500);
         }
     }
 
     private function verifyAadhaarWithAPI($mobile, $aadhaar)
     {
-       
         $client = new Client();
         $requestId = time() . rand(1000, 9999);
         $jwtToken = $this->generateJwtToken($requestId);
 
         $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
             'headers' => [
-          
                'Token' => $jwtToken,
                 'accept' => 'application/json',
                 'content-type' => 'application/json',
             ],
             'json' => [
                 'mobile' => $mobile,
-                'aadhaar_no' => $aadhaar, 
+                'aadhaar_no' => $aadhaar,
             ],
         ]);
-        
+
         return json_decode($response->getBody()->getContents(), true);
     }
 
@@ -267,16 +219,13 @@ class Remitter2Controller extends Controller
         ]);
     }
 
-
     public function registerRemitter(Request $request)
     {
         if ($request->isMethod('post')) {
             try {
-                // Generate unique request ID and JWT token
                 $requestId = time() . rand(1000, 9999);
                 $jwtToken = $this->generateJwtToken($requestId);
 
-                // Call external API
                 $response = Http::withHeaders([
                     'Token' => $jwtToken,
                     'accept' => 'application/json',
@@ -286,13 +235,11 @@ class Remitter2Controller extends Controller
 
                 $responseData = $response->json();
 
-                // Extract relevant data from the response
                 $status = $responseData['status'] ?? null;
                 $message = $responseData['message'] ?? null;
                 $limit = $responseData['data']['limit'] ?? null;
                 $mobile = $responseData['data']['mobile'] ?? $request->mobile;
 
-                // Store the registration attempt and response
                 $registration = RemitterRegistration::create([
                     'mobile' => $request->mobile,
                     'otp' => $request->otp,
@@ -304,7 +251,7 @@ class Remitter2Controller extends Controller
                     'api_response' => $responseData,
                     'status' => $status,
                     'message' => $message,
-                    'jwt_token' => $jwtToken // Added to store the used token
+                    'jwt_token' => $jwtToken
                 ]);
 
                 Log::info('Remitter registration successful', [
@@ -322,9 +269,7 @@ class Remitter2Controller extends Controller
                         'registration_id' => $registration->id
                     ]
                 ], $response->status());
-
             } catch (\Exception $e) {
-                // Store failed attempt
                 $registration = RemitterRegistration::create([
                     'mobile' => $request->mobile,
                     'otp' => $request->otp,
@@ -350,7 +295,6 @@ class Remitter2Controller extends Controller
             }
         }
 
-        // Get recent registrations for display
         $recentRegistrations = RemitterRegistration::latest()
             ->take(5)
             ->get()
@@ -367,9 +311,13 @@ class Remitter2Controller extends Controller
             });
 
         return Inertia::render('Admin/remitter2/RegisterRemitter', [
-            'recentRegistrations' => $recentRegistrations
+            'recentRegistrations' => $recentRegistrations,
+            'mobile' => $request->query('mobile'),
+            'aadhaarData' => $request->query('aadhaarData'),
+            'dbData' => $request->query('dbData'),
         ]);
     }
+
     public function getRegistrations()
     {
         $registrations = RemitterRegistration::latest()
@@ -390,8 +338,4 @@ class Remitter2Controller extends Controller
             'registrations' => $registrations
         ]);
     }
-
-
-
-
 }

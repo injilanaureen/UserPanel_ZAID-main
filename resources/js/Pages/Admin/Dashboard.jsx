@@ -155,7 +155,10 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl shadow p-6 w-64">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Wallet Balance</h3>
+              <h3 className="text-sm font-medium text-gray-500">
+              Cash Balance <br /> (Debit Balance)
+              </h3>
+
                 <div className="mt-2">
                   <span className="text-2xl font-bold text-gray-900">
                     {isLoadingBalance ? 'Loading...' : walletBalance === 'Error' ? 'Error' : `₹${walletBalance}`}

@@ -1,1 +1,0 @@
-import{j as e}from"./app-DKoc5bU4.js";import{A as t}from"./AdminLayout-B01A5rIe.js";import"./x-CLVtGspL.js";import"./createLucideIcon-D8pcIGZt.js";const n=()=>e.jsx(t,{children:e.jsx("div",{className:"flex items-center justify-center h-screen",children:e.jsx("h1",{className:"text-2xl font-bold",children:"Coming Soon"})})});export{n as default};

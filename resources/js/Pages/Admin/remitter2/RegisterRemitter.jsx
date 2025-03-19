@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Phone, Send, Key, FileText, AlertCircle, CheckCircle, Code } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const RegisterRemitter = ({ recentRegistrations = [] }) => {
+const RegisterRemitter = ({ recentRegistrations = [], mobile: initialMobile = '', aadhaarData = null, dbData = null }) => {
     const [formData, setFormData] = useState({
-        mobile: "",
+        mobile: initialMobile || "",
         otp: "",
         stateresp: "",
         data: "",
@@ -18,7 +18,13 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
     const [apiData, setApiData] = useState(null);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState("");
-    const [activeTab, setActiveTab] = useState("form"); 
+    const [activeTab, setActiveTab] = useState("form");
+
+    useEffect(() => {
+        if (initialMobile) {
+            setFormData((prev) => ({ ...prev, mobile: initialMobile }));
+        }
+    }, [initialMobile]);
 
     const handleChange = (e) => {
         setFormData({
@@ -39,7 +45,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
         setError(null);
         
         try {
-            const response = await fetch("YOUR_OTP_API_ENDPOINT", {
+            const response = await fetch("/api/send-otp", {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -87,42 +93,36 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
             if (response.ok) {
                 setApiData(result.data);
                 setSuccess("Remitter registered successfully!");
-                // Optional: Reset form or keep as is
             } else {
                 setError(result.error || "Failed to register remitter");
             }
         } catch (err) {
-            setError(
-                "Failed to communicate with the server. Please try again."
-            );
+            setError("Failed to communicate with the server. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
 
+    // Optional: Add a next step if there's a subsequent page (e.g., a confirmation page)
+    const handleNextStep = () => {
+        // For now, no next step; could redirect to a confirmation page or dashboard
+        console.log("Registration complete. Add next step logic here if needed.");
+    };
+
     return (
         <AdminLayout>
             <div className="max-w-full">
-                {/* Tab Navigation */}
                 <div className="mb-6">
                     <div className="flex space-x-4 border-b">
                         <button
                             onClick={() => setActiveTab("form")}
-                            className={`py-2 px-4 font-medium ${
-                                activeTab === "form"
-                                    ? "border-b-2 border-gray-800 text-gray-800"
-                                    : "text-gray-500 hover:text-gray-700"
-                            }`}
+                            className={`py-2 px-4 font-medium ${activeTab === "form" ? "border-b-2 border-gray-800 text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
                         >
                             Registration Form
                         </button>
                         <button
                             onClick={() => setActiveTab("history")}
-                            className={`py-2 px-4 font-medium ${
-                                activeTab === "history"
-                                    ? "border-b-2 border-gray-800 text-gray-800"
-                                    : "text-gray-500 hover:text-gray-700"
-                            }`}
+                            className={`py-2 px-4 font-medium ${activeTab === "history" ? "border-b-2 border-gray-800 text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
                         >
                             Registration History
                         </button>
@@ -156,10 +156,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div className="flex flex-col">
-                                    <label
-                                        htmlFor="mobile"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
+                                    <label htmlFor="mobile" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                         <Phone size={20} className="mr-2 text-blue-500" />
                                         Mobile Number
                                     </label>
@@ -180,10 +177,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                 </div>
 
                                 <div>
-                                    <label
-                                        htmlFor="otp"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
+                                    <label htmlFor="otp" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                         <Key size={20} className="mr-2 text-yellow-500" />
                                         OTP
                                     </label>
@@ -197,15 +191,12 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                         onChange={handleChange}
                                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
                                         required
-                                        placeholder="Enter 6 digit OTP recieved while verifying Aadhar"
+                                        placeholder="Enter 6 digit OTP received while verifying Aadhar"
                                     />
                                 </div>
 
                                 <div>
-                                    <label
-                                        htmlFor="stateresp"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
+                                    <label htmlFor="stateresp" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                         <FileText size={20} className="mr-2 text-green-500" />
                                         State Response
                                     </label>
@@ -222,10 +213,7 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                 </div>
 
                                 <div>
-                                    <label
-                                        htmlFor="data"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
+                                    <label htmlFor="data" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                         <FileText size={20} className="mr-2 text-purple-500" />
                                         Data(Pid)
                                     </label>
@@ -241,13 +229,8 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                     />
                                 </div>
 
-                                {/* Access Mode field removed */}
-
                                 <div>
-                                    <label
-                                        htmlFor="is_iris"
-                                        className="flex items-center text-sm font-medium text-gray-600 mb-1"
-                                    >
+                                    <label htmlFor="is_iris" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                         <FileText size={20} className="mr-2 text-orange-500" />
                                         Is Iris
                                     </label>
@@ -306,6 +289,13 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                                             </TableBody>
                                         </Table>
                                     </div>
+                                    {/* Optional: Add a Next Step button if there's a subsequent page */}
+                                    {/* <button
+                                        onClick={handleNextStep}
+                                        className="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                                    >
+                                        Next Step
+                                    </button> */}
                                 </div>
                             </div>
                         )}
@@ -320,70 +310,32 @@ const RegisterRemitter = ({ recentRegistrations = [] }) => {
                             <Table className="w-full">
                                 <TableHeader className="bg-gray-50">
                                     <TableRow>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Date
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Mobile
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Status
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Message
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Access Mode
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Limit
-                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mobile</TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Access Mode</TableHead>
+                                        <TableHead className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Limit</TableHead>
                                     </TableRow>
                                 </TableHeader>
-
                                 <TableBody>
                                     {recentRegistrations.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                                                No registration data available
-                                            </TableCell>
+                                            <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">No registration data available</TableCell>
                                         </TableRow>
                                     ) : (
                                         recentRegistrations.map((registration, index) => (
-                                            <TableRow
-                                                key={registration.id || index}
-                                                className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                                            >
-                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(registration.created_at).toLocaleString()}
-                                                </TableCell>
-                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {registration.mobile}
-                                                </TableCell>
+                                            <TableRow key={registration.id || index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{new Date(registration.created_at).toLocaleString()}</TableCell>
+                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{registration.mobile}</TableCell>
                                                 <TableCell className="px-4 py-3 whitespace-nowrap">
-                                                    <span
-                                                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                            registration.status === "success"
-                                                                ? "bg-green-100 text-green-800"
-                                                                : registration.status === "error"
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-yellow-100 text-yellow-800"
-                                                        }`}
-                                                    >
+                                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${registration.status === "success" ? "bg-green-100 text-green-800" : registration.status === "error" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>
                                                         {registration.status || "Pending"}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="px-4 py-3 text-sm text-gray-500">
-                                                    {registration.message}
-                                                </TableCell>
-                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                    {registration.accessmode}
-                                                </TableCell>
-                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                    {registration.limit
-                                                        ? `₹${registration.limit.toLocaleString()}`
-                                                        : "N/A"}
-                                                </TableCell>
+                                                <TableCell className="px-4 py-3 text-sm text-gray-500">{registration.message}</TableCell>
+                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{registration.accessmode}</TableCell>
+                                                <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{registration.limit ? `₹${registration.limit.toLocaleString()}` : "N/A"}</TableCell>
                                             </TableRow>
                                         ))
                                     )}

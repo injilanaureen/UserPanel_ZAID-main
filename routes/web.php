@@ -133,7 +133,16 @@ Route::post('/api/admin/remitter2/register-remitter', [Remitter2Controller::clas
     ->name('api.admin.remitter2.register');
     Route::get('/admin/remitter2/registrations', [Remitter2Controller::class, 'getRegistrations'])
     ->name('admin.remitter2.registrations');
-// Redirect root to dashboard
+//route redirect for register remitter 
+Route::prefix('admin/remitter2')->middleware(['auth'])->group(function () {
+    Route::get('/query-remitter', [Remitter2Controller::class, 'showQueryForm'])->name('remitter.query.form');
+    Route::post('/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query');
+    Route::post('/storeRemitter', [Remitter2Controller::class, 'storeRemitterData'])->name('remitter.store');
+    Route::get('/remitter-adhaar-verify', [Remitter2Controller::class, 'showRemitterAdhaarVerifyApi'])->name('remitter.aadhaar.verify.form');
+    Route::post('/remitter-adhaar-verify', [Remitter2Controller::class, 'verifyAadhaar'])->name('remitter.aadhaar.verify');
+    Route::get('/register-remitter', [Remitter2Controller::class, 'registerRemitter'])->name('remitter.register.form');
+    Route::post('/register-remitter', [Remitter2Controller::class, 'registerRemitter'])->name('remitter.register');
+});
 
  
 //Beneficiary 
