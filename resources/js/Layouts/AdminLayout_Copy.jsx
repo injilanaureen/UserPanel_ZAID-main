@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
-import axios from "axios";
 import {
     LogOut,
     Home,
@@ -12,7 +11,6 @@ import {
     IndianRupee,
     Menu,
     X,
-    Wallet,
 } from "lucide-react";
 import sidebarItems from "../data/sidebar_items.json";
 
@@ -23,8 +21,6 @@ export default function AdminLayout({ children }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileView, setIsMobileView] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-    const [walletBalance, setWalletBalance] = useState(null);
-    const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
     // Handle responsive sidebar behavior
     useEffect(() => {
@@ -43,29 +39,6 @@ export default function AdminLayout({ children }) {
 
         // Clean up
         return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    // Fetch wallet balance
-    useEffect(() => {
-        const fetchWalletBalance = async () => {
-            try {
-                setIsLoadingBalance(true);
-                const response = await axios.get('/admin/api/proxy/wallet-balance');
-                if (response.data.success) {
-                    setWalletBalance(response.data.balance);
-                } else {
-                    setWalletBalance('Error');
-                    console.error('Wallet Balance API Error:', response.data.message);
-                }
-            } catch (error) {
-                setWalletBalance('Error');
-                console.error('Wallet Balance API Response:', error);
-            } finally {
-                setIsLoadingBalance(false);
-            }
-        };
-
-        fetchWalletBalance();
     }, []);
 
     const handleLogout = () => {
@@ -314,30 +287,11 @@ export default function AdminLayout({ children }) {
                             </marquee> */}
                         </div>
                         <div className="relative flex items-center">
-                                                      {/* Credit Balance Display - No API Integration */}
-    <div className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 bg-red-50 rounded-md mr-2">
-        <IndianRupee className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
-        <div>
-            <span className="hidden lg:inline mr-1">Credit Balance:</span>
-            <span className="font-bold">₹0</span>
-        </div>
-    </div>
-                            {/* Wallet Balance Display */}
-                            <div className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-green-600 bg-green-50 rounded-md mr-2">
-                                <Wallet className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
-                                <div>
-                                    <span className="hidden lg:inline mr-1">Debit Balance:</span>
-                                    <span className="font-bold">
-                                        {isLoadingBalance ? 'Loading...' : walletBalance === 'Error' ? 'Error' : `₹${walletBalance}`}
-                                    </span>
-                                </div>
-                            </div>
-      
                             <button
                                 onClick={handleLogout}
                                 onMouseEnter={() => setShowUserInfo(true)}
                                 onMouseLeave={() => setShowUserInfo(false)}
-                                className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-150 ease-in-out"
+                                className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-150 ease-in-out ml-4"
                             >
                                 <User className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
                                 <LogOut className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />

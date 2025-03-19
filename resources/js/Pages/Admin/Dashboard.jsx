@@ -151,7 +151,7 @@ const Dashboard = () => {
     <AdminLayout>
       <div className="bg-gray-50 min-h-screen">
         {/* Wallet Balance Box */}
-        <div className="flex justify-end mb-4 pr-6">
+        {/* <div className="flex justify-end mb-4 pr-6">
           <div className="bg-white rounded-xl shadow p-6 w-64">
             <div className="flex items-center justify-between">
               <div>
@@ -168,7 +168,7 @@ const Dashboard = () => {
               <div className="text-2xl">💳</div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Time Filter */}
         <div className="max-w-full">
