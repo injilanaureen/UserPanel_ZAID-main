@@ -9,50 +9,56 @@ class PaysprintCallbackController extends Controller
 {
     public function handleCallback(Request $request)
     {
+        // Log request for debugging
         Log::info('Paysprint Callback Received:', $request->all());
 
-
+        // Validate request structure
         $request->validate([
             'event' => 'required|string',
             'param' => 'required|array',
+            'param.amount' => 'required|string',
+            'param.refid' => 'required|string',
+            'param.customer_mobile' => 'required|string',
         ]);
 
+        // Get event type
         $event = $request->input('event');
         $params = $request->input('param');
 
-        switch ($event) {
-            case 'BUS_TICKET_BOOKING_DEBIT_CONFIRMATION':
-                return $this->handleDebitCallback($params);
-            case 'BUS_TICKET_BOOKING_CREDIT_CONFIRMATION':
-                return $this->handleCreditCallback($params);
-            case 'BUS_TICKET_BOOKING_CONFIRMATION':
-                return $this->handleTicketConfirmation($params);
-            default:
-                return response()->json(['status' => 400, 'message' => 'Invalid event type'], 400);
+        // Process based on event type
+        if ($event === 'BUS_TICKET_BOOKING_DEBIT_CONFIRMATION') {
+            return $this->handleDebitTransaction($params);
+        } elseif ($event === 'BUS_TICKET_BOOKING_CREDIT_CONFIRMATION') {
+            return $this->handleCreditTransaction($params);
         }
+
+        return response()->json(['status' => 400, 'message' => 'Invalid event type'], 400);
     }
 
-    private function handleDebitCallback($params) 
+    private function handleDebitTransaction($params)
     {
-        Log::info('Handling Debit Callback:', $params);
-        
+        // Log the transaction
+        Log::info('Processing Debit Transaction:', $params);
+
+        // Example: Save booking details (uncomment if you have a database)
+        // Booking::create([
+        //     'ref_id' => $params['refid'],
+        //     'amount' => $params['amount'],
+        //     'customer_mobile' => $params['customer_mobile'],
+        //     'status' => 'confirmed'
+        // ]);
 
         return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
     }
 
-    private function handleCreditCallback($params)
+    private function handleCreditTransaction($params)
     {
-        // Process credit confirmation logic
-        Log::info('Handling Credit Callback:', $params);
-        
-        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
-    }
+        // Log the transaction
+        Log::info('Processing Credit Transaction:', $params);
 
-    private function handleTicketConfirmation($params)
-    {
-        // Process ticket confirmation logic
-        Log::info('Handling Ticket Confirmation:', $params);
-        
-        return response()->json(['status' => 200, 'message' => 'Ticket confirmed successfully']);
+        // Example: Mark booking as canceled (uncomment if using a database)
+        // Booking::where('ref_id', $params['refid'])->update(['status' => 'canceled']);
+
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
     }
 }
