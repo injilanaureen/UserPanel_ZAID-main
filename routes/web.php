@@ -37,6 +37,8 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/admin/api/proxy/wallet-balance', [AdminController::class, 'getWalletBalance'])
 ->name('admin.wallet.balance');
+Route::post('/admin/api/proxy/credit-balance', [AdminController::class, 'getCreditBalance'])
+    ->name('admin.credit.balance');
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
@@ -106,7 +108,9 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     Route::get('/checkBookedTickets', [BusTicketController::class, 'getcheckBookedTickets'])->name('busTicket.checkBookedTickets');
     Route::post('/fetchBookedTickets', [BusTicketController::class, 'fetchBookedTickets'])->name('busTicket.fetchBookedTickets');
 });
-
+// Add these routes to your web.php or api.php route file
+Route::post('/admin/busTicket/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('admin.busTicket.fetchSourceCities');
+Route::post('/admin/busTicket/fetchDestinationCities', [BusTicketController::class, 'fetchDestinationCities'])->name('admin.busTicket.fetchDestinationCities');
 //DMT Bank 2 Remitter
 Route::get('/admin/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query');
 Route::post('/admin/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query.post');
@@ -384,3 +388,7 @@ Route::post('/cms/airtel/store', [CMSAirtelController::class, 'store']);
 Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
 Route::get('/admin/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
     Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');
+
+
+
+    

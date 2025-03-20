@@ -52,6 +52,32 @@ class AdminController extends Controller
             ], 500);
         }
     }
+    public function getCreditBalance()
+{
+    $requestId = time() . rand(1000, 9999);
+    $jwtToken = $this->generateJwtToken($requestId);
+    
+    try {
+        $response = Http::withHeaders([
+            'Token' => $jwtToken,
+            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+            'User-Agent' => $this->partnerId,
+            'accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->post('https://sit.paysprint.in/service-api/api/v1/service/balance/balance/mainbalance');
+        
+        return response()->json([
+            'success' => true,
+            'balance' => $response->json('data.balance') ?? 0
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+    
 
     
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class PaysprintCallbackController extends Controller
 {
     public function handleCallback(Request $request)
-    {
+    {       
         // Log request for debugging
         Log::info('Paysprint Callback Received:', $request->all());
 
@@ -75,11 +75,7 @@ class PaysprintCallbackController extends Controller
         // Log the transaction
         Log::info('Processing Ticket Confirmation:', $params);
 
-        // Additional validation for seat details in ticket confirmation
-        if (!isset($params['seat_details'])) {
-            return response()->json(['status' => 400, 'message' => 'Missing seat details'], 400);
-        }
-
+        
         // Example: Save ticket details in the database
         // Ticket::create([
         //     'pnr_no' => $params['pnr_no'],

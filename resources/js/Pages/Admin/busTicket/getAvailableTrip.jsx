@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Loader2, Search } from "lucide-react";
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Receipt,LoaderPinwheel ,ShipWheel  } from 'lucide-react';
-
+import { Receipt, LoaderPinwheel, ShipWheel } from 'lucide-react';
 
 const AvailableTrips = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +9,7 @@ const AvailableTrips = () => {
     destination_id: "",
     date_of_journey: "",
   });
-  const [trips, setTrips] = useState([]);
+  const [trips, setTrips] = useState([]); // Ensure trips is always an array
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -18,6 +17,50 @@ const AvailableTrips = () => {
     availability: "",
     fareRange: "",
   });
+  const [sourceCities, setSourceCities] = useState([]);
+  const [destinationCities, setDestinationCities] = useState([]);
+  const [sourceSearch, setSourceSearch] = useState("");
+  const [destSearch, setDestSearch] = useState("");
+  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [showDestDropdown, setShowDestDropdown] = useState(false);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch('/admin/busTicket/fetchSourceCities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        if (data.status && data.data.cities) {
+          setSourceCities(data.data.cities);
+          setDestinationCities(data.data.cities);
+        } else {
+          throw new Error('Failed to fetch cities data');
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  const filteredSourceCities = sourceCities.filter(city =>
+    city.name.toLowerCase().includes(sourceSearch.toLowerCase())
+  ).slice(0, 10);
+
+  const filteredDestCities = destinationCities.filter(city =>
+    city.name.toLowerCase().includes(destSearch.toLowerCase())
+  ).slice(0, 10);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -36,11 +79,23 @@ const AvailableTrips = () => {
     }));
   };
 
+  const handleCitySelect = (type, city) => {
+    if (type === "source") {
+      setFormData((prev) => ({ ...prev, source_id: city.id }));
+      setSourceSearch(city.name);
+      setShowSourceDropdown(false);
+    } else {
+      setFormData((prev) => ({ ...prev, destination_id: city.id }));
+      setDestSearch(city.name);
+      setShowDestDropdown(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setTrips([]);
+    setTrips([]); // Reset trips to an empty array
 
     try {
       const response = await fetch("/admin/busTicket/fetchAvailableTrips", {
@@ -48,9 +103,7 @@ const AvailableTrips = () => {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "X-CSRF-TOKEN": document
-            .querySelector('meta[name="csrf-token"]')
-            .getAttribute("content"),
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
           "X-Requested-With": "XMLHttpRequest",
         },
         body: JSON.stringify(formData),
@@ -62,29 +115,32 @@ const AvailableTrips = () => {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
 
-      setTrips(data.data.availableTrips);
+      // Ensure availableTrips is an array, fallback to empty array if undefined
+      const availableTrips = Array.isArray(data.data?.availableTrips) ? data.data.availableTrips : [];
+      setTrips(availableTrips);
+
+      if (availableTrips.length === 0) {
+        setError("No trips found for the selected criteria.");
+      }
     } catch (err) {
       setError(err.message || "Failed to fetch trips. Please try again.");
+      setTrips([]); // Ensure trips is reset to an array on error
     } finally {
       setLoading(false);
     }
   };
 
   const getFilteredTrips = () => {
-    if (!trips) return [];
-
     return trips.filter((trip) => {
       const matchBusType = !filters.busType || trip.busType === filters.busType;
-
-      const seats = parseInt(trip.availableSeats);
+      const seats = parseInt(trip.availableSeats) || 0; // Handle invalid seats
       const matchAvailability = !filters.availability || (
         (filters.availability === "1-5" && seats <= 5) ||
         (filters.availability === "6-10" && seats > 5 && seats <= 10) ||
         (filters.availability === "11-20" && seats > 10 && seats <= 20) ||
         (filters.availability === "21+" && seats > 20)
       );
-
-      const fare = parseFloat(trip.fares);
+      const fare = parseFloat(trip.fares) || 0; // Handle invalid fares
       const matchFare = !filters.fareRange || (
         (filters.fareRange === "low" && fare <= 50) ||
         (filters.fareRange === "medium" && fare > 50 && fare <= 200) ||
@@ -96,8 +152,7 @@ const AvailableTrips = () => {
   };
 
   const getBusTypes = () => {
-    if (!trips) return [];
-    return [...new Set(trips.map(trip => trip.busType))];
+    return [...new Set(trips.map(trip => trip.busType).filter(Boolean))]; // Filter out undefined/null
   };
 
   return (
@@ -108,41 +163,81 @@ const AvailableTrips = () => {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 mb-6 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-            <div className="flex gap-1">
-          <Receipt size={20} className="text-green-500 animate-bounce"/>
-          <label className="block text-gray-700 font-medium mb-1">Source ID:</label>
-          </div>
-              <input
-                type="number"
-                name="source_id"
-                value={formData.source_id}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+            <div className="relative">
+              <div className="flex gap-1">
+                <Receipt size={20} className="text-green-500 animate-bounce" />
+                <label className="block text-gray-700 font-medium mb-1">Source City:</label>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={sourceSearch}
+                  onChange={(e) => {
+                    setSourceSearch(e.target.value);
+                    setShowSourceDropdown(true);
+                  }}
+                  onFocus={() => setShowSourceDropdown(true)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Search source city..."
+                  required
+                />
+                {showSourceDropdown && filteredSourceCities.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border rounded-lg mt-1 max-h-60 overflow-y-auto">
+                    {filteredSourceCities.map((city) => (
+                      <li
+                        key={city.id}
+                        onClick={() => handleCitySelect("source", city)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {city.name}, {city.state} (ID: {city.id})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="flex gap-1">
+                <LoaderPinwheel size={20} className="text-yellow-500 animate-bounce" />
+                <label className="block text-gray-700 font-medium mb-1">Destination City:</label>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={destSearch}
+                  onChange={(e) => {
+                    setDestSearch(e.target.value);
+                    setShowDestDropdown(true);
+                  }}
+                  onFocus={() => setShowDestDropdown(true)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  placeholder="Search destination city..."
+                  required
+                />
+                {showDestDropdown && filteredDestCities.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border rounded-lg mt-1 max-h-60 overflow-y-auto">
+                    {filteredDestCities.map((city) => (
+                      <li
+                        key={city.id}
+                        onClick={() => handleCitySelect("destination", city)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {city.name}, {city.state} (ID: {city.id})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             <div>
-            <div className="flex gap-1">
-          <LoaderPinwheel size={20} className="text-yellow-500 animate-bounce"/>
-          <label className="block text-gray-700 font-medium mb-1">Destination ID:</label>
-          </div>
-              <input
-                type="number"
-                name="destination_id"
-                value={formData.destination_id}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                required
-              />
-            </div>
-
-            <div>
-            <div className="flex gap-1">
-          <ShipWheel size={20} className="text-red-500 animate-bounce"/>
-          <label className="block text-gray-700 font-medium mb-1">Date of Journey:</label>
-          </div>
+              <div className="flex gap-1">
+                <ShipWheel size={20} className="text-red-500 animate-bounce" />
+                <label className="block text-gray-700 font-medium mb-1">Date of Journey:</label>
+              </div>
               <input
                 type="date"
                 name="date_of_journey"
@@ -177,7 +272,11 @@ const AvailableTrips = () => {
           </div>
         )}
 
-        {trips.length > 0 && !loading && (
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : trips.length > 0 ? (
           <div>
             <h3 className="text-lg font-semibold mb-2">Available Trips</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -225,19 +324,19 @@ const AvailableTrips = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Bus Type</p>
-                      <p className="font-medium">{trip.busType}</p>
+                      <p className="font-medium">{trip.busType || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Available Seats</p>
-                      <p className="font-medium">{trip.availableSeats}</p>
+                      <p className="font-medium">{trip.availableSeats || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Fare</p>
-                      <p className="font-medium">₹{trip.fares}</p>
+                      <p className="font-medium">₹{trip.fares || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Duration</p>
-                      <p className="font-medium">{trip.duration}</p>
+                      <p className="font-medium">{trip.duration || "N/A"}</p>
                     </div>
                   </div>
 
@@ -250,53 +349,56 @@ const AvailableTrips = () => {
                         </p>
                       ))
                     ) : (
-                      <p className="font-medium">{trip.boardingTimes.bpName} - {trip.boardingTimes.address} (Contact: {trip.boardingTimes.contactNumber})</p>
+                      <p className="font-medium">
+                        {trip.boardingTimes?.bpName || "N/A"} - {trip.boardingTimes?.address || "N/A"} (Contact: {trip.boardingTimes?.contactNumber || "N/A"})
+                      </p>
                     )}
                   </div>
 
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Dropping Point:</p>
-                    <p className="font-medium">{trip.droppingTimes.bpName} - {trip.droppingTimes.address} (Contact: {trip.droppingTimes.contactNumber})</p>
+                    <p className="font-medium">
+                      {trip.droppingTimes?.bpName || "N/A"} - {trip.droppingTimes?.address || "N/A"} (Contact: {trip.droppingTimes?.contactNumber || "N/A"})
+                    </p>
                   </div>
 
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Cancellation Policy:</p>
-                    <p className="font-medium">{trip.cancellationPolicy}</p>
+                    <p className="font-medium">{trip.cancellationPolicy || "N/A"}</p>
                   </div>
 
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Fare Details:</p>
                     <div className="border-t pt-2">
-                      <p className="font-medium">Base Fare: ₹{trip.fareDetails.baseFare}</p>
-                      <p className="font-medium">GST: ₹{trip.fareDetails.gst}</p>
-                      <p className="font-medium">Total Fare: ₹{trip.fareDetails.totalFare}</p>
+                      <p className="font-medium">Base Fare: ₹{trip.fareDetails?.baseFare || "N/A"}</p>
+                      <p className="font-medium">GST: ₹{trip.fareDetails?.gst || "N/A"}</p>
+                      <p className="font-medium">Total Fare: ₹{trip.fareDetails?.totalFare || "N/A"}</p>
                     </div>
                   </div>
 
-                  {/* New Fields */}
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Operator:</p>
-                    <p className="font-medium">{trip.operator}</p>
+                    <p className="font-medium">{trip.operator || "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Travel Company:</p>
-                    <p className="font-medium">{trip.travels}</p>
+                    <p className="font-medium">{trip.travels || "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Date of Journey:</p>
-                    <p className="font-medium">{new Date(trip.doj).toLocaleDateString()}</p>
+                    <p className="font-medium">{trip.doj ? new Date(trip.doj).toLocaleDateString() : "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Departure Time:</p>
-                    <p className="font-medium">{trip.departureTime}</p>
+                    <p className="font-medium">{trip.departureTime || "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Arrival Time:</p>
-                    <p className="font-medium">{trip.arrivalTime}</p>
+                    <p className="font-medium">{trip.arrivalTime || "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Vehicle Type:</p>
-                    <p className="font-medium">{trip.vehicleType}</p>
+                    <p className="font-medium">{trip.vehicleType || "N/A"}</p>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">Vaccinated Bus:</p>
@@ -310,6 +412,12 @@ const AvailableTrips = () => {
               ))}
             </div>
           </div>
+        ) : (
+          !error && (
+            <div className="text-gray-600 p-4">
+              No trips available. Please search with different criteria.
+            </div>
+          )
         )}
       </div>
     </AdminLayout>

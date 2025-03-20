@@ -25,6 +25,8 @@ export default function AdminLayout({ children }) {
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [walletBalance, setWalletBalance] = useState(null);
     const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+    const [creditBalance, setCreditBalance] = useState(null);
+    const [isLoadingCreditBalance, setIsLoadingCreditBalance] = useState(false);
 
     // Handle responsive sidebar behavior
     useEffect(() => {
@@ -67,6 +69,33 @@ export default function AdminLayout({ children }) {
 
         fetchWalletBalance();
     }, []);
+
+    // Add a function to fetch credit balance
+    useEffect(() => {
+    const fetchCreditBalance = async () => {
+        try {
+            setIsLoadingCreditBalance(true);
+            const response = await axios.post('/admin/api/proxy/credit-balance');
+
+            // console.log('Credit Balance API Full Response:', response);
+
+            if (response.data.success) {
+                // console.log('Credit Balance Data:', response.data);
+                setCreditBalance(response.data.balance);
+            } else {
+                setCreditBalance('Error');
+                console.error('Credit Balance API Error:', response.data.message);
+            }
+        } catch (error) {
+            setCreditBalance('Error');
+            console.error('Credit Balance API Response:', error);
+        } finally {
+            setIsLoadingCreditBalance(false);
+        }
+    };
+
+    fetchCreditBalance();
+}, []);
 
     const handleLogout = () => {
         router.post(route("logout"));
@@ -314,14 +343,16 @@ export default function AdminLayout({ children }) {
                             </marquee> */}
                         </div>
                         <div className="relative flex items-center">
-                                                      {/* Credit Balance Display - No API Integration */}
-    <div className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 bg-red-50 rounded-md mr-2">
-        <IndianRupee className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
-        <div>
-            <span className="hidden lg:inline mr-1">Credit Balance:</span>
-            <span className="font-bold">₹0</span>
-        </div>
-    </div>
+                         {/* Credit Balance Display */}
+                        <div className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 bg-red-50 rounded-md mr-2">
+                            <IndianRupee className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+                            <div>
+                                <span className="hidden lg:inline mr-1">Credit Balance:</span>
+                                <span className="font-bold">
+                                    {isLoadingCreditBalance ? 'Loading...' : creditBalance === 'Error' ? 'Error' : `₹${creditBalance}`}
+                                </span>
+                            </div>
+                        </div>
                             {/* Wallet Balance Display */}
                             <div className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-green-600 bg-green-50 rounded-md mr-2">
                                 <Wallet className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
