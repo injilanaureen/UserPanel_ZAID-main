@@ -17,8 +17,14 @@ class PaysprintCallbackController extends Controller
             'event' => 'required|string',
             'param' => 'required|array',
             'param.amount' => 'required|string',
-            'param.refid' => 'required|string',
+            'param.base_fare' => 'required|string',
+            'param.comm' => 'required|string',
+            'param.tds' => 'required|string',
+            'param.total_deduction' => 'required|string',
             'param.customer_mobile' => 'required|string',
+            'param.refid' => 'required|string',
+            'param.customer_email' => 'required|email',
+            'param.block_id' => 'required|string',
         ]);
 
         // Get event type
@@ -30,6 +36,8 @@ class PaysprintCallbackController extends Controller
             return $this->handleDebitTransaction($params);
         } elseif ($event === 'BUS_TICKET_BOOKING_CREDIT_CONFIRMATION') {
             return $this->handleCreditTransaction($params);
+        } elseif ($event === 'BUS_TICKET_BOOKING_CONFIRMATION') {
+            return $this->handleTicketConfirmation($params);
         }
 
         return response()->json(['status' => 400, 'message' => 'Invalid event type'], 400);
@@ -40,7 +48,7 @@ class PaysprintCallbackController extends Controller
         // Log the transaction
         Log::info('Processing Debit Transaction:', $params);
 
-        // Example: Save booking details (uncomment if you have a database)
+        // Example: Save booking details in the database
         // Booking::create([
         //     'ref_id' => $params['refid'],
         //     'amount' => $params['amount'],
@@ -56,9 +64,31 @@ class PaysprintCallbackController extends Controller
         // Log the transaction
         Log::info('Processing Credit Transaction:', $params);
 
-        // Example: Mark booking as canceled (uncomment if using a database)
+        // Example: Mark booking as canceled in the database
         // Booking::where('ref_id', $params['refid'])->update(['status' => 'canceled']);
 
         return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
+    }
+
+    private function handleTicketConfirmation($params)
+    {
+        // Log the transaction
+        Log::info('Processing Ticket Confirmation:', $params);
+
+        // Additional validation for seat details in ticket confirmation
+        if (!isset($params['seat_details'])) {
+            return response()->json(['status' => 400, 'message' => 'Missing seat details'], 400);
+        }
+
+        // Example: Save ticket details in the database
+        // Ticket::create([
+        //     'pnr_no' => $params['pnr_no'],
+        //     'block_id' => $params['block_id'],
+        //     'source_city' => $params['seat_details']['sourceCity'] ?? null,
+        //     'destination_city' => $params['seat_details']['destinationCity'] ?? null,
+        //     'status' => 'BOOKED'
+        // ]);
+
+        return response()->json(['status' => 200, 'message' => 'Ticket confirmed successfully']);
     }
 }
