@@ -101,13 +101,17 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     Route::post('/bookticket', [BusTicketController::class, 'bookandstorebookticket'])->name('busTicket.bookandstorebookticket');
     //block ticket
     Route::get('/blockTicket', [BusTicketController::class, 'blockTicket'])->name('busTicket.blockTicket');
+    Route::post('/block-ticket', [BusTicketController::class, 'blockTicketApi'])->name('busTicket.blockTicketApi');
     //get boarding point details ...
     Route::get('/getBoardingPointDetails', [BusTicketController::class, 'getboardingpointdetails'])->name('busTicket.getAvailableTrip');
     Route::post('/fetchboardingpointdetails', [BusTicketController::class, 'fetchandstoreboardingpointdetails'])->name('busTicket.fetchandstoreboardingpointdetails');
     //booked tickets
     Route::get('/checkBookedTickets', [BusTicketController::class, 'getcheckBookedTickets'])->name('busTicket.checkBookedTickets');
     Route::post('/fetchBookedTickets', [BusTicketController::class, 'fetchBookedTickets'])->name('busTicket.fetchBookedTickets');
+    //cancelation data 
+    Route::get('/getCancelationData', [BusTicketController::class, 'getCancelationData'])->name('busTicket.getCancelationData');
 });
+Route::match(['get', 'post'], '/admin/cancellation/data', [BusTicketController::class, 'getCancelationData'])->name('admin.cancellation.data');
 // Add these routes to your web.php or api.php route file
 Route::post('/admin/busTicket/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('admin.busTicket.fetchSourceCities');
 Route::post('/admin/busTicket/fetchDestinationCities', [BusTicketController::class, 'fetchDestinationCities'])->name('admin.busTicket.fetchDestinationCities');

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\RechargeController;
 use App\Http\Controllers\PaysprintCallbackController;
+use App\Http\Controllers\BusTicketController;
 use Illuminate\Support\Facades\Http;
 use Firebase\JWT\JWT;
 
@@ -23,3 +24,4 @@ Route::prefix('recharge')->group(function () {
 });
 
 Route::post('/busbookingcallback', [PaysprintCallbackController::class, 'handleCallback']);
+Route::post('/bus/block-ticket', [BusTicketController::class, 'blockTicketApi']);

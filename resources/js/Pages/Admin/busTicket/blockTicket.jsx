@@ -1,10 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 import AdminLayout from "@/Layouts/AdminLayout";
+
 const BlockTicket = () => {
     const [formData, setFormData] = useState({
         availableTripId: "",
         boardingPointId: "",
+        droppingPointId: "", // Added
+        source: "", // Added
+        destination: "", // Added
+        bookingType: "", // Added
+        serviceCharge: "", // Added
+        paymentMode: "", // Added
         inventoryItems: {
             0: {
                 seatName: "",
@@ -31,6 +38,14 @@ const BlockTicket = () => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
 
     const handleInventoryChange = (event) => {
         const { name, value } = event.target;
@@ -73,6 +88,12 @@ const BlockTicket = () => {
             const formattedData = {
                 availableTripId: Number(formData.availableTripId),
                 boardingPointId: Number(formData.boardingPointId),
+                droppingPointId: Number(formData.droppingPointId), // Added
+                source: formData.source, // Added
+                destination: formData.destination, // Added
+                bookingType: formData.bookingType, // Added
+                serviceCharge: Number(formData.serviceCharge), // Added
+                paymentMode: formData.paymentMode, // Added
                 inventoryItems: {
                     0: {
                         seatName: formData.inventoryItems[0].seatName,
@@ -90,10 +111,10 @@ const BlockTicket = () => {
                             address: formData.inventoryItems[0].passenger.address,
                             idType: formData.inventoryItems[0].passenger.idType,
                             idNumber: formData.inventoryItems[0].passenger.idNumber,
-                            primary: formData.inventoryItems[0].passenger.primary
-                        }
-                    }
-                }
+                            primary: formData.inventoryItems[0].passenger.primary,
+                        },
+                    },
+                },
             };
 
             const response = await axios.post(
@@ -102,8 +123,8 @@ const BlockTicket = () => {
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    }
+                        "Accept": "application/json",
+                    },
                 }
             );
 
@@ -117,8 +138,8 @@ const BlockTicket = () => {
         } catch (error) {
             console.error("Error while calling API:", error);
             setError(
-                error.response?.data?.message || 
-                error.response?.data?.error || 
+                error.response?.data?.message ||
+                error.response?.data?.error ||
                 "An error occurred while processing your request"
             );
         } finally {
@@ -128,217 +149,267 @@ const BlockTicket = () => {
 
     return (
         <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-xl font-bold mb-6">Block Ticket Form</h1>
-            
-            {error && (
-                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-                    {error}
-                </div>
-            )}
-            
-            {success && (
-                <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
-                    {success}
-                </div>
-            )}
+            <div className="p-6 max-w-4xl mx-auto">
+                <h1 className="text-xl font-bold mb-6">Block Ticket Form</h1>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-                <label className="col-span-2 font-semibold">
-                    Available Trip Information
-                </label>
-                <input
-                    type="number"
-                    name="availableTripId"
-                    placeholder="Available Trip ID"
-                    value={formData.availableTripId}
-                    onChange={(e) =>
-                        setFormData({
-                            ...formData,
-                            availableTripId: e.target.value,
-                        })
-                    }
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="number"
-                    name="boardingPointId"
-                    placeholder="Boarding Point ID"
-                    value={formData.boardingPointId}
-                    onChange={(e) =>
-                        setFormData({
-                            ...formData,
-                            boardingPointId: e.target.value,
-                        })
-                    }
-                    className="p-2 border rounded"
-                    required
-                />
+                {error && (
+                    <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+                        {error}
+                    </div>
+                )}
 
-                <label className="col-span-2 font-semibold mt-4">
-                    Seat & Pricing Information
-                </label>
-                <input
-                    type="text"
-                    name="seatName"
-                    placeholder="Seat Name"
-                    value={formData.inventoryItems[0].seatName}
-                    onChange={handleInventoryChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="number"
-                    name="fare"
-                    placeholder="Fare"
-                    step="0.01"
-                    value={formData.inventoryItems[0].fare}
-                    onChange={handleInventoryChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="number"
-                    name="serviceTax"
-                    placeholder="Service Tax"
-                    step="0.01"
-                    value={formData.inventoryItems[0].serviceTax}
-                    onChange={handleInventoryChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="number"
-                    name="operatorServiceCharge"
-                    placeholder="Operator Service Charge"
-                    step="0.01"
-                    value={formData.inventoryItems[0].operatorServiceCharge}
-                    onChange={handleInventoryChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <select
-                    name="ladiesSeat"
-                    value={formData.inventoryItems[0].ladiesSeat}
-                    onChange={handleInventoryChange}
-                    className="p-2 border rounded"
-                    required
-                >
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
-                </select>
+                {success && (
+                    <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
+                        {success}
+                    </div>
+                )}
 
-                <label className="col-span-2 font-semibold mt-4">
-                    Passenger Information
-                </label>
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="Passenger Name"
-                    value={formData.inventoryItems[0].passenger.name}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <select
-                    name="title"
-                    value={formData.inventoryItems[0].passenger.title}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                >
-                    <option value="Mr">Mr</option>
-                    <option value="Ms">Ms</option>
-                    <option value="Mrs">Mrs</option>
-                </select>
-                <input
-                    type="tel"
-                    name="mobile"
-                    placeholder="Mobile Number"
-                    value={formData.inventoryItems[0].passenger.mobile}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email Address"
-                    value={formData.inventoryItems[0].passenger.email}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="number"
-                    name="age"
-                    placeholder="Age"
-                    value={formData.inventoryItems[0].passenger.age}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <select
-                    name="gender"
-                    value={formData.inventoryItems[0].passenger.gender}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                >
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                </select>
-                <input
-                    type="text"
-                    name="address"
-                    placeholder="Address"
-                    value={formData.inventoryItems[0].passenger.address}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="text"
-                    name="idType"
-                    placeholder="ID Type (e.g., Aadhar, PAN)"
-                    value={formData.inventoryItems[0].passenger.idType}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <input
-                    type="text"
-                    name="idNumber"
-                    placeholder="ID Number"
-                    value={formData.inventoryItems[0].passenger.idNumber}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                />
-                <select
-                    name="primary"
-                    value={formData.inventoryItems[0].passenger.primary}
-                    onChange={handlePassengerChange}
-                    className="p-2 border rounded"
-                    required
-                >
-                    <option value="1">Yes</option>
-                    <option value="0">No</option>
-                </select>
+                <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+                    <label className="col-span-2 font-semibold">
+                        Trip Information
+                    </label>
+                    <input
+                        type="number"
+                        name="availableTripId"
+                        placeholder="Available Trip ID"
+                        value={formData.availableTripId}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="boardingPointId"
+                        placeholder="Boarding Point ID"
+                        value={formData.boardingPointId}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="droppingPointId"
+                        placeholder="Dropping Point ID"
+                        value={formData.droppingPointId}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="source"
+                        placeholder="Source"
+                        value={formData.source}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="destination"
+                        placeholder="Destination"
+                        value={formData.destination}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="bookingType"
+                        value={formData.bookingType}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="">Select Booking Type</option>
+                        <option value="STANDARD">STANDARD</option>
 
-                <button
-                    type="submit"
-                    className="col-span-2 p-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                    disabled={loading}
-                >
-                    {loading ? "Processing..." : "Block Ticket"}
-                </button>
-            </form>
-        </div>
+                    </select>
+                    <input
+                        type="number"
+                        name="serviceCharge"
+                        placeholder="Service Charge"
+                        step="0.01"
+                        value={formData.serviceCharge}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="paymentMode"
+                        value={formData.paymentMode}
+                        onChange={handleChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="">Select Payment Mode</option>
+                        <option value="CASH">Cash</option>
+                        <option value="CARD">Card</option>
+                        <option value="UPI">UPI</option>
+                        <option value="NETBANKING">Net Banking</option>
+                    </select>
+
+                    <label className="col-span-2 font-semibold mt-4">
+                        Seat & Pricing Information
+                    </label>
+                    <input
+                        type="text"
+                        name="seatName"
+                        placeholder="Seat Name"
+                        value={formData.inventoryItems[0].seatName}
+                        onChange={handleInventoryChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="fare"
+                        placeholder="Fare"
+                        step="0.01"
+                        value={formData.inventoryItems[0].fare}
+                        onChange={handleInventoryChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="serviceTax"
+                        placeholder="Service Tax"
+                        step="0.01"
+                        value={formData.inventoryItems[0].serviceTax}
+                        onChange={handleInventoryChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="operatorServiceCharge"
+                        placeholder="Operator Service Charge"
+                        step="0.01"
+                        value={formData.inventoryItems[0].operatorServiceCharge}
+                        onChange={handleInventoryChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="ladiesSeat"
+                        value={formData.inventoryItems[0].ladiesSeat}
+                        onChange={handleInventoryChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+
+                    <label className="col-span-2 font-semibold mt-4">
+                        Passenger Information
+                    </label>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Passenger Name"
+                        value={formData.inventoryItems[0].passenger.name}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="title"
+                        value={formData.inventoryItems[0].passenger.title}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="Mr">Mr</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Mrs">Mrs</option>
+                    </select>
+                    <input
+                        type="tel"
+                        name="mobile"
+                        placeholder="Mobile Number"
+                        value={formData.inventoryItems[0].passenger.mobile}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email Address"
+                        value={formData.inventoryItems[0].passenger.email}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="age"
+                        placeholder="Age"
+                        value={formData.inventoryItems[0].passenger.age}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="gender"
+                        value={formData.inventoryItems[0].passenger.gender}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                    </select>
+                    <input
+                        type="text"
+                        name="address"
+                        placeholder="Address"
+                        value={formData.inventoryItems[0].passenger.address}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="idType"
+                        placeholder="ID Type (e.g., Aadhar, PAN)"
+                        value={formData.inventoryItems[0].passenger.idType}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="idNumber"
+                        placeholder="ID Number"
+                        value={formData.inventoryItems[0].passenger.idNumber}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    />
+                    <select
+                        name="primary"
+                        value={formData.inventoryItems[0].passenger.primary}
+                        onChange={handlePassengerChange}
+                        className="p-2 border rounded"
+                        required
+                    >
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+
+                    <button
+                        type="submit"
+                        className="col-span-2 p-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                        disabled={loading}
+                    >
+                        {loading ? "Processing..." : "Block Ticket"}
+                    </button>
+                </form>
+            </div>
         </AdminLayout>
     );
-    
 };
 
 export default BlockTicket;

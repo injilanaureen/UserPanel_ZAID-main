@@ -137,6 +137,10 @@
           {
             "title": "Check Booked Tickets",
             "href": "/admin/busTicket/checkBookedTickets"
+          },
+          {
+            "title": "Get Cancelation Data",
+            "href": "/admin/busTicket/getCancelationData" 
           }
       ]
     },
