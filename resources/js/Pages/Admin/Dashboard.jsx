@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid, ResponsiveContainer, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ScatterChart, Scatter, ZAxis, Legend } from 'recharts';
 import axios from 'axios';
+import Profile from './Profile/profile';
 const Dashboard = () => {
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -149,6 +150,7 @@ const Dashboard = () => {
 
   return (
     <AdminLayout>
+    <Profile/>
       <div className="bg-gray-50 min-h-screen">
         {/* Wallet Balance Box */}
         {/* <div className="flex justify-end mb-4 pr-6">
