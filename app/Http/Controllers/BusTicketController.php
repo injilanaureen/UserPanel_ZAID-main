@@ -117,6 +117,9 @@ class BusTicketController extends Controller
     }
     public function fetchAndStoreAvailableTrips(Request $request)
     {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         try {
 
             $requestId = time() . rand(1000, 9999);
@@ -157,6 +160,9 @@ class BusTicketController extends Controller
 
     public function fetchTripDetails(Request $request)
     {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         try {
             $request->validate([
                 'trip_id' => 'required|string',
@@ -167,9 +173,9 @@ class BusTicketController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/tripdetails', [
+                'User-Agent' => $this->partnerId,
+                'Token' => $jwtToken,
+            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/tripdetails', [
                 'trip_id' => $request->trip_id
             ]);
     
@@ -262,6 +268,9 @@ class BusTicketController extends Controller
     }
     public function bookandstorebookticket(Request $request)
     {
+        $requestId = time() . rand(1000, 9999);
+        $jwtToken = $this->generateJwtToken($requestId);
+
         try {
             // Validate input
             $request->validate([
@@ -277,9 +286,9 @@ class BusTicketController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/bookticket', [
+                'User-Agent' => $this->partnerId,
+                'Token' => $jwtToken,
+            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/bookticket', [
                 'refid' => $request->refid,
                 'amount' => $request->amount,
                 'base_fare' => $request->base_fare,
@@ -395,6 +404,8 @@ class BusTicketController extends Controller
 
     public function fetchandstoreboardingpointdetails(Request $request) {
         try {
+            $requestId = time() . rand(1000, 9999);
+            $jwtToken = $this->generateJwtToken($requestId);
             // Validate input
             $request->validate([
                 'bpId' => 'required|integer',
@@ -405,9 +416,9 @@ class BusTicketController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-                'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4'
-            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/boardingPoint', [
+                'User-Agent' => $this->partnerId,
+                'Token' => $jwtToken,
+            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/boardingPoint', [
                 'bpId' => $request->bpId, 
                 'trip_id' => $request->trip_id,
             ]);
