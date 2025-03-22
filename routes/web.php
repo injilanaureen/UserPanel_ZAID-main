@@ -20,6 +20,8 @@ use App\Http\Controllers\BillController;
 use App\Http\Controllers\BillPaymentController;
 use App\Http\Controllers\LICEnquiryController;
 use App\Http\Controllers\CMSAirtelController;
+use App\Http\Controllers\MyProfileController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +36,7 @@ Route::middleware('guest')->group(function () {
         ->name('register');
     Route::post('register', [AuthenticatedSessionController::class, 'storeRegister']);
 });
+Route::get('/admin/profile', [MyProfileController::class, 'show'])->name('admin.profile');
 
 Route::get('/admin/api/proxy/wallet-balance', [AdminController::class, 'getWalletBalance'])
 ->name('admin.wallet.balance');
@@ -108,13 +111,21 @@ Route::group(['prefix' => 'admin/busTicket'], function () {
     //booked tickets
     Route::get('/checkBookedTickets', [BusTicketController::class, 'getcheckBookedTickets'])->name('busTicket.checkBookedTickets');
     Route::post('/fetchBookedTickets', [BusTicketController::class, 'fetchBookedTickets'])->name('busTicket.fetchBookedTickets');
-    //cancelation data 
-    Route::get('/getCancelationData', [BusTicketController::class, 'getCancelationData'])->name('busTicket.getCancelationData');
+    // Ticket cancelation 
+    Route::get('/ticketCancellation', [BusTicketController::class, 'ticketCancellation'])->name('busTicket.ticketCancellation');
+    
 });
-Route::match(['get', 'post'], '/admin/cancellation/data', [BusTicketController::class, 'getCancelationData'])->name('admin.cancellation.data');
-// Add these routes to your web.php or api.php route file
+
+
+
 Route::post('/admin/busTicket/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('admin.busTicket.fetchSourceCities');
 Route::post('/admin/busTicket/fetchDestinationCities', [BusTicketController::class, 'fetchDestinationCities'])->name('admin.busTicket.fetchDestinationCities');
+
+Route::get('/admin/bus-ticket/block', [BusTicketController::class, 'blockTicket'])->name('admin.bus-ticket.block');
+Route::post('/admin/bus-ticket/block/api', [BusTicketController::class, 'blockTicketApi'])->name('admin.bus-ticket.block.api');
+Route::match(['get', 'post'], '/admin/bus-ticket/block/api', [BusTicketController::class, 'blockTicketApi'])
+    ->name('admin.bus-ticket.block.api');
+
 //DMT Bank 2 Remitter
 Route::get('/admin/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query');
 Route::post('/admin/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query.post');
@@ -381,18 +392,13 @@ Route::get('/get-csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
 
-
-//cms airtel 
-
-
 });
-
+//cms airtel 
 Route::get('/admin/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
 Route::post('/cms/airtel/store', [CMSAirtelController::class, 'store']);
 Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
 Route::get('/admin/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
-    Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');
+Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');
 
-
-
-    
+Route::get('/add-account', [AccountController::class, 'create'])->name('account.create');
+Route::post('/add-account', [AccountController::class, 'store'])->name('account.store');

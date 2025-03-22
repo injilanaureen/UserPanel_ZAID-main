@@ -123,24 +123,25 @@
           "href": "/admin/busTicket/getCurrentTripDetails"
         },
         {
+          "title": "Get Boarding Point Details",
+          "href": "/admin/busTicket/getBoardingPointDetails"
+        },
+        {
+          "title": "Block Tickets",
+          "href": "/admin/busTicket/blockTicket"
+        },
+        {
             "title": "Book Tickets",
             "href": "/admin/busTicket/bookTicket"
           },
-          {
-            "title": "Block Tickets",
-            "href": "/admin/busTicket/blockTicket"
-          },
-          {
-            "title": "Get Boarding Point Details",
-            "href": "/admin/busTicket/getBoardingPointDetails"
-          },
+        
           {
             "title": "Check Booked Tickets",
             "href": "/admin/busTicket/checkBookedTickets"
           },
           {
-            "title": "Get Cancelation Data",
-            "href": "/admin/busTicket/getCancelationData" 
+            "title": "Ticket Cancellation",
+            "href": "/admin/busTicket/ticketCancellation" 
           }
       ]
     },

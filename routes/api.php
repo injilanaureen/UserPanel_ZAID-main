@@ -25,3 +25,5 @@ Route::prefix('recharge')->group(function () {
 
 Route::post('/busbookingcallback', [PaysprintCallbackController::class, 'handleCallback']);
 Route::post('/bus/block-ticket', [BusTicketController::class, 'blockTicketApi']);
+
+Route::post('/cancel-bus-ticket', [BusTicketController::class, 'cancelTicket']);

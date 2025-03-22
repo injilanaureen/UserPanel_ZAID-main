@@ -101,6 +101,9 @@ export default function AdminLayout({ children }) {
         router.post(route("logout"));
     };
 
+    const handleProfileClick = () => {
+        router.get(route("admin.profile")); // Assuming you have a route for profile
+    };
     const toggleMenu = (menu) => {
         setIsMenuOpen((prev) => ({
             ...prev,
@@ -364,33 +367,55 @@ export default function AdminLayout({ children }) {
                                 </div>
                             </div>
       
-                            <button
-                                onClick={handleLogout}
+                           {/* User Section with Profile and Logout */}
+                           <div 
+                                className="relative"
                                 onMouseEnter={() => setShowUserInfo(true)}
                                 onMouseLeave={() => setShowUserInfo(false)}
-                                className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-150 ease-in-out"
                             >
-                                <User className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
-                                <LogOut className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
-                                <span className="hidden lg:inline">Logout</span>
-                            </button>
-                            {showUserInfo && auth.user && (
-                                <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-2 px-3 z-50 border border-gray-200 top-full">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                        <div className="bg-indigo-100 rounded-full p-2">
-                                            <User className="w-5 h-5 text-indigo-600" />
+                                <button
+                                    className="flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors duration-150 ease-in-out"
+                                >
+                                    <User className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
+                                    <span className="hidden lg:inline">{auth.user.name}</span>
+                                </button>
+
+                                {showUserInfo && auth.user && (
+                                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-2 px-3 z-50 border border-gray-200 top-full">
+                                        <div className="flex items-center space-x-3 mb-2">
+                                            <div className="bg-indigo-100 rounded-full p-2">
+                                                <User className="w-5 h-5 text-indigo-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {auth.user.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {auth.user.email}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                {auth.user.name}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {auth.user.email}
-                                            </p>
-                                        </div>
+                                        
+                                        {/* My Profile Link */}
+                                        <button
+                                            onClick={handleProfileClick}
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center"
+                                        >
+                                            <User className="w-4 h-4 mr-2" />
+                                            My Profile
+                                        </button>
+
+                                        {/* Logout Button */}
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center"
+                                        >
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Logout
+                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -401,5 +426,5 @@ export default function AdminLayout({ children }) {
                 </div>
             </div>
         </div>
-    );
-}
+        );
+    }
