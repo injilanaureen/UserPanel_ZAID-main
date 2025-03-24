@@ -329,10 +329,7 @@ class BusTicketController extends Controller
         return Inertia::render('Admin/busTicket/blockTicket');
     }
    public function blockTicketApi(Request $request)
-    {   
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
+    {
         try {
             // Validate the incoming request
             $validated = $request->validate([
@@ -369,9 +366,9 @@ class BusTicketController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/block', $validated);
+                'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+                'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkyNTM1MzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MjUzNTM3In0.RSV5uUuUgx5XdD2h6rdAR5Kbh6DZVCE7mb85JLCTFP0',
+            ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/block', $validated);
 
             // Log the raw response for debugging
             \Log::info('External API Response:', [
@@ -497,9 +494,6 @@ class BusTicketController extends Controller
     
     public function fetchBookedTickets(Request $request)
 {
-    $requestId = time() . rand(1000, 9999);
-    $jwtToken = $this->generateJwtToken($requestId);
-
     try {
         $request->validate([
             'refid' => 'required|integer',
@@ -509,9 +503,9 @@ class BusTicketController extends Controller
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'User-Agent' => $this->partnerId,
-            'Token' => $jwtToken,
-        ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/check_booked_ticket', [
+            'authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+            'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkzNDM0NDIsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MzQzNDQyIn0.oenxjDuLp4lPTB_fCDZL98ENr6I-ULmw0u9XkGgWZI4'
+        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/check_booked_ticket', [
             'refid' => $request->refid,
         ]);
 
@@ -624,9 +618,6 @@ public function ticketCancellation()
 
 public function cancelTicket(Request $request)
 {
-    $requestId = time() . rand(1000, 9999);
-    $jwtToken = $this->generateJwtToken($requestId);
-    
     $request->validate([
         'refId' => 'required',
         'seatNumber' => 'required|string',
@@ -634,11 +625,11 @@ public function cancelTicket(Request $request)
 
     try {
         $response = Http::withHeaders([
-            'User-Agent' => $this->partnerId,
-            'Token' => $jwtToken,
+            'Token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkyNTM1MzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MjUzNTM3In0.RSV5uUuUgx5XdD2h6rdAR5Kbh6DZVCE7mb85JLCTFP0',
+            'Authorisedkey' => 'Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/cancel_ticket', [
+        ])->post('https://sit.paysprint.in/service-api/api/v1/service/bus/ticket/cancel_ticket', [
             'refid' => $request->refId,
             'seatsToCancel' => [
                 '0' => $request->seatNumber

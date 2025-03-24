@@ -17,7 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->alias([
+            "LocationCapture" => App\Http\Middleware\LocationCapture::class
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

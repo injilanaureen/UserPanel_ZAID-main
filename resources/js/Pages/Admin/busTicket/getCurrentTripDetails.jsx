@@ -15,14 +15,17 @@ const GetCurrentTripDetails = () => {
 
   const saveTripDetails = async (rawData) => {
     try {
-      const boardingPoints = rawData.boardingTimes.map(point => ({
-        location: point.location,
-        address: point.address,
-        city: point.bpName,
-        time: parseInt(point.time),
-        landmark: point.landmark,
-        contact: point.contactNumber
-      }));
+      // Ensure boardingTimes is an array before mapping
+      const boardingPoints = Array.isArray(rawData.boardingTimes) 
+        ? rawData.boardingTimes.map(point => ({
+            location: point.location,
+            address: point.address,
+            city: point.bpName,
+            time: parseInt(point.time),
+            landmark: point.landmark,
+            contact: point.contactNumber
+          }))
+        : [];
 
       const response = await fetch('/admin/busTicket/storeTripDetails', {
         method: 'POST',
@@ -93,73 +96,100 @@ const GetCurrentTripDetails = () => {
     setLoading(false);
   };
 
-  const renderBoardingDroppingPoints = (points, title) => (
-    <div className="mt-4">
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {points.map((point, index) => (
-          <div key={index} className="border p-4 rounded-lg">
-            <p><strong>Name:</strong> {point.bpName}</p>
-            <p><strong>Location:</strong> {point.location}</p>
-            <p><strong>Address:</strong> {point.address}</p>
-            <p><strong>Time:</strong> {point.time}</p>
-            <p><strong>Contact:</strong> {point.contactNumber}</p>
-            <p><strong>Landmark:</strong> {point.landmark}</p>
-            <p><strong>BP ID:</strong> {point.bpId}</p>
-            <p><strong>Identifier:</strong> {point.bpIdentifier}</p>
-            <p><strong>Amenities:</strong> {point.bpAmenities || 'None'}</p>
-            <p><strong>Prime:</strong> {point.prime}</p>
+  const renderBoardingDroppingPoints = (points, title) => {
+    // Check if points is an array, if not, make it an empty array
+    const pointsArray = Array.isArray(points) ? points : [];
+    
+    return (
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        {pointsArray.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pointsArray.map((point, index) => (
+              <div key={index} className="border p-4 rounded-lg">
+                <p><strong>Name:</strong> {point.bpName}</p>
+                <p><strong>Location:</strong> {point.location}</p>
+                <p><strong>Address:</strong> {point.address}</p>
+                <p><strong>Time:</strong> {point.time}</p>
+                <p><strong>Contact:</strong> {point.contactNumber}</p>
+                <p><strong>Landmark:</strong> {point.landmark}</p>
+                <p><strong>BP ID:</strong> {point.bpId}</p>
+                <p><strong>Identifier:</strong> {point.bpIdentifier}</p>
+                <p><strong>Amenities:</strong> {point.bpAmenities || 'None'}</p>
+                <p><strong>Prime:</strong> {point.prime}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <p>No {title.toLowerCase()} available.</p>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
-  const renderFareDetails = (fares) => (
-    <div className="mt-4">
-      <h3 className="text-xl font-semibold mb-2">Fare Details</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {fares.map((fare, index) => (
-          <div key={index} className="border p-4 rounded-lg">
-            <p><strong>Total Fare:</strong> ₹{fare.totalFare}</p>
-            <p><strong>Base Fare:</strong> ₹{fare.baseFare}</p>
-            <p><strong>GST:</strong> ₹{fare.gst}</p>
-            <p><strong>Service Tax:</strong> ₹{fare.serviceTaxAbsolute} ({fare.serviceTaxPercentage}%)</p>
-            <p><strong>Bank Transaction Amount:</strong> ₹{fare.bankTrexAmt}</p>
-            <p><strong>Booking Fee:</strong> ₹{fare.bookingFee}</p>
-            <p><strong>Child Fare:</strong> ₹{fare.childFare}</p>
-            <p><strong>Levy Fare:</strong> ₹{fare.levyFare}</p>
-            <p><strong>Markup Fare:</strong> ₹{fare.markupFareAbsolute} ({fare.markupFarePercentage}%)</p>
-            <p><strong>Operator Service Charge:</strong> ₹{fare.operatorServiceChargeAbsolute} ({fare.operatorServiceChargePercentage}%)</p>
-            <p><strong>SRT Fee:</strong> ₹{fare.srtFee}</p>
-            <p><strong>Toll Fee:</strong> ₹{fare.tollFee}</p>
+  const renderFareDetails = (fares) => {
+    // Check if fares is an array, if not, make it an empty array
+    const faresArray = Array.isArray(fares) ? fares : [];
+    
+    return (
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold mb-2">Fare Details</h3>
+        {faresArray.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {faresArray.map((fare, index) => (
+              <div key={index} className="border p-4 rounded-lg">
+                <p><strong>Total Fare:</strong> ₹{fare.totalFare}</p>
+                <p><strong>Base Fare:</strong> ₹{fare.baseFare}</p>
+                <p><strong>GST:</strong> ₹{fare.gst}</p>
+                <p><strong>Service Tax:</strong> ₹{fare.serviceTaxAbsolute} ({fare.serviceTaxPercentage}%)</p>
+                <p><strong>Bank Transaction Amount:</strong> ₹{fare.bankTrexAmt}</p>
+                <p><strong>Booking Fee:</strong> ₹{fare.bookingFee}</p>
+                <p><strong>Child Fare:</strong> ₹{fare.childFare}</p>
+                <p><strong>Levy Fare:</strong> ₹{fare.levyFare}</p>
+                <p><strong>Markup Fare:</strong> ₹{fare.markupFareAbsolute} ({fare.markupFarePercentage}%)</p>
+                <p><strong>Operator Service Charge:</strong> ₹{fare.operatorServiceChargeAbsolute} ({fare.operatorServiceChargePercentage}%)</p>
+                <p><strong>SRT Fee:</strong> ₹{fare.srtFee}</p>
+                <p><strong>Toll Fee:</strong> ₹{fare.tollFee}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <p>No fare details available.</p>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
-  const renderSeats = (seats) => (
-    <div className="mt-4">
-      <h3 className="text-xl font-semibold mb-2">Seat Details</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {seats.map((seat, index) => (
-          <div key={index} className={`border p-4 rounded-lg ${seat.available === 'true' ? 'bg-green-50' : 'bg-red-50'}`}>
-            <p><strong>Seat:</strong> {seat.name}</p>
-            <p><strong>Available:</strong> {seat.available === 'true' ? 'Yes' : 'No'}</p>
-            <p><strong>Fare:</strong> ₹{seat.fare}</p>
-            <p><strong>Base Fare:</strong> ₹{seat.baseFare}</p>
-            <p><strong>Position:</strong> Row {seat.row}, Col {seat.column}</p>
-            <p><strong>Ladies Seat:</strong> {seat.ladiesSeat === 'true' ? 'Yes' : 'No'}</p>
-            <p><strong>Males Seat:</strong> {seat.malesSeat === 'true' ? 'Yes' : 'No'}</p>
-            <p><strong>Double Berth:</strong> {seat.doubleBirth === 'true' ? 'Yes' : 'No'}</p>
-            <p><strong>Dimensions:</strong> {seat.length}x{seat.width}</p>
-            <p><strong>Z-Index:</strong> {seat.zIndex}</p>
+  const renderSeats = (seats) => {
+    // Check if seats is an array, if not, make it an empty array
+    const seatsArray = Array.isArray(seats) ? seats : [];
+    
+    return (
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold mb-2">Seat Details</h3>
+        {seatsArray.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {seatsArray.map((seat, index) => (
+              <div key={index} className={`border p-4 rounded-lg ${seat.available === 'true' ? 'bg-green-50' : 'bg-red-50'}`}>
+                <p><strong>Seat:</strong> {seat.name}</p>
+                <p><strong>Available:</strong> {seat.available === 'true' ? 'Yes' : 'No'}</p>
+                <p><strong>Fare:</strong> ₹{seat.fare}</p>
+                <p><strong>Base Fare:</strong> ₹{seat.baseFare}</p>
+                <p><strong>Position:</strong> Row {seat.row}, Col {seat.column}</p>
+                <p><strong>Ladies Seat:</strong> {seat.ladiesSeat === 'true' ? 'Yes' : 'No'}</p>
+                <p><strong>Males Seat:</strong> {seat.malesSeat === 'true' ? 'Yes' : 'No'}</p>
+                <p><strong>Double Berth:</strong> {seat.doubleBirth === 'true' ? 'Yes' : 'No'}</p>
+                <p><strong>Dimensions:</strong> {seat.length}x{seat.width}</p>
+                <p><strong>Z-Index:</strong> {seat.zIndex}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <p>No seat details available.</p>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <AdminLayout>

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\AirtelCmsUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config;
 
 class CMSAirtelController extends Controller
 {
@@ -38,23 +39,17 @@ class CMSAirtelController extends Controller
         $url = "https://sit.paysprint.in/service-api/api/v1/service/airtelcms/V2/airtel/index";
         $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEzNDk2MzAsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMzQ5NjMwICJ9.XDf0Oc7lRKY6042VAmm_E916_9TzBNzAjE2EzccSdzY";
     
-        // Hardcoded latitude and longitude
-        $latitude = "28.6139";  // Example: New Delhi
-        $longitude = "77.2090";
     
-        // Pass hardcoded values to Inertia view
-        return Inertia::render('Admin/cmsairtel/GenerateUrl', [
-            'latitude' => $latitude,
-            'longitude' => $longitude
-        ]);
+        return Inertia::render('Admin/cmsairtel/GenerateUrl');
     }
+    
     public function storeUrl(Request $request)
     {
         // Validate the incoming request
         $validated = $request->validate([
             'refid' => 'required|string',
-            'latitude' => 'required|string',
-            'longitude' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
         ]);
         
         // Get API settings from config
@@ -93,11 +88,9 @@ class CMSAirtelController extends Controller
         }
     }
    
-
- public function airtelTransactionEnquiry()
+    public function airtelTransactionEnquiry()
     {
         return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry');
     }
 
-    // API call to get operators
 }

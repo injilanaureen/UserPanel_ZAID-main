@@ -395,10 +395,18 @@ Route::get('/get-csrf-token', function () {
 });
 //cms airtel 
 Route::get('/admin/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
-Route::post('/cms/airtel/store', [CMSAirtelController::class, 'store']);
+// Route::post('/cms/airtel/store', [CMSAirtelController::class, 'store']);
 Route::get('/admin/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
 Route::get('/admin/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
 Route::post('/admin/get-bill-operators', [CMSAirtelController::class, 'getBillOperators'])->name('admin.get.bill.operators');
 
 Route::get('/add-account', [AccountController::class, 'create'])->name('account.create');
 Route::post('/add-account', [AccountController::class, 'store'])->name('account.store');
+
+Route::middleware(['web', 'auth', 'LocationCapture'])->group(function () {
+    Route::get('/cms/airtel/generate', [CMSAirtelController::class, 'generateUrl'])->name('cms.airtel.generate');
+    // Route::post('/cms/airtel/store', [CMSAirtelController::class, 'storeUrl'])->name('cms.airtel.store');
+    Route::get('/cms/airtel/enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('cms.airtel.enquiry');
+});
+// Add this line to your web.php file
+Route::post('/admin/cmsairtel/generateUrl', [CMSAirtelController::class, 'processGenerateUrl'])->name('admin.cmsairtel.process');

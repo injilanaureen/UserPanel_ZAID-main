@@ -27,3 +27,4 @@ Route::post('/busbookingcallback', [PaysprintCallbackController::class, 'handleC
 Route::post('/bus/block-ticket', [BusTicketController::class, 'blockTicketApi']);
 
 Route::post('/cancel-bus-ticket', [BusTicketController::class, 'cancelTicket']);
+

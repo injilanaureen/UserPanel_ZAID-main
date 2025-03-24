@@ -146,7 +146,20 @@
       ]
     },
 
-    
+    {
+      "title": "CMS-Airtel",
+      "icon": "Battery",
+      "subMenu": [
+        {
+          "title": "Generate URL",
+          "href": "/admin/cmsairtel/GenerateUrl"
+        },
+        {
+          "title": "Transaction Enquiry",
+          "href": "/admin/cmsairtel/AirtelTransactionEnquiry"
+        }
+      ]
+    },
       {
         "title": "Bill Payment",
         "subMenu": [
