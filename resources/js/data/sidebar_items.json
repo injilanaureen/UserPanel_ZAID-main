@@ -5,6 +5,11 @@
       "href": "/admin/dashboard"
     },
     {
+      "title": "Fund Request",
+      "icon": "Home",
+      "href": "/admin/fundrequest/fundrequest"
+    },
+    {
       "title": "Recharge",
       "icon": "Battery",
       "subMenu": [

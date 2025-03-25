@@ -17,8 +17,20 @@ class AddAccount extends Model
         'account_number',
         'confirm_account_number',
         'ifsc_code',
-        'status',
+        'balance',
         'userid',
-        'balance'
+        'status'
     ];
+
+    // Relationship with User model
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'userid');
+    }
+
+    // Scope to get only active accounts
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

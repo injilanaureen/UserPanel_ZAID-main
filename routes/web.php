@@ -22,6 +22,7 @@ use App\Http\Controllers\LICEnquiryController;
 use App\Http\Controllers\CMSAirtelController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\FundController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -38,10 +39,6 @@ Route::middleware('guest')->group(function () {
 });
 Route::get('/admin/profile', [MyProfileController::class, 'show'])->name('admin.profile');
 
-Route::get('/admin/api/proxy/wallet-balance', [AdminController::class, 'getWalletBalance'])
-->name('admin.wallet.balance');
-Route::post('/admin/api/proxy/credit-balance', [AdminController::class, 'getCreditBalance'])
-    ->name('admin.credit.balance');
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
@@ -410,3 +407,7 @@ Route::middleware(['web', 'auth', 'LocationCapture'])->group(function () {
 });
 // Add this line to your web.php file
 Route::post('/admin/cmsairtel/generateUrl', [CMSAirtelController::class, 'processGenerateUrl'])->name('admin.cmsairtel.process');
+//fund request
+Route::get('/admin/fundrequest/fundrequest', [FundController::class, 'fundrequest'])->name('fundrequest');
+Route::get('/fundrequest', [FundController::class, 'fundrequest']);
+Route::post('/fundrequest/store', [FundController::class, 'store']);

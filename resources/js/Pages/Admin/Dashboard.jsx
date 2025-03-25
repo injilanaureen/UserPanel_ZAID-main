@@ -152,25 +152,7 @@ const Dashboard = () => {
     <AdminLayout>
     {/* <Profile/> */}
       <div className="bg-gray-50 min-h-screen">
-        {/* Wallet Balance Box */}
-        {/* <div className="flex justify-end mb-4 pr-6">
-          <div className="bg-white rounded-xl shadow p-6 w-64">
-            <div className="flex items-center justify-between">
-              <div>
-              <h3 className="text-sm font-medium text-gray-500">
-              Cash Balance <br /> (Debit Balance)
-              </h3>
 
-                <div className="mt-2">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {isLoadingBalance ? 'Loading...' : walletBalance === 'Error' ? 'Error' : `₹${walletBalance}`}
-                  </span>
-                </div>
-              </div>
-              <div className="text-2xl">💳</div>
-            </div>
-          </div>
-        </div> */}
 
         {/* Time Filter */}
         <div className="max-w-full">
