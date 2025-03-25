@@ -411,3 +411,8 @@ Route::post('/admin/cmsairtel/generateUrl', [CMSAirtelController::class, 'proces
 Route::get('/admin/fundrequest/fundrequest', [FundController::class, 'fundrequest'])->name('fundrequest');
 Route::get('/fundrequest', [FundController::class, 'fundrequest']);
 Route::post('/fundrequest/store', [FundController::class, 'store']);
+
+
+Route::get('/admin/wallet-balance', [AdminController::class, 'getWalletBalance'])
+    ->name('admin.wallet-balance')
+    ->middleware('auth');

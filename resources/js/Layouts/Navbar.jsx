@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { router, usePage } from "@inertiajs/react";
+import axios from 'axios';
 import {
     LogOut,
     User,
@@ -12,8 +13,29 @@ export default function Navbar({
     toggleSidebar, 
     isSidebarCollapsed 
 }) {
-    const { auth, walletBalance } = usePage().props;
+    const { auth } = usePage().props;
+    const [walletBalance, setWalletBalance] = useState({
+        credit: 0,
+        debit: 0
+    });
     const [showUserInfo, setShowUserInfo] = useState(false);
+
+    useEffect(() => {
+        const fetchWalletBalance = async () => {
+            try {
+                // Replace this with your actual API endpoint for fetching wallet balance
+                const response = await axios.get('/admin/wallet-balance');
+                setWalletBalance(response.data);
+            } catch (error) {
+                console.error('Failed to fetch wallet balance', error);
+                // Optionally set default values or handle error
+                setWalletBalance({ credit: 0, debit: 0 });
+            }
+        };
+
+        // Fetch wallet balance when component mounts
+        fetchWalletBalance();
+    }, []);  // Empty dependency array means this runs once on component mount
 
     const handleLogout = () => {
         router.post(route("logout"));
@@ -52,7 +74,7 @@ export default function Navbar({
                     >
                         <Wallet className="w-4 h-4 mr-2" />
                         <span className="text-xs lg:text-sm font-medium">
-                            Credit Balance: ₹ {(walletBalance?.credit || 0).toLocaleString()}
+                            Credit Balance: ₹ {(walletBalance.credit || 0).toLocaleString()}
                         </span>
                     </button>
 
@@ -63,7 +85,7 @@ export default function Navbar({
                     >
                         <Wallet className="w-4 h-4 mr-2" />
                         <span className="text-xs lg:text-sm font-medium">
-                            Debit Balance: ₹ {(walletBalance?.debit || 0).toLocaleString()}
+                            Debit Balance: ₹ {(walletBalance.debit || 0).toLocaleString()}
                         </span>
                     </button>
 
