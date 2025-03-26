@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use App\Models\Remitter;
+use App\Models\ApiManagement;
 use App\Models\RemitterRegistration;
 use App\Models\RemitterAadharVerify;
 use Illuminate\Support\Facades\Http;
@@ -17,15 +18,44 @@ class Remitter2Controller extends Controller
     private $partnerId = 'PS005962'; 
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    private function generateJwtToken($requestId)
+
+    private function callDynamicApi($apiName, $payload = [], $additionalHeaders = [])
     {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
-        return Jwt::encode($payload, $this->secretKey, 'HS256');
+        try {
+            // Fetch API URL using helper
+            $apiUrl = \App\Helpers\ApiHelper::getApiUrl($apiName);
+
+            // Generate unique request ID and JWT token using helpers
+            $requestId = \App\Helpers\ApiHelper::generateRequestId();
+            $jwtToken = \App\Helpers\ApiHelper::generateJwtToken($requestId, $this->partnerId, $this->secretKey);
+
+            // Prepare headers using helper
+            $headers = \App\Helpers\ApiHelper::getApiHeaders($jwtToken, $additionalHeaders, $this->partnerId);
+
+            // Make the API call
+            $response = Http::withHeaders($headers)
+                ->post($apiUrl, $payload);
+
+            // Log the API call
+            Log::info('Dynamic API Call', [
+                'api_name' => $apiName,
+                'url' => $apiUrl,
+                'payload' => $payload,
+                'response' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Dynamic API Call Failed', [
+                'api_name' => $apiName,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'status' => false,
+                'message' => 'API call failed: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function showQueryForm()
@@ -44,23 +74,13 @@ class Remitter2Controller extends Controller
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
 
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-
-            $response = Http::withHeaders([
-                'Token' => $jwtToken,
-                'accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter', [
+            // Use dynamic API call
+            $responseData = $this->callDynamicApi('Dmt2queryremitter', [
                 'mobile' => $request->input('mobile')
             ]);
 
-            $responseData = $response->json();
-
             Log::info('Remitter query successful', [
                 'mobile' => $request->input('mobile'),
-                'jwt_token' => $jwtToken,
                 'response_status' => $responseData['status'] ?? 'unknown'
             ]);
 
@@ -114,23 +134,12 @@ class Remitter2Controller extends Controller
         }
 
         try {
-            $client = new Client();
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-
-            $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
-                'headers' => [
-                    'Token' => $jwtToken,
-                    'accept' => 'application/json',
-                    'content-type' => 'application/json',
-                ],
-                'json' => [
-                    'mobile' => $request->mobile,
-                    'aadhaar_no' => $request->aadhaar_no,
-                ],
+            // Use dynamic API call
+            $apiResponse = $this->callDynamicApi('Dmt2remitteraadharverifyapi', [
+                'mobile' => $request->mobile,
+                'aadhaar_no' => $request->aadhaar_no,
             ]);
 
-            $apiResponse = json_decode($response->getBody()->getContents(), true);
             $maskedAadhaar = $this->maskAadhaar($request->aadhaar_no);
 
             $verification = RemitterAadharVerify::create([
@@ -145,7 +154,7 @@ class Remitter2Controller extends Controller
                 'apiData' => $apiResponse,
                 'dbData' => $verification,
                 'error' => null,
-                'mobile' => $request->mobile, // Pass mobile back for redirection
+                'mobile' => $request->mobile,
             ]);
         } catch (\Exception $e) {
             Log::error('Aadhaar verification error: ' . $e->getMessage());
@@ -190,26 +199,38 @@ class Remitter2Controller extends Controller
         }
     }
 
+   
     private function verifyAadhaarWithAPI($mobile, $aadhaar)
-    {
-        $client = new Client();
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
-        $response = $client->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/queryremitter/aadhar_verify', [
-            'headers' => [
-               'Token' => $jwtToken,
-                'accept' => 'application/json',
-                'content-type' => 'application/json',
-            ],
-            'json' => [
-                'mobile' => $mobile,
-                'aadhaar_no' => $aadhaar,
-            ],
+{
+    try {
+        // Use dynamic API call
+        $responseData = $this->callDynamicApi('Dmt2remitteraadharverifyapi', [
+            'mobile' => $mobile,
+            'aadhaar_no' => $aadhaar,
         ]);
 
-        return json_decode($response->getBody()->getContents(), true);
+        // Log the verification attempt
+        Log::info('Aadhaar Verification API Call', [
+            'mobile' => $mobile,
+            'status' => $responseData['status'] ?? 'unknown'
+        ]);
+
+        return $responseData;
+
+    } catch (\Exception $e) {
+        // Log any errors during the API call
+        Log::error('Aadhaar Verification API Error', [
+            'mobile' => $mobile,
+            'error' => $e->getMessage()
+        ]);
+
+        // Return a standardized error response
+        return [
+            'status' => false,
+            'message' => 'API verification failed: ' . $e->getMessage()
+        ];
     }
+}
 
     public function showVerificationForm()
     {
@@ -223,17 +244,12 @@ class Remitter2Controller extends Controller
     {
         if ($request->isMethod('post')) {
             try {
-                $requestId = time() . rand(1000, 9999);
-                $jwtToken = $this->generateJwtToken($requestId);
+                // Generate a reference ID for this registration
+                $referenceId = \App\Helpers\ApiHelper::generateReferenceId('REMIT');
 
-                $response = Http::withHeaders([
-                    'Token' => $jwtToken,
-                    'accept' => 'application/json',
-                    'content-type' => 'application/json',
-                    'User-Agent' => $this->partnerId
-                ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/remitter/registerremitter', $request->all());
-
-                $responseData = $response->json();
+                // Add referenceId to payload (assuming the API supports it)
+                $payload = array_merge($request->all(), ['referenceid' => $referenceId]);
+                $responseData = $this->callDynamicApi('Dmt2registerremitter', $payload);
 
                 $status = $responseData['status'] ?? null;
                 $message = $responseData['message'] ?? null;
@@ -251,13 +267,13 @@ class Remitter2Controller extends Controller
                     'api_response' => $responseData,
                     'status' => $status,
                     'message' => $message,
-                    'jwt_token' => $jwtToken
+                    'jwt_token' => \App\Helpers\ApiHelper::generateJwtToken($referenceId, $this->partnerId, $this->secretKey)
                 ]);
 
                 Log::info('Remitter registration successful', [
                     'mobile' => $request->mobile,
-                    'jwt_token' => $jwtToken,
-                    'status' => $status
+                    'status' => $status,
+                    'referenceid' => $referenceId
                 ]);
 
                 return response()->json([
@@ -266,10 +282,13 @@ class Remitter2Controller extends Controller
                         'limit' => $limit,
                         'status' => $status,
                         'message' => $message,
-                        'registration_id' => $registration->id
+                        'registration_id' => $registration->id,
+                        'referenceid' => $referenceId
                     ]
-                ], $response->status());
+                ]);
             } catch (\Exception $e) {
+                $referenceId = \App\Helpers\ApiHelper::generateReferenceId('REMIT');
+
                 $registration = RemitterRegistration::create([
                     'mobile' => $request->mobile,
                     'otp' => $request->otp,
@@ -285,6 +304,7 @@ class Remitter2Controller extends Controller
 
                 Log::error('Remitter registration failed: ' . $e->getMessage(), [
                     'mobile' => $request->mobile,
+                    'referenceid' => $referenceId,
                     'trace' => $e->getTraceAsString()
                 ]);
 

@@ -14,23 +14,47 @@ class Refund2Controller extends Controller
     private $partnerId = 'PS005962';
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    private function generateJwtToken($requestId)
+    private function callDynamicApi($apiName, $payload = [], $additionalHeaders = [])
     {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
+        try {
+            // Fetch API URL using helper
+            $apiUrl = \App\Helpers\ApiHelper::getApiUrl($apiName);
 
-        return Jwt::encode($payload, $this->secretKey, 'HS256');
+            // Generate unique request ID and JWT token using helpers
+            $requestId = \App\Helpers\ApiHelper::generateRequestId();
+            $jwtToken = \App\Helpers\ApiHelper::generateJwtToken($requestId, $this->partnerId, $this->secretKey);
+
+            // Prepare headers using helper
+            $headers = \App\Helpers\ApiHelper::getApiHeaders($jwtToken, $additionalHeaders, $this->partnerId);
+
+            // Make the API call
+            $response = Http::withHeaders($headers)
+                ->post($apiUrl, $payload);
+
+            // Log the API call
+            Log::info('Dynamic API Call', [
+                'api_name' => $apiName,
+                'url' => $apiUrl,
+                'payload' => $payload,
+                'response' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Dynamic API Call Failed', [
+                'api_name' => $apiName,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'status' => false,
+                'message' => 'API call failed: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function refundOtp(Request $request)
     {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
         if ($request->isMethod('get')) {
             return Inertia::render('Admin/refund2/refundOtp', [
                 'apiResponse' => null
@@ -43,17 +67,10 @@ class Refund2Controller extends Controller
                 'ackno' => 'required|string',
             ]);
 
-            $response = Http::withHeaders([
-                'Token' => $jwtToken,
-                'User-Agent' => $this->partnerId,
-                'accept' => 'application/json',
-                'content-type' => 'application/json',
-            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/refund/refund/resendotp', [
+            $responseData = $this->callDynamicApi('Dmt2Refund Otp', [
                 'referenceid' => $validated['referenceid'],
                 'ackno' => $validated['ackno'],
             ]);
-
-            $responseData = $response->json();
 
             RefundOtp::create([
                 'referenceid' => $validated['referenceid'],
@@ -66,7 +83,6 @@ class Refund2Controller extends Controller
             return Inertia::render('Admin/refund2/refundOtp', [
                 'apiResponse' => $responseData
             ]);
-
         } catch (\Exception $e) {
             return Inertia::render('Admin/refund2/refundOtp', [
                 'apiResponse' => [
@@ -87,38 +103,29 @@ class Refund2Controller extends Controller
     
     public function processRefund(Request $request)
     {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
         $request->validate([
-            'ackno'       => 'required|string',
+            'ackno' => 'required|string',
             'referenceid' => 'required|string',
-            'otp'         => 'required|string',
+            'otp' => 'required|string',
         ]);
-    
+
         try {
-            $response = Http::withHeaders([
-                'Content-Type'  => 'application/json',
-                 'Token' => $jwtToken,
-                'User-Agent' => $this->partnerId,
-                'accept'        => 'application/json',
-            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/refund/refund/', [
-                'ackno'       => $request->ackno,
+            $payload = [
+                'ackno' => $request->ackno,
                 'referenceid' => $request->referenceid,
-                'otp'         => $request->otp,
-            ]);
-    
-            $apiResponse = $response->json();
-    
-            // Store response in claim_refunds table
+                'otp' => $request->otp,
+            ];
+
+            $apiResponse = $this->callDynamicApi('Dmt2Claim Refund', $payload);
+
             ClaimRefund::create([
-                'ackno'        => $request->ackno,
-                'referenceid'  => $request->referenceid,
-                'status'       => $apiResponse['status'] ?? 'failed',
-                'response_code'=> $apiResponse['response_code'] ?? 'unknown',
-                'message'      => $apiResponse['message'] ?? 'No message',
+                'ackno' => $request->ackno,
+                'referenceid' => $request->referenceid,
+                'status' => $apiResponse['status'] ?? 'failed',
+                'response_code' => $apiResponse['response_code'] ?? 'unknown',
+                'message' => $apiResponse['message'] ?? 'No message',
             ]);
-    
+
             return redirect()->route('transaction2.claimRefund')->with('apiResponse', $apiResponse);
         } catch (\Exception $e) {
             return redirect()->route('transaction2.claimRefund')->with('apiResponse', [

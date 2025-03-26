@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'alias' => [
+        'ApiHelper' => App\Helpers\ApiHelper::class,
+    ],
+
 ];

@@ -9,7 +9,6 @@ use App\Models\FundRequest;
 class AdminController extends Controller {
     public function dashboard(Request $request)
     {
-        // Your existing dashboard method
         return Inertia::render('Admin/Dashboard');
     }
 
@@ -18,8 +17,7 @@ class AdminController extends Controller {
     {
         // Get the authenticated user
         $user = $request->user();
-
-        // Calculate pending (status 0) and approved (status 1) amounts
+        // 0=pending = credit , 1=active = debit
         $pendingAmount = FundRequest::where('user_id', $user->id)
             ->where('status', 0)
             ->sum('amount');

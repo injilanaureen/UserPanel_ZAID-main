@@ -6,32 +6,56 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\RechargeTransaction;
 use App\Models\RechargeOperator;
+use App\Models\ApiManagement;
 use App\Models\JwtToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;  
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Jwt; 
+
 class RechargeController extends Controller
 {
     private $partnerId = 'PS005962'; 
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    // Method to generate JWT token
-    private function generateJwtToken($requestId)
+    private function callDynamicApi($apiName, $payload = [], $additionalHeaders = [])
     {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
+        try {
+            // Fetch API URL using helper
+            $apiUrl = \App\Helpers\ApiHelper::getApiUrl($apiName);
 
-        return Jwt::encode(
-            $payload,
-            $this->secretKey,
-            'HS256' // Using HMAC SHA-256 algorithm
-        );
+            // Generate unique request ID and JWT token using helpers
+            $requestId = \App\Helpers\ApiHelper::generateRequestId();
+            $jwtToken = \App\Helpers\ApiHelper::generateJwtToken($requestId, $this->partnerId, $this->secretKey);
+
+            // Prepare headers using helper
+            $headers = \App\Helpers\ApiHelper::getApiHeaders($jwtToken, $additionalHeaders, $this->partnerId);
+
+            // Make the API call
+            $response = Http::withHeaders($headers)
+                ->post($apiUrl, $payload);
+
+            // Log the API call
+            Log::info('Dynamic API Call', [
+                'api_name' => $apiName,
+                'url' => $apiUrl,
+                'payload' => $payload,
+                'response' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Dynamic API Call Failed', [
+                'api_name' => $apiName,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'status' => false,
+                'message' => 'API call failed: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function dorecharge()
@@ -48,65 +72,49 @@ class RechargeController extends Controller
                 'operator' => 'required|numeric',
                 'canumber' => 'required|string',
                 'amount' => 'required|numeric|min:1'
-                // 'referenceid' => 'required|string',
             ]);
-            
+
             if ($validator->fails()) {
-                Log::error('Validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation failed',
                     'errors' => $validator->errors()
                 ], 422);
             }
-            // Generate unique reference ID
-        $referenceId = 'RECH' . time() . rand(1000, 9999); // Example format: RECH16776543211234
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
 
+            // Generate reference ID using helper
+            $referenceId = \App\Helpers\ApiHelper::generateReferenceId();
 
-            $apiResponse = Http::withHeaders([
-                'Token' => $jwtToken,
-                'accept' => 'text/plain',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/recharge/recharge/dorecharge', [
+            // Prepare payload for dynamic API call
+            $payload = [
                 'operator' => (int)$request->operator,
                 'canumber' => $request->canumber,
                 'amount' => (int)$request->amount,
                 'referenceid' => $referenceId
-            ]);
-            
-            $responseData = $apiResponse->json();
-            
+            ];
+
+            // Call the API
+            $responseData = $this->callDynamicApi('DoRecharge', $payload);
+
             // Store transaction in database
             $transaction = RechargeTransaction::create([
                 'operator' => $request->operator,
                 'canumber' => $request->canumber,
                 'amount' => $request->amount,
                 'referenceid' => $referenceId,
-                'jwt_token' => $jwtToken,
-                'status' => isset($responseData['status']) && $responseData['status'] ? 'success' : 'failed',
+                'status' => $responseData['status'] ?? 'failed',
                 'message' => $responseData['message'] ?? 'Transaction processed',
                 'response_code' => $responseData['response_code'] ?? '',
                 'operatorid' => $responseData['operatorid'] ?? '',
                 'ackno' => $responseData['ackno'] ?? ''
             ]);
-            // Store JWT token in the jwt_tokens table
-        $jwtTokenRecord = JwtToken::create([
-            'transaction_id' => $transaction->id,
-            'jwt_token' => $jwtToken,
-        ]);
-        Log::info('Transaction created successfully:', $transaction->toArray());
-        Log::info('JWT Token stored successfully:', $jwtTokenRecord->toArray());
-            
-            // Return API response to frontend
+
+            Log::info('Transaction created successfully:', $transaction->toArray());
+
             return response()->json($responseData);
-            
         } catch (\Exception $e) {
             Log::error('Recharge processing failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to process recharge: ' . $e->getMessage()
@@ -196,26 +204,9 @@ class RechargeController extends Controller
                 ], 422);
             }
     
-            // Generate unique request ID and JWT token
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-    
-            $response = Http::withHeaders([
-                'Token' => $jwtToken,
-                'accept' => 'application/json',
-                'content-type' => 'application/json',
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/recharge/recharge/status', [
+            // Call the RechargeStatus API dynamically
+            $responseData = $this->callDynamicApi('RechargeStatus', [
                 'referenceid' => $request->referenceid
-            ]);
-    
-            $responseData = $response->json();
-    
-            // Log the status check
-            Log::info('Recharge status checked:', [
-                'referenceid' => $request->referenceid,
-                'jwt_token' => $jwtToken,
-                'response' => $responseData
             ]);
     
             return response()->json($responseData);
@@ -256,54 +247,16 @@ class RechargeController extends Controller
     public function getOperators()
     {
         try {
-            // Generate unique request ID and JWT token
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-    
-            $url = 'https://api.paysprint.in/api/v1/service/recharge/recharge/getoperator';
-            $headers = [
-                'Token: ' . $jwtToken,
-                'accept: application/json',
-                'User-Agent: ' . $this->partnerId,
-                'Content-Type: application/json'
-            ];
-    
-            $curl = curl_init();
-            curl_setopt_array($curl, [
-                CURLOPT_URL => $url,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_HTTPHEADER => $headers,
-            ]);
-    
-            $response = curl_exec($curl);
-            $err = curl_error($curl);
-            curl_close($curl);
-    
-            if ($err) {
-                Log::error('Error fetching operators: ' . $err);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error fetching operators',
-                    'error' => $err
-                ], 500);
-            }
-    
-            // Decode the response
-            $responseData = json_decode($response, true);
-    
+            // Call the GetOperator API dynamically
+            $responseData = $this->callDynamicApi('GetOperator');
+
             // Save to database if the API call is successful
             if (isset($responseData['status']) && $responseData['status'] === true) {
                 $this->saveOperatorsToDatabase($responseData['data']);
             }
-    
-            Log::info('Operators fetched successfully', [
-                'jwt_token' => $jwtToken,
-                'response_status' => $responseData['status'] ?? 'unknown'
-            ]);
-    
+
             return response()->json($responseData);
-    
+
         } catch (\Exception $e) {
             Log::error('Failed to fetch operators: ' . $e->getMessage());
             return response()->json([

@@ -17,22 +17,43 @@ class Transaction2Controller extends Controller
     private $partnerId = 'PS005962';
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    private function generateJwtToken($requestId)
+    private function callDynamicApi($apiName, $payload = [], $additionalHeaders = [])
     {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
+        try {
+            $apiUrl = \App\Helpers\ApiHelper::getApiUrl($apiName);
 
-        return JWT::encode($payload, $this->secretKey, 'HS256');
+            $requestId = \App\Helpers\ApiHelper::generateRequestId();
+            $jwtToken = \App\Helpers\ApiHelper::generateJwtToken($requestId, $this->partnerId, $this->secretKey);
+
+            $headers = \App\Helpers\ApiHelper::getApiHeaders($jwtToken, $additionalHeaders, $this->partnerId);
+
+            $response = Http::withHeaders($headers)
+                ->post($apiUrl, $payload);
+
+            Log::info('Dynamic API Call', [
+                'api_name' => $apiName,
+                'url' => $apiUrl,
+                'payload' => $payload,
+                'response' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Dynamic API Call Failed', [
+                'api_name' => $apiName,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'status' => false,
+                'message' => 'API call failed: ' . $e->getMessage()
+            ];
+        }
     }
-    public function pennyDrop(Request $request)
+
+  public function pennyDrop(Request $request)
     {
-        $referenceId = 'TRAN' . time() . rand(1000, 9999); 
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
+        $referenceId = \App\Helpers\ApiHelper::generateReferenceId('TRAN');
 
         if ($request->isMethod('post')) {
             $validatedData = $request->validate([
@@ -47,27 +68,14 @@ class Transaction2Controller extends Controller
                 'bene_id' => 'required|integer',
             ]);
             $validatedData['referenceid'] = $referenceId;
-            
 
             Log::info('Sending API request for penny drop', [
                 'request_data' => $validatedData,
-                'request_id' => $requestId
-            ]);
-            // Send data to Paysprint API
-            $apiResponse = Http::withHeaders([
-                'accept' => 'application/json',
-                'content-type' => 'application/json',
-                'Token' => $jwtToken,
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/beneficiary/registerbeneficiary/benenameverify', $validatedData);
-
-            $responseData = $apiResponse->json();
-            Log::info('API response received for penny drop', [
-                'status' => $apiResponse->status(),
-                'body' => $responseData
+                'referenceid' => $referenceId
             ]);
 
-            // Save request and response data to the penny_drops table
+            $responseData = $this->callDynamicApi('Dmt2PennyDrop', $validatedData);
+
             PennyDrop::create([
                 'mobile' => $validatedData['mobile'],
                 'accno' => $validatedData['accno'],
@@ -79,8 +87,6 @@ class Transaction2Controller extends Controller
                 'dob' => date('Y-m-d', strtotime($validatedData['dob'])),
                 'gst_state' => $validatedData['gst_state'],
                 'bene_id' => $validatedData['bene_id'],
-
-                // Store API response
                 'status' => $responseData['status'] ?? 0,
                 'response_code' => $responseData['response_code'] ?? null,
                 'utr' => $responseData['utr'] ?? null,
@@ -90,91 +96,78 @@ class Transaction2Controller extends Controller
                 'balance' => $responseData['balance'] ?? null,
             ]);
 
-            // Return with API response
             return Inertia::render('Admin/transaction2/pennyDrop', [
                 'apiResponse' => $responseData,
             ]);
         }
 
-        // Initial render with empty response
         return Inertia::render('Admin/transaction2/pennyDrop', [
             'apiResponse' => null,
         ]);
     }
 
 
-
     public function transactionSentOtp(Request $request)
     {
-        $referenceId = 'TRAN' . time() . rand(1000, 9999); 
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
+        $referenceId = \App\Helpers\ApiHelper::generateReferenceId('TRAN');
 
         if ($request->isMethod('post')) {
             $request->validate([
-                'mobile'      => 'required|digits:10',
-                'bene_id'     => 'required|string',
-                'txntype'     => 'required|string',
-                'amount'      => 'required|numeric',
-                'pincode'     => 'required|string',
-                'address'     => 'required|string',
-                'gst_state'   => 'required|string',
-                'dob'         => 'required|date_format:d-m-Y',
-                'lat'         => 'nullable|string',
-                'long'        => 'nullable|string',
+                'mobile' => 'required|digits:10',
+                'bene_id' => 'required|string',
+                'txntype' => 'required|string',
+                'amount' => 'required|numeric',
+                'pincode' => 'required|string',
+                'address' => 'required|string',
+                'gst_state' => 'required|string',
+                'dob' => 'required|date_format:d-m-Y',
+                'lat' => 'nullable|string',
+                'long' => 'nullable|string',
             ]);
-    
-            // Convert dob to MySQL compatible format (YYYY-MM-DD)
+
             $dob = \Carbon\Carbon::createFromFormat('d-m-Y', $request->dob)->format('Y-m-d');
-    
-            $response = Http::withHeaders([
-                'Content-Type'  => 'application/json',
-                'accept'        => 'application/json',
-                'Token' => $jwtToken,
-                'User-Agent' => $this->partnerId
-            ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact/send_otp', [
-                'mobile'      => $request->mobile,
+
+            $payload = [
+                'mobile' => $request->mobile,
                 'referenceid' => $referenceId,
-                'bene_id'     => $request->bene_id,
-                'txntype'     => $request->txntype,
-                'amount'      => $request->amount,
-                'pincode'     => $request->pincode,
-                'address'     => $request->address,
-                'gst_state'   => $request->gst_state,
-                'dob'         => $dob,
-                'lat'         => $request->lat,
-                'long'        => $request->long,
-            ]);
-    
-            $apiResponse = $response->json();
-            Log::info('API Response:', ['response' => $apiResponse]);
-    
-            // Save response to the database
+                'bene_id' => $request->bene_id,
+                'txntype' => $request->txntype,
+                'amount' => $request->amount,
+                'pincode' => $request->pincode,
+                'address' => $request->address,
+                'gst_state' => $request->gst_state,
+                'dob' => $dob,
+                'lat' => $request->lat,
+                'long' => $request->long,
+            ];
+
+            $apiResponse = $this->callDynamicApi('Dmt2TransactionSentOtp', $payload);
+
             TransactionSentOtp::create([
-                'mobile'        => $request->mobile,
-                'referenceid'   => $referenceId,
-                'bene_id'       => $request->bene_id,
-                'txntype'       => $request->txntype,
-                'amount'        => $request->amount,
-                'pincode'       => $request->pincode,
-                'address'       => $request->address,
-                'gst_state'     => $request->gst_state,
-                'dob'           => $dob,
-                'lat'           => $request->lat,
-                'long'          => $request->long,
-                'status'        => $apiResponse['status'] ?? null,
+                'mobile' => $request->mobile,
+                'referenceid' => $referenceId,
+                'bene_id' => $request->bene_id,
+                'txntype' => $request->txntype,
+                'amount' => $request->amount,
+                'pincode' => $request->pincode,
+                'address' => $request->address,
+                'gst_state' => $request->gst_state,
+                'dob' => $dob,
+                'lat' => $request->lat,
+                'long' => $request->long,
+                'status' => $apiResponse['status'] ?? null,
                 'response_code' => $apiResponse['response_code'] ?? null,
-                'message'       => $apiResponse['message'] ?? null,
-                'txn_id'        => $apiResponse['data']['txn_id'] ?? null,
-                'ackno'         => $apiResponse['data']['ackno'] ?? null,
-                'utr'           => $apiResponse['data']['utr'] ?? null,
+                'message' => $apiResponse['message'] ?? null,
+                'txn_id' => $apiResponse['data']['txn_id'] ?? null,
+                'ackno' => $apiResponse['data']['ackno'] ?? null,
+                'utr' => $apiResponse['data']['utr'] ?? null,
             ]);
-    
+
             return Inertia::render('Admin/transaction2/transactionSentOtp', [
                 'response' => $apiResponse
             ]);
         }
-    
+
         return Inertia::render('Admin/transaction2/transactionSentOtp');
     }
 
@@ -185,77 +178,54 @@ public function transaction()
     return Inertia::render('Admin/transaction2/transaction');
 }
 public function transact(Request $request)
-{
-    $referenceId = 'TRAN' . time() . rand(1000, 9999); 
-    $requestId = time() . rand(1000, 9999);
-    $jwtToken = $this->generateJwtToken($requestId);    
+    {
+        $referenceId = \App\Helpers\ApiHelper::generateReferenceId('TRAN');
 
-    $validated = $request->validate([
-        'mobile' => 'required|string',
-        'referenceid' => 'required|string',
-        'pincode' => 'required|string',
-        'address' => 'required|string',
-        'amount' => 'required|string',
-        'txntype' => 'required|string|in:imps,neft',
-        'dob' => 'required|date_format:d-m-Y',
-        'gst_state' => 'required|string',
-        'bene_id' => 'required|string',
-        'otp' => 'required|string',
-        'stateresp' => 'required|string',
-        'lat' => 'required|string',
-        'long' => 'required|string',
-    ]);
-
-    // Log request payload
-    Log::info('Request Payload:', $validated);
-
-    // Call external API
-    $response = Http::withHeaders([
-        'Token' => $jwtToken,
-        'User-Agent' => $this->partnerId,
-        'accept' => 'application/json',
-        'content-type' => 'application/json',
-    ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact', $validated);
-
-    // Log API Response
-    Log::info('API Response:', $response->json());
-
-    // Return data to frontend
-    return Inertia::render('Admin/transaction2/transaction', [
-        'transactionData' => $response->json(),
-    ]);
-}
-
-   public function transactionStatus(Request $request)
-{
-    // If the form is submitted with a reference ID
-    if ($request->filled('referenceid')) {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-        
-        $referenceId = $request->input('referenceid');
-        
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Token' => $jwtToken,
-            'User-Agent' => $this->partnerId,
-            'accept' => 'application/json',
-        ])->post('https://api.paysprint.in/api/v1/service/dmt-v2/transact/transact/querytransact', [
-            'referenceid' => $referenceId,
+        $validated = $request->validate([
+            'mobile' => 'required|string',
+            'referenceid' => 'required|string',
+            'pincode' => 'required|string',
+            'address' => 'required|string',
+            'amount' => 'required|string',
+            'txntype' => 'required|string|in:imps,neft',
+            'dob' => 'required|date_format:d-m-Y',
+            'gst_state' => 'required|string',
+            'bene_id' => 'required|string',
+            'otp' => 'required|string',
+            'stateresp' => 'required|string',
+            'lat' => 'required|string',
+            'long' => 'required|string',
         ]);
-        
-        $data = $response->json();
-        
-        return Inertia::render('Admin/transaction2/transactionStatus', [
-            'transactionData' => $data,
-            'referenceId' => $referenceId,
+
+        // Override the validated referenceid with the generated one
+        $validated['referenceid'] = $referenceId;
+
+        Log::info('Request Payload:', $validated);
+
+        $responseData = $this->callDynamicApi('Dmt2Transaction', $validated);
+
+        return Inertia::render('Admin/transaction2/transaction', [
+            'transactionData' => $responseData,
         ]);
     }
-    
-    // Initial page load without reference ID
-    return Inertia::render('Admin/transaction2/transactionStatus', [
-        'transactionData' => null,
-        'referenceId' => '',
-    ]);
-}
+
+    public function transactionStatus(Request $request)
+    {
+        if ($request->filled('referenceid')) {
+            $referenceId = $request->input('referenceid');
+
+            $payload = ['referenceid' => $referenceId];
+            $responseData = $this->callDynamicApi('Dmt2TransactionStatus', $payload);
+
+            return Inertia::render('Admin/transaction2/transactionStatus', [
+                'transactionData' => $responseData,
+                'referenceId' => $referenceId,
+            ]);
+        }
+
+        return Inertia::render('Admin/transaction2/transactionStatus', [
+            'transactionData' => null,
+            'referenceId' => '',
+        ]);
+    }
 }
