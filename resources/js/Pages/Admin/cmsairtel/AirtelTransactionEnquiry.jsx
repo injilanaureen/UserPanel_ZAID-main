@@ -100,7 +100,7 @@ const AirtelTransactionEnquiry = () => {
                 </h3>
                 <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
                   <Table className="w-full border-collapse">
-                    <TableHeader className="bg-sky-500 text-white">
+                    <TableHeader className="bg-gray-100 text-white">
                       <TableRow>
                         <TableHead className="px-4 py-2 text-left">Key</TableHead>
                         <TableHead className="px-4 py-2 text-left">Value</TableHead>

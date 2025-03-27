@@ -32,89 +32,107 @@ class CMSAirtelController extends Controller
             'HS256'
         );
     }
+    public function generateUrl(Request $request)
+{
+    // Validate user input
+    $validator = Validator::make($request->all(), [
+        'refid' => 'required|string|max:50',
+        'latitude' => 'required|numeric',
+        'longitude' => 'required|numeric',
+    ]);
 
-    public function generateUrl()
-    {
-        // API call to fetch Airtel CMS data
-        $url = "https://sit.paysprint.in/service-api/api/v1/service/airtelcms/V2/airtel/index";
-        $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3NDEzNDk2MzAsInBhcnRuZXJJZCI6IlBTMDA1OTYyIiwicmVxaWQiOiIxNzQxMzQ5NjMwICJ9.XDf0Oc7lRKY6042VAmm_E916_9TzBNzAjE2EzccSdzY";
-    
-    
-        return Inertia::render('Admin/cmsairtel/GenerateUrl');
-    }
-    
-    public function storeUrl(Request $request)
-    {
-        // Validate the incoming request
-        $validated = $request->validate([
-            'refid' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+    if ($validator->fails()) {
+        return Inertia::render('Admin/cmsairtel/GenerateUrl', [
+            'error' => $validator->errors(),
         ]);
-        
-        // Get API settings from config
-        $apiSettings = Config::get('services.airtelcms');
-        
-        try {
-            // Make the API call to generate URL
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiSettings['token'],
-                'Content-Type' => 'application/json'
-            ])->post($apiSettings['url'], [
-                'refid' => $request->refid,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-            ]);
-            
-            $responseData = $response->json();
-            
-            // Store the data in the database
-            $airtelUrl = new AirtelCmsUrl();
-            $airtelUrl->refid = $request->refid;
-            $airtelUrl->latitude = $request->latitude;
-            $airtelUrl->longitude = $request->longitude;
-            $airtelUrl->message = $responseData['message'] ?? null;
-            $airtelUrl->redirectionUrl = $responseData['redirectionUrl'] ?? null;
-            $airtelUrl->save();
-            
-            // Return the API response to the frontend
-            return response()->json($responseData);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Error processing request: ' . $e->getMessage()
-            ], 500);
-        }
     }
+
+    $refid = $request->input('refid');
+    $latitude = $request->input('latitude');
+    $longitude = $request->input('longitude');
+
+    // Generate JWT token
+    $token = $this->generateJwtToken($refid);
+
+    try {
+        // Call API
+        $response = Http::withHeaders([
+            'Token' => $token,
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->post('https://api.paysprint.in/api/v1/service/airtelcms/V2/airtel/index', [
+            'refid' => $refid,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ]);
+
+        // Convert response to JSON
+        $responseData = $response->json();
+
+        // Return response data to Inertia
+        return Inertia::render('Admin/cmsairtel/GenerateUrl', [
+            'apiResponse' => $responseData,
+            'refid' => $refid,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('API Call Failed: ' . $e->getMessage());
+
+        return Inertia::render('Admin/cmsairtel/GenerateUrl', [
+            'error' => 'Failed to fetch API response. Please try again.',
+        ]);
+    }
+}
+
+
     
-    public function airtelTransactionEnquiry(Request $request)
+   
+public function airtelTransactionEnquiry(Request $request)
     {
-        // Get API settings from config
-        $apiSettings = Config::get('services.airtelcms');
-    
-        try {
-            // Make the API call to fetch transaction status
-            $response = Http::withHeaders([
-                'Token' => $apiSettings['token'],
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'authorisedkey' => $apiSettings['authorised_key']
-            ])->post($apiSettings['status_url'], [
-                'refid' => $request->refid
+        if ($request->isMethod('post')) {
+            // Validate user input
+            $validator = Validator::make($request->all(), [
+                'refid' => 'required|string|max:50',
             ]);
-    
-            $responseData = $response->json();
-    
-            return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
-                'transactionData' => $responseData
-            ]);
-        } catch (\Exception $e) {
-            return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
-                'error' => 'Error fetching transaction: ' . $e->getMessage()
-            ]);
+
+            if ($validator->fails()) {
+                return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
+                    'error' => $validator->errors()->first(),
+                ]);
+            }
+
+            $refid = $request->input('refid');
+            $token = $this->generateJwtToken($refid);
+
+            try {
+                // Call API
+                $response = Http::withHeaders([
+                    'Token' => $token,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.paysprint.in/api/v1/service/airtelcms/airtel/status', [
+                    'refid' => $refid,
+                ]);
+
+                $responseData = $response->json();
+
+                return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
+                    'transactionData' => $responseData,
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Transaction Enquiry Failed: ' . $e->getMessage());
+
+                return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
+                    'error' => 'Failed to fetch transaction status. Please try again.',
+                ]);
+            }
         }
+
+        // For GET request, just render the page
+        return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry');
     }
-    
 
 }

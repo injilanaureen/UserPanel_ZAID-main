@@ -29,7 +29,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         setWalletBalance('Error');
-        console.error('Wallet Balance API Response:', error);
+        // console.error('Wallet Balance API Response:', error);
       } finally {
         setIsLoadingBalance(false);
       }
