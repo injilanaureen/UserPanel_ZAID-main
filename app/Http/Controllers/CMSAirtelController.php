@@ -87,10 +87,34 @@ class CMSAirtelController extends Controller
             ], 500);
         }
     }
-   
-    public function airtelTransactionEnquiry()
+    
+    public function airtelTransactionEnquiry(Request $request)
     {
-        return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry');
+        // Get API settings from config
+        $apiSettings = Config::get('services.airtelcms');
+    
+        try {
+            // Make the API call to fetch transaction status
+            $response = Http::withHeaders([
+                'Token' => $apiSettings['token'],
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'authorisedkey' => $apiSettings['authorised_key']
+            ])->post($apiSettings['status_url'], [
+                'refid' => $request->refid
+            ]);
+    
+            $responseData = $response->json();
+    
+            return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
+                'transactionData' => $responseData
+            ]);
+        } catch (\Exception $e) {
+            return Inertia::render('Admin/cmsairtel/AirtelTransactionEnquiry', [
+                'error' => 'Error fetching transaction: ' . $e->getMessage()
+            ]);
+        }
     }
+    
 
 }

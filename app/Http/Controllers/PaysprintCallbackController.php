@@ -23,6 +23,14 @@ class PaysprintCallbackController extends Controller
         } elseif ($event === 'BUS_TICKET_BOOKING_CONFIRMATION') {
             // No validation, just process the ticket confirmation
             return $this->handleTicketConfirmation($request->input('param'));
+        }elseif ($event === 'CMS_BALANCE_INQUIRY') {
+            return $this->handleBalanceInquiry($request->input('param'));
+        }  elseif ($event === 'CMS_BALANCE_DEBIT') {
+            return $this->handleBalanceDebit($request->input('param'));
+        } elseif ($event === 'CMS_LOW_BALANCE_INQUIRY') {
+            return $this->handleLowBalanceInquiry($request->input('param'));
+        } elseif ($event === 'CMS_POSTING') {
+            return $this->handleMsPosting($request->input('param'));
         }
 
         return response()->json(['status' => 400, 'message' => 'Invalid event type'], 400);
@@ -73,5 +81,37 @@ class PaysprintCallbackController extends Controller
             Log::error('Ticket Confirmation Error: ' . $e->getMessage(), ['params' => $params]);
             return response()->json(['status' => 500, 'message' => 'Ticket confirmation failed'], 500);
         }
+    }
+    private function handleBalanceInquiry($params)
+    {
+        // Log the balance inquiry
+        Log::info('Processing Balance Inquiry:', $params);
+        
+        // Simply return success response without any validation
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
+    }
+    private function handleBalanceDebit($params)
+    {
+        // Log the balance debit
+        Log::info('Processing Balance Debit:', $params);
+        
+        // Simply return success response
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
+    }
+    private function handleLowBalanceInquiry($params)
+    {
+        // Log the low balance inquiry
+        Log::info('Processing Low Balance Inquiry:', $params);
+        
+        // Simply return success response
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
+    }
+    private function handleMsPosting($params)
+    {
+        // Log the MS Posting
+        Log::info('Processing MS Posting:', $params);
+        
+        // Simply return success response
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully']);
     }
 }

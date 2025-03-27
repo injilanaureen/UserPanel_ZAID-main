@@ -10,7 +10,10 @@ use App\Models\BusCurrentTrip;
 use App\Models\BookBusTicket;
 use App\Models\getboardingpointdetails;
 use App\Models\getBookedTickets;
+use App\Models\ApiManagement;
+use Illuminate\Support\Facades\Log;  
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Jwt; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BusTicketController extends Controller
@@ -18,20 +21,37 @@ class BusTicketController extends Controller
     private $partnerId = 'PS005962'; 
     private $secretKey = 'UFMwMDU5NjJjYzE5Y2JlYWY1OGRiZjE2ZGI3NThhN2FjNDFiNTI3YTE3NDA2NDkxMzM=';
 
-    private function generateJwtToken($requestId)
+   
+    private function callDynamicApi($apiName, $payload = [], $additionalHeaders = [])
     {
-        $timestamp = time();
-        $payload = [
-            'timestamp' => $timestamp,
-            'partnerId' => $this->partnerId,
-            'reqid' => $requestId
-        ];
+        try {
+            $requestId = \App\Helpers\ApiHelper::generateRequestId();
+            $jwtToken = \App\Helpers\ApiHelper::generateJwtToken($requestId, $this->partnerId, $this->secretKey);
+            $headers = \App\Helpers\ApiHelper::getApiHeaders($jwtToken, $additionalHeaders, $this->partnerId);
+            $apiUrl = \App\Helpers\ApiHelper::getApiUrl($apiName);
 
-        return Jwt::encode(
-            $payload,
-            $this->secretKey,
-            'HS256' // Using HMAC SHA-256 algorithm
-        );
+            $response = Http::withHeaders($headers)
+                ->post($apiUrl, $payload);
+
+            Log::info('Dynamic API Call', [
+                'api_name' => $apiName,
+                'url' => $apiUrl,
+                'payload' => $payload,
+                'response' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Dynamic API Call Failed', [
+                'api_name' => $apiName,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'status' => false,
+                'message' => 'API call failed: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function getSourceCity()
@@ -39,46 +59,28 @@ class BusTicketController extends Controller
         return Inertia::render('Admin/busTicket/getSourceCity');
     }
 
-    public function fetchSourceCities()
+   public function fetchSourceCities()
     {
         try {
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
+            $responseData = $this->callDynamicApi('BusBooking:GetSourceCity');
 
-            // Fetch from API
-            $response = Http::withHeaders([
-                'accept' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/source');
-            
-            if (!$response->successful()) {
-                \Log::error('API Error: ' . $response->status() . ' - ' . $response->body());
-                throw new \Exception('API request failed with status: ' . $response->status());
-            }
-            
-            $data = $response->json();
-            
-            if (isset($data['status']) && $data['status'] && isset($data['data']['cities'])) {
-                // Clear existing data
+            if (isset($responseData['status']) && $responseData['status'] && isset($responseData['data']['cities'])) {
                 SourceCity::truncate();
-                
-                // Store all cities, including the id field
-                foreach ($data['data']['cities'] as $city) {
+
+                foreach ($responseData['data']['cities'] as $city) {
                     SourceCity::create([
-                        'id' => $city['id'], // Add the id field
+                        'id' => $city['id'],
                         'city' => $city['name'],
                         'state' => $city['state'],
                         'location_type' => $city['locationType'],
                         'coordinates' => ($city['latitude'] ?? '') . ',' . ($city['longitude'] ?? '')
                     ]);
                 }
-                
-                // Fetch all cities from the database to confirm they were saved
+
                 $cities = SourceCity::all()->map(function ($city) {
                     $coordinates = explode(',', $city->coordinates);
                     return [
-                        'id' => $city->id, // Include id in the response
+                        'id' => $city->id,
                         'name' => $city->city,
                         'state' => $city->state,
                         'locationType' => $city->location_type,
@@ -86,20 +88,19 @@ class BusTicketController extends Controller
                         'longitude' => $coordinates[1] ?? ''
                     ];
                 });
-                
+
                 return response()->json([
                     'status' => true,
                     'data' => [
                         'cities' => $cities,
-                        'count' => $cities->count() // Add count for debugging
+                        'count' => $cities->count()
                     ]
                 ]);
-            } else {
-                \Log::error('Invalid data structure: ' . json_encode($data));
-                throw new \Exception('Invalid data structure received from API');
             }
+
+            throw new \Exception($responseData['message'] ?? 'Invalid data structure');
         } catch (\Exception $e) {
-            \Log::error('Failed to fetch cities: ' . $e->getMessage());
+            Log::error('Failed to fetch cities: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch or store cities',
@@ -117,36 +118,19 @@ class BusTicketController extends Controller
     }
     public function fetchAndStoreAvailableTrips(Request $request)
     {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
         try {
+            $responseData = $this->callDynamicApi('BusBooking:GetAvailableTrips', $request->all());
 
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-    
-            $response = Http::withHeaders([
-                'accept' => 'application/json',
-                'content-type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/availabletrips', $request->all());
-    
-            $jsonResponse = $response->json();
-            
-            // Add additional error checking
-            if (!$response->successful()) {
-                throw new \Exception('API request failed: ' . ($jsonResponse['message'] ?? 'Unknown error'));
+            if (!isset($responseData['status']) || !$responseData['status']) {
+                throw new \Exception($responseData['message'] ?? 'Failed to fetch trips');
             }
-    
-            return response()->json($jsonResponse);
-    
+
+            return response()->json($responseData);
         } catch (\Exception $e) {
-            \Log::error('Bus API Error: ' . $e->getMessage());
+            Log::error('Bus API Error: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to fetch trips: ' . $e->getMessage(),
-                'error' => $e->getMessage()
+                'message' => 'Failed to fetch trips: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -160,57 +144,26 @@ class BusTicketController extends Controller
 
     public function fetchTripDetails(Request $request)
     {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
         try {
             $request->validate([
                 'trip_id' => 'required|string',
             ]);
-    
-            \Log::info('Fetching trip details for trip_id: ' . $request->trip_id);
-    
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/tripdetails', [
+
+            $responseData = $this->callDynamicApi('BusBooking:TripDetails', [
                 'trip_id' => $request->trip_id
             ]);
-    
-            \Log::info('API Response:', [
-                'status' => $response->status(),
-                'body' => $response->json()
-            ]);
-    
-            if (!$response->successful()) {
-                \Log::error('API request failed', [
-                    'status' => $response->status(),
-                    'response' => $response->json()
-                ]);
-                throw new \Exception('API request failed: ' . $response->status());
+
+            if (!isset($responseData['status']) || !$responseData['status']) {
+                throw new \Exception($responseData['message'] ?? 'API returned error status');
             }
-    
-            $data = $response->json();
-    
-            if (!isset($data['status'])) {
-                throw new \Exception('Invalid response format from API');
-            }
-    
-            if (!$data['status']) {
-                throw new \Exception($data['message'] ?? 'API returned error status');
-            }
-    
+
             return response()->json([
                 'status' => true,
-                'data' => $data['data'] ?? null,
-                'message' => $data['message'] ?? 'Success'
+                'data' => $responseData['data'] ?? null,
+                'message' => $responseData['message'] ?? 'Success'
             ]);
-    
         } catch (\Exception $e) {
-            \Log::error('Failed to fetch trip details: ' . $e->getMessage());
-            
+            Log::error('Failed to fetch trip details: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch trip details: ' . $e->getMessage()
@@ -268,11 +221,7 @@ class BusTicketController extends Controller
     }
     public function bookandstorebookticket(Request $request)
     {
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
         try {
-            // Validate input
             $request->validate([
                 'refid' => 'required|integer',
                 'amount' => 'required|integer',
@@ -282,25 +231,17 @@ class BusTicketController extends Controller
                 'passenger_email' => 'required|email'
             ]);
 
-            // API call
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/bookticket', [
+            $payload = [
                 'refid' => $request->refid,
                 'amount' => $request->amount,
                 'base_fare' => $request->base_fare,
                 'blockKey' => $request->blockKey,
                 'passenger_phone' => $request->passenger_phone,
                 'passenger_email' => $request->passenger_email
-            ]);
+            ];
 
-            // Convert response to JSON
-            $responseData = $response->json();
+            $responseData = $this->callDynamicApi('BusBooking:BookTicket', $payload);
 
-            // Store data in database
             $ticket = BookBusTicket::create([
                 'refid' => $request->refid,
                 'amount' => $request->amount,
@@ -314,9 +255,9 @@ class BusTicketController extends Controller
             ]);
 
             return response()->json([
-                'success' => $responseData['status'] ?? false, // Use actual booking status
-      'message' => $responseData['message'] ?? 'Ticket booking failed',
-      'data' => $ticket
+                'success' => $responseData['status'] ?? false,
+                'message' => $responseData['message'] ?? 'Ticket booking failed',
+                'data' => $ticket
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -325,16 +266,13 @@ class BusTicketController extends Controller
             ], 500);
         }
     }
+
     public function blockTicket(){
         return Inertia::render('Admin/busTicket/blockTicket');
     }
-   public function blockTicketApi(Request $request)
-    {   
-        $requestId = time() . rand(1000, 9999);
-        $jwtToken = $this->generateJwtToken($requestId);
-
+  public function blockTicketApi(Request $request)
+    {
         try {
-            // Validate the incoming request
             $validated = $request->validate([
                 'availableTripId' => 'required|numeric',
                 'boardingPointId' => 'required|numeric',
@@ -362,49 +300,21 @@ class BusTicketController extends Controller
                 'inventoryItems.0.passenger.primary' => 'required|string|in:0,1',
             ]);
 
-            // Log the validated data for debugging
-            \Log::info('Validated Request Data:', $validated);
+            $responseData = $this->callDynamicApi('BusBooking:BlockTicket', $validated);
 
-            // Make the external API call
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/block', $validated);
-
-            // Log the raw response for debugging
-            \Log::info('External API Response:', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            // Check if the request was successful
-            if (!$response->successful()) {
+            if (!isset($responseData['status']) || !$responseData['status']) {
                 return response()->json([
                     'status' => 'FAILED',
-                    'message' => $response->json('message', 'Failed to block ticket'),
-                    'external_status' => $response->status(),
-                ], $response->status());
-            }
-
-            $data = $response->json();
-
-            // Check the API's success indicator (adjust based on actual response structure)
-            if (!isset($data['status']) || $data['status'] !== true) {
-                return response()->json([
-                    'status' => 'FAILED',
-                    'message' => $data['message'] ?? 'Failed to block ticket',
-                    'external_data' => $data,
+                    'message' => $responseData['message'] ?? 'Failed to block ticket',
+                    'external_data' => $responseData,
                 ], 400);
             }
 
             return response()->json([
                 'status' => 'SUCCESS',
                 'message' => 'Ticket blocked successfully',
-                'data' => $data['data'] ?? $validated,
+                'data' => $responseData['data'] ?? $validated,
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'status' => 'FAILED',
@@ -412,9 +322,7 @@ class BusTicketController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Block Ticket API Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Block Ticket API Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'FAILED',
                 'message' => 'Error processing request: ' . $e->getMessage(),
@@ -426,43 +334,29 @@ class BusTicketController extends Controller
         return Inertia::render('Admin/busTicket/getBoardingPointDetails');
     }   
 
-    public function fetchandstoreboardingpointdetails(Request $request) {
+    public function fetchandstoreboardingpointdetails(Request $request)
+    {
         try {
-            $requestId = time() . rand(1000, 9999);
-            $jwtToken = $this->generateJwtToken($requestId);
-    
-            // Validate input, treat trip_id as string to avoid integer overflow
             $request->validate([
                 'bpId' => 'required|integer',
-                'trip_id' => 'required|string', // Changed to string
+                'trip_id' => 'required|string',
             ]);
-    
-            // API call
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'User-Agent' => $this->partnerId,
-                'Token' => $jwtToken,
-            ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/boardingPoint', [
-                'bpId' => (int) $request->bpId, // Cast to integer
-                'trip_id' => $request->trip_id, // Keep as string
-            ]);
-    
-            // Log response for debugging
-            \Log::info('API Response:', $response->json());
-    
-            $responseData = $response->json();
-    
-            // Check if response is successful and contains 'data'
+
+            $payload = [
+                'bpId' => (int) $request->bpId,
+                'trip_id' => $request->trip_id,
+            ];
+
+            $responseData = $this->callDynamicApi('BusBooking:GetBoardingPointDetails', $payload);
+
             if (!isset($responseData['data']) || !isset($responseData['status'])) {
                 return response()->json([
                     'success' => false,
                     'message' => $responseData['message'] ?? 'Invalid response from API',
-                    'api_response' => $responseData // Include full response for debugging
+                    'api_response' => $responseData
                 ], 400);
             }
-    
-            // Store data in database
+
             $ticket = getboardingpointdetails::create([
                 'bpId' => $request->bpId,
                 'trip_id' => $request->trip_id,
@@ -476,13 +370,13 @@ class BusTicketController extends Controller
                 'name' => $responseData['data']['name'] ?? '',
                 'rbMasterId' => $responseData['data']['rbMasterId'] ?? ''
             ]);
-    
+
             return response()->json([
                 'success' => true,
-                'api_response' => $responseData // Send full response
+                'api_response' => $responseData
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in fetchandstoreboardingpointdetails: ' . $e->getMessage());
+            Log::error('Error in fetchandstoreboardingpointdetails: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error occurred: ' . $e->getMessage()
@@ -496,163 +390,123 @@ class BusTicketController extends Controller
     }
     
     public function fetchBookedTickets(Request $request)
-{
-    $requestId = time() . rand(1000, 9999);
-    $jwtToken = $this->generateJwtToken($requestId);
+    {
+        try {
+            $request->validate([
+                'refid' => 'required|integer',
+            ]);
 
-    try {
-        $request->validate([
-            'refid' => 'required|integer',
-        ]);
+            $responseData = $this->callDynamicApi('BusBooking:CheckBookedTicket', [
+                'refid' => $request->refid,
+            ]);
 
-        // API Call
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-            'User-Agent' => $this->partnerId,
-            'Token' => $jwtToken,
-        ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/check_booked_ticket', [
-            'refid' => $request->refid,
-        ]);
+            if (!isset($responseData['data']) || !isset($responseData['status'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $responseData['message'] ?? 'Invalid response from API',
+                ], 400);
+            }
 
-        $responseData = $response->json();
-            
-        // Check if the API returned an error message
-        if (isset($responseData['message']) && !isset($responseData['data'])) {
+            $data = $responseData['data'];
+            $inventory = $data['inventoryItems'] ?? null;
+            $passenger = $inventory['passenger'] ?? null;
+
+            if (!$inventory || !$passenger) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Missing inventory or passenger data',
+                ], 400);
+            }
+
+            getBookedTickets::updateOrCreate(
+                ['pnr' => $data['pnr']],
+                [
+                    'tin' => $data['tin'],
+                    'status' => $data['status'],
+                    'bus_type' => $data['busType'],
+                    'source_city' => $data['sourceCity'],
+                    'source_city_id' => $data['sourceCityId'],
+                    'destination_city' => $data['destinationCity'],
+                    'destination_city_id' => $data['destinationCityId'],
+                    'date_of_issue' => $data['dateOfIssue'],
+                    'doj' => $data['doj'],
+                    'pickup_location' => $data['pickupLocation'],
+                    'pickup_location_id' => $data['pickupLocationId'],
+                    'pickup_location_address' => $data['pickUpLocationAddress'],
+                    'pickup_location_landmark' => $data['pickupLocationLandmark'],
+                    'drop_location' => $data['dropLocation'],
+                    'drop_location_id' => $data['dropLocationId'],
+                    'drop_location_address' => $data['dropLocationAddress'],
+                    'drop_location_landmark' => $data['dropLocationLandmark'],
+                    'pickup_time' => $data['pickupTime'],
+                    'drop_time' => $data['dropTime'],
+                    'prime_departure_time' => $data['primeDepartureTime'],
+                    'fare' => $inventory['fare'],
+                    'seat_name' => $inventory['seatName'],
+                    'passenger_name' => $passenger['name'],
+                    'passenger_mobile' => $passenger['mobile'],
+                    'passenger_email' => $passenger['email'],
+                    'passenger_id_type' => $passenger['idType'],
+                    'passenger_id_number' => $passenger['idNumber'],
+                    'mticket_enabled' => filter_var($data['MTicketEnabled'], FILTER_VALIDATE_BOOLEAN),
+                    'partial_cancellation_allowed' => filter_var($data['partialCancellationAllowed'], FILTER_VALIDATE_BOOLEAN),
+                    'has_special_template' => filter_var($data['hasSpecialTemplate'], FILTER_VALIDATE_BOOLEAN),
+                    'has_rtc_breakup' => filter_var($data['hasRTCBreakup'], FILTER_VALIDATE_BOOLEAN),
+                    'cancellation_policy' => $data['cancellationPolicy'],
+                    'cancellation_message' => $data['cancellationMessage'],
+                    'cancellation_calculation_timestamp' => $data['cancellationCalculationTimestamp'],
+                    'primo_booking' => filter_var($data['primoBooking'], FILTER_VALIDATE_BOOLEAN),
+                    'vaccinated_bus' => filter_var($data['vaccinatedBus'], FILTER_VALIDATE_BOOLEAN),
+                    'vaccinated_staff' => filter_var($data['vaccinatedStaff'], FILTER_VALIDATE_BOOLEAN),
+                    'service_charge' => $data['serviceCharge'],
+                    'operator_service_charge' => $inventory['operatorServiceCharge'],
+                    'service_tax' => $inventory['serviceTax'],
+                    'travels' => $data['travels'],
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ticket details saved successfully!',
+                'data' => $responseData['data']
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $responseData['message'],
-            ], 400);
+                'message' => 'Error occurred: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Check if required data exists
-        if (!isset($responseData['data']) || !isset($responseData['status'])) {
-            return response()->json([
-                'success' => false,
-                'message' => $responseData['message'] ?? 'Invalid response from API',
-            ], 400);
-        }
-
-        // Extract data
-        $data = $responseData['data'];
-        
-        // Check if inventoryItems exists
-        if (!isset($data['inventoryItems'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No inventory items found in the response',
-            ], 400);
-        }
-        
-        $inventory = $data['inventoryItems'];
-        
-        // Check if passenger data exists
-        if (!isset($inventory['passenger'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No passenger information found in the response',
-            ], 400);
-        }
-        
-        $passenger = $inventory['passenger'];
-
-        // Save to database
-        getBookedTickets::updateOrCreate(
-            ['pnr' => $data['pnr']],
-            [
-                'tin' => $data['tin'],
-                'status' => $data['status'],
-                'bus_type' => $data['busType'],
-                'source_city' => $data['sourceCity'],
-                'source_city_id' => $data['sourceCityId'],
-                'destination_city' => $data['destinationCity'],
-                'destination_city_id' => $data['destinationCityId'],
-                'date_of_issue' => $data['dateOfIssue'],
-                'doj' => $data['doj'],
-                'pickup_location' => $data['pickupLocation'],
-                'pickup_location_id' => $data['pickupLocationId'],
-                'pickup_location_address' => $data['pickUpLocationAddress'],
-                'pickup_location_landmark' => $data['pickupLocationLandmark'],
-                'drop_location' => $data['dropLocation'],
-                'drop_location_id' => $data['dropLocationId'],
-                'drop_location_address' => $data['dropLocationAddress'],
-                'drop_location_landmark' => $data['dropLocationLandmark'],
-                'pickup_time' => $data['pickupTime'],
-                'drop_time' => $data['dropTime'],
-                'prime_departure_time' => $data['primeDepartureTime'],
-                'fare' => $inventory['fare'],
-                'seat_name' => $inventory['seatName'],
-                'passenger_name' => $passenger['name'],
-                'passenger_mobile' => $passenger['mobile'],
-                'passenger_email' => $passenger['email'],
-                'passenger_id_type' => $passenger['idType'],
-                'passenger_id_number' => $passenger['idNumber'],
-                'mticket_enabled' => filter_var($data['MTicketEnabled'], FILTER_VALIDATE_BOOLEAN),
-                'partial_cancellation_allowed' => filter_var($data['partialCancellationAllowed'], FILTER_VALIDATE_BOOLEAN),
-                'has_special_template' => filter_var($data['hasSpecialTemplate'], FILTER_VALIDATE_BOOLEAN),
-                'has_rtc_breakup' => filter_var($data['hasRTCBreakup'], FILTER_VALIDATE_BOOLEAN),
-                'cancellation_policy' => $data['cancellationPolicy'],
-                'cancellation_message' => $data['cancellationMessage'],
-                'cancellation_calculation_timestamp' => $data['cancellationCalculationTimestamp'],
-                'primo_booking' => filter_var($data['primoBooking'], FILTER_VALIDATE_BOOLEAN),
-                'vaccinated_bus' => filter_var($data['vaccinatedBus'], FILTER_VALIDATE_BOOLEAN),
-                'vaccinated_staff' => filter_var($data['vaccinatedStaff'], FILTER_VALIDATE_BOOLEAN),
-                'service_charge' => $data['serviceCharge'],
-                'operator_service_charge' => $inventory['operatorServiceCharge'],
-                'service_tax' => $inventory['serviceTax'],
-                'travels' => $data['travels'],
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Ticket details saved successfully!',
-            'data' => $responseData['data']
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error occurred: ' . $e->getMessage()
-        ], 500);
     }
-}
 public function ticketCancellation()
 {
     return Inertia::render('Admin/busTicket/ticketCancellation');
 }
 
 public function cancelTicket(Request $request)
-{
-    $requestId = time() . rand(1000, 9999);
-    $jwtToken = $this->generateJwtToken($requestId);
-    
-    $request->validate([
-        'refId' => 'required',
-        'seatNumber' => 'required|string',
-    ]);
+    {
+        try {
+            $request->validate([
+                'refId' => 'required',
+                'seatNumber' => 'required|string',
+            ]);
 
-    try {
-        $response = Http::withHeaders([
-            'User-Agent' => $this->partnerId,
-            'Token' => $jwtToken,
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->post('https://api.paysprint.in/api/v1/service/bus/ticket/cancel_ticket', [
-            'refid' => $request->refId,
-            'seatsToCancel' => [
-                '0' => $request->seatNumber
-            ]
-        ]);
+            $payload = [
+                'refid' => $request->refId,
+                'seatsToCancel' => [
+                    '0' => $request->seatNumber
+                ]
+            ];
 
-        return $response->json();
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => $e->getMessage()
-        ], 500);
+            $responseData = $this->callDynamicApi('BusBooking:TicketCancellation', $payload);
+
+            return response()->json($responseData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
 }
 
