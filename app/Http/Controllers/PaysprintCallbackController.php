@@ -23,6 +23,7 @@ class PaysprintCallbackController extends Controller
         } elseif ($event === 'BUS_TICKET_BOOKING_CONFIRMATION') {
             // No validation, just process the ticket confirmation
             return $this->handleTicketConfirmation($request->input('param'));
+
         }elseif ($event === 'CMS_BALANCE_INQUIRY') {
             return $this->handleBalanceInquiry($request->input('param'));
         }  elseif ($event === 'CMS_BALANCE_DEBIT') {
@@ -33,7 +34,7 @@ class PaysprintCallbackController extends Controller
             return $this->handleMsPosting($request->input('param'));
         }
 
-        return response()->json(['status' => 400, 'message' => 'Invalid event type'], 400);
+        return response()->json(['status' => 200, 'message' => 'Transaction completed successfully'], 200);
     }
 
     private function handleDebitTransaction($params)
