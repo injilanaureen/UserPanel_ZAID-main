@@ -10,6 +10,7 @@ use App\Models\AirtelCmsUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
+use App\Http\Controllers\Jwt; 
 
 class CMSAirtelController extends Controller
 {
@@ -26,7 +27,7 @@ class CMSAirtelController extends Controller
             'reqid' => $requestId
         ];
 
-        return JWT::encode(
+        return Jwt::encode(
             $payload,
             $this->secretKey,
             'HS256'
