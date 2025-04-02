@@ -67,114 +67,9 @@ class RechargeController extends Controller
     
 
     
-//     public function processRecharge(Request $request)
-// {
-//     try {
-//         $validator = Validator::make($request->all(), [
-//             'operator' => 'required|numeric',
-//             'canumber' => 'required|string',
-//             'amount' => 'required|numeric|min:1'
-//         ]);
-
-//         if ($validator->fails()) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'Validation failed',
-//                 'errors' => $validator->errors()
-//             ], 422);
-//         }
-
-//         $user = $request->user();
-//         $amount = $request->input('amount');
-//         $referenceId = ApiHelper::generateReferenceId();
-
-//         // Calculate available balance
-//         $totalApproved = FundRequest::getAvailableBalance($user->id);
-//         $spentAmount = Transaction::where('user_id', $user->id)
-//             ->where('status', 'completed')
-//             ->where('type', 'debit')
-//             ->sum('amount');
-//         $remainingBalance = $totalApproved - $spentAmount;
-
-//         if ($amount > $remainingBalance) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'Insufficient funds'
-//             ], 403);
-//         }
-
-//         $payload = json_encode([
-//             'operator' => (int)$request->operator,
-//             'canumber' => $request->canumber,
-//             'amount' => (int)$amount,
-//             'referenceid' => $referenceId
-//         ]);
-
-//         $curl = curl_init();
-//         curl_setopt_array($curl, [
-//             CURLOPT_URL => 'https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/dorecharge',
-//             CURLOPT_RETURNTRANSFER => true,
-//             CURLOPT_ENCODING => '',
-//             CURLOPT_MAXREDIRS => 10,
-//             CURLOPT_TIMEOUT => 30,
-//             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-//             CURLOPT_CUSTOMREQUEST => 'POST',
-//             CURLOPT_POSTFIELDS => $payload,
-//             CURLOPT_HTTPHEADER => [
-//                 'Authorisedkey: Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
-//                 'Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkyNTM1MzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MjUzNTM3In0.RSV5uUuUgx5XdD2h6rdAR5Kbh6DZVCE7mb85JLCTFP0',
-//                 'accept: text/plain',
-//                 'content-type: application/json'
-//             ],
-//         ]);
-
-//         $response = curl_exec($curl);
-//         $err = curl_error($curl);
-//         curl_close($curl);
-
-//         if ($err) {
-//             throw new \Exception('cURL Error: ' . $err);
-//         }
-
-//         $responseData = json_decode($response, true);
-
-//         // Store the recharge transaction regardless of status
-//         $rechargeTransaction = RechargeTransaction::create([
-//             'operator' => $request->operator,
-//             'canumber' => $request->canumber,
-//             'amount' => $amount,
-//             'referenceid' => $referenceId,
-//             'status' => $responseData['status'] ? 'success' : 'failed',
-//             'response_code' => $responseData['response_code'] ?? '',
-//             'operatorid' => $responseData['operatorid'] ?? '',
-//             'ackno' => $responseData['ackno'] ?? '',
-//             'message' => $responseData['message'] ?? ''
-//         ]);
-
-//         if (isset($responseData['status']) && $responseData['status'] === true) {
-//             // Record the debit transaction only if recharge is successful
-//             Transaction::create([
-//                 'user_id' => $user->id,
-//                 'amount' => $amount,
-//                 'type' => 'debit',
-//                 'status' => 'completed'
-//             ]);
-//         }
-
-//         return response()->json($responseData);
-
-//     } catch (\Exception $e) {
-//         Log::error('Recharge processing failed: ' . $e->getMessage());
-//         return response()->json([
-//             'status' => false,
-//             'message' => 'Failed to process recharge: ' . $e->getMessage()
-//         ], 500);
-//     }
-// }
-public function processRecharge(Request $request)
+    public function processRecharge(Request $request)
 {
     try {
-        // Validate the request
         $validator = Validator::make($request->all(), [
             'operator' => 'required|numeric',
             'canumber' => 'required|string',
@@ -208,22 +103,40 @@ public function processRecharge(Request $request)
             ], 403);
         }
 
-        // Prepare payload for the API
-        $payload = [
+        $payload = json_encode([
             'operator' => (int)$request->operator,
             'canumber' => $request->canumber,
             'amount' => (int)$amount,
             'referenceid' => $referenceId
-        ];
+        ]);
 
-        // Call the dynamic API using the database-stored API name
-        $apiName = 'DoRecharge'; // Matches the api_name in your database
-        $responseData = $this->callDynamicApi($apiName, $payload);
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => 'https://sit.paysprint.in/service-api/api/v1/service/recharge/recharge/dorecharge',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Authorisedkey: Y2RkZTc2ZmNjODgxODljMjkyN2ViOTlhM2FiZmYyM2I=',
+                'Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aW1lc3RhbXAiOjE3MzkyNTM1MzcsInBhcnRuZXJJZCI6IlBTMDAxNTY4IiwicmVxaWQiOiIxNzM5MjUzNTM3In0.RSV5uUuUgx5XdD2h6rdAR5Kbh6DZVCE7mb85JLCTFP0',
+                'accept: text/plain',
+                'content-type: application/json'
+            ],
+        ]);
 
-        // Check if the API call failed
-        if (isset($responseData['status']) && $responseData['status'] === false) {
-            throw new \Exception($responseData['message'] ?? 'Unknown error from API');
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            throw new \Exception('cURL Error: ' . $err);
         }
+
+        $responseData = json_decode($response, true);
 
         // Store the recharge transaction regardless of status
         $rechargeTransaction = RechargeTransaction::create([
@@ -238,8 +151,8 @@ public function processRecharge(Request $request)
             'message' => $responseData['message'] ?? ''
         ]);
 
-        // Record the debit transaction only if recharge is successful
         if (isset($responseData['status']) && $responseData['status'] === true) {
+            // Record the debit transaction only if recharge is successful
             Transaction::create([
                 'user_id' => $user->id,
                 'amount' => $amount,
@@ -258,6 +171,94 @@ public function processRecharge(Request $request)
         ], 500);
     }
 }
+
+// public function processRecharge(Request $request)
+// {
+//     try {
+//         // Validate the request
+//         $validator = Validator::make($request->all(), [
+//             'operator' => 'required|numeric',
+//             'canumber' => 'required|string',
+//             'amount' => 'required|numeric|min:1'
+//         ]);
+
+//         if ($validator->fails()) {
+//             return response()->json([
+//                 'status' => false,
+//                 'message' => 'Validation failed',
+//                 'errors' => $validator->errors()
+//             ], 422);
+//         }
+
+//         $user = $request->user();
+//         $amount = $request->input('amount');
+//         $referenceId = ApiHelper::generateReferenceId();
+
+//         // Calculate available balance
+//         $totalApproved = FundRequest::getAvailableBalance($user->id);
+//         $spentAmount = Transaction::where('user_id', $user->id)
+//             ->where('status', 'completed')
+//             ->where('type', 'debit')
+//             ->sum('amount');
+//         $remainingBalance = $totalApproved - $spentAmount;
+
+//         if ($amount > $remainingBalance) {
+//             return response()->json([
+//                 'status' => false,
+//                 'message' => 'Insufficient funds'
+//             ], 403);
+//         }
+
+//         // Prepare payload for the API
+//         $payload = [
+//             'operator' => (int)$request->operator,
+//             'canumber' => $request->canumber,
+//             'amount' => (int)$amount,
+//             'referenceid' => $referenceId
+//         ];
+
+//         // Call the dynamic API using the database-stored API name
+//         $apiName = 'DoRecharge'; 
+//         $responseData = $this->callDynamicApi($apiName, $payload);
+
+//         // Check if the API call failed
+//         if (isset($responseData['status']) && $responseData['status'] === false) {
+//             throw new \Exception($responseData['message'] ?? 'Unknown error from API');
+//         }
+
+//         // Store the recharge transaction regardless of status
+//         $rechargeTransaction = RechargeTransaction::create([
+//             'operator' => $request->operator,
+//             'canumber' => $request->canumber,
+//             'amount' => $amount,
+//             'referenceid' => $referenceId,
+//             'status' => $responseData['status'] ? 'success' : 'failed',
+//             'response_code' => $responseData['response_code'] ?? '',
+//             'operatorid' => $responseData['operatorid'] ?? '',
+//             'ackno' => $responseData['ackno'] ?? '',
+//             'message' => $responseData['message'] ?? ''
+//         ]);
+
+//         // Record the debit transaction only if recharge is successful
+//         if (isset($responseData['status']) && $responseData['status'] === true) {
+//             Transaction::create([
+//                 'user_id' => $user->id,
+//                 'amount' => $amount,
+//                 'type' => 'debit',
+//                 'status' => 'completed'
+//             ]);
+//         }
+
+//         return response()->json($responseData);
+
+//     } catch (\Exception $e) {
+//         Log::error('Recharge processing failed: ' . $e->getMessage());
+//         return response()->json([
+//             'status' => false,
+//             'message' => 'Failed to process recharge: ' . $e->getMessage()
+//         ], 500);
+//     }
+// }
     
     public function updateTransaction(Request $request)
     {

@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
             // Set application timezone to ensure consistency
             config(['app.timezone' => 'Asia/Kolkata']);
             
-            // Insert directly using DB facade to avoid model casting issues
+
             DB::table('login_sessions')->insert([
                 'user_id'      => Auth::id(),
                 'ip_address'   => $request->ip(),

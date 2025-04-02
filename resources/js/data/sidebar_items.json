@@ -132,7 +132,7 @@
           "href": "/admin/busTicket/getBoardingPointDetails"
         },
         {
-          "title": "Block Tickets",
+          "title": "Reserve Tickets",
           "href": "/admin/busTicket/blockTicket"
         },
         {
