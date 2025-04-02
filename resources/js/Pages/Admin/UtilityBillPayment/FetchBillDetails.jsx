@@ -61,6 +61,18 @@ const FetchBillDetails = () => {
         });
     };
 
+    const handlePayBill = () => {
+        // Navigate to PayBill route with bill data
+        router.visit('/admin/utility-bill-payment/pay-bill', {
+            method: 'get',
+            data: {
+                operator: formData.operator,
+                canumber: formData.canumber,
+                amount: billData.amount
+            }
+        });
+    };
+
     return (
         <AdminLayout>
             <div className="max-w-full p-6">
@@ -219,6 +231,14 @@ const FetchBillDetails = () => {
                                         </TableBody>
                                     </Table>
                                 </div>
+                                {billData.status && (
+                                    <button
+                                        onClick={handlePayBill}
+                                        className="mt-4 w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium"
+                                    >
+                                        Proceed to Pay Bill
+                                    </button>
+                                )}
                                 {savedRecord && (
                                     <div className="mt-4 p-4 bg-green-50 border border-green-100 rounded-lg">
                                         <p className="text-green-600 text-sm flex items-center">

@@ -12,6 +12,7 @@ class AccountController extends Controller
     public function create()
     {
         // Fetch all existing accounts
+        //for whitlisting a/c of user
         $accounts = AddAccount::all()->toArray();
         
         // Pass accounts to the frontend

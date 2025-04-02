@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Landmark, Hash, Map, User, AlertCircle, CheckCircle, Code } from 'lucide-react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
@@ -8,10 +8,39 @@ const BoardingPoint = () => {
   const [bpId, setBpId] = useState('');
   const [tripId, setTripId] = useState('');
   const [boardingPoint, setBoardingPoint] = useState(null);
+  const [boardingPointsList, setBoardingPointsList] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [apiResponse, setApiResponse] = useState(null);
+
+  // Fetch boarding points when tripId changes
+  useEffect(() => {
+    if (tripId) {
+      fetchTripBoardingPoints();
+    }
+  }, [tripId]);
+
+  const fetchTripBoardingPoints = async () => {
+    try {
+      const response = await axios.post('/admin/busTicket/fetchTripDetails', {
+        trip_id: tripId,
+      }, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = response.data;
+      if (data.status && data.data?.boardingTimes) {
+        setBoardingPointsList(data.data.boardingTimes);
+      }
+    } catch (err) {
+      console.error('Error fetching trip boarding points:', err);
+    }
+  };
 
   const fetchBoardingPoint = async () => {
     setLoading(true);
@@ -53,6 +82,17 @@ const BoardingPoint = () => {
     }
   };
 
+  const handleAddressChange = (e) => {
+    const selectedAddr = e.target.value;
+    setSelectedAddress(selectedAddr);
+    
+    // Find the corresponding bpId for the selected address
+    const selectedPoint = boardingPointsList.find(point => point.address === selectedAddr);
+    if (selectedPoint) {
+      setBpId(selectedPoint.bpId);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (bpId && tripId) {
@@ -73,22 +113,6 @@ const BoardingPoint = () => {
           <form onSubmit={handleSubmit} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label htmlFor="bpId" className="flex items-center text-sm font-medium text-gray-600 mb-1">
-                  <Hash size={20} className="mr-2 text-blue-500" />
-                  BP ID
-                </label>
-                <input
-                  id="bpId"
-                  type="number"
-                  value={bpId}
-                  onChange={(e) => setBpId(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                  placeholder="Enter BP ID"
-                  required
-                />
-              </div>
-
-              <div>
                 <label htmlFor="tripId" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                   <Map size={20} className="mr-2 text-blue-500" />
                   Trip ID
@@ -103,6 +127,42 @@ const BoardingPoint = () => {
                   required
                 />
               </div>
+
+              <div>
+                <label htmlFor="address" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <MapPin size={20} className="mr-2 text-blue-500" />
+                  Select Boarding Point Address
+                </label>
+                <select
+                  id="address"
+                  value={selectedAddress}
+                  onChange={handleAddressChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  disabled={!tripId || boardingPointsList.length === 0}
+                  required
+                >
+                  <option value="">Select an address</option>
+                  {boardingPointsList.map((point, index) => (
+                    <option key={index} value={point.address}>
+                      {point.address} (BP ID: {point.bpId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="bpId" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                <Hash size={20} className="mr-2 text-blue-500" />
+                Selected BP ID
+              </label>
+              <input
+                id="bpId"
+                type="number"
+                value={bpId}
+                readOnly
+                className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg"
+              />
             </div>
 
             <button
@@ -177,35 +237,6 @@ const BoardingPoint = () => {
                 </div>
               </div>
             )}
-
-            {/* {apiResponse && (
-              <div className="mt-4">
-                <h3 className="font-medium text-sm text-gray-700 mb-2 flex items-center">
-                  <Code size={16} className="mr-2" />
-                  API Response:
-                </h3>
-                <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
-                  <Table className="w-full border-collapse">
-                    <TableHeader className="bg-sky-500 text-white">
-                      <TableRow>
-                        <TableHead className="px-4 py-2 text-left">Key</TableHead>
-                        <TableHead className="px-4 py-2 text-left">Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(apiResponse).map(([key, value]) => (
-                        <TableRow key={key} className="border-b border-gray-200">
-                          <TableCell className="px-4 py-2 font-medium">{key}</TableCell>
-                          <TableCell className="px-4 py-2">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )} */}
           </div>
         </div>
       </div>

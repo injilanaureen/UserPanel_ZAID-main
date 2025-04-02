@@ -20,7 +20,7 @@ export default function Sidebar({
     toggleSidebar 
 }) {
     const [isMenuOpen, setIsMenuOpen] = useState({});
-
+    
     const toggleMenu = (menu) => {
         setIsMenuOpen((prev) => ({
             ...prev,

@@ -1,17 +1,78 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, AlertCircle, Loader2, MapPin } from 'lucide-react';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
+    const [locationStatus, setLocationStatus] = useState('idle'); // idle, loading, success, error
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
         remember: false,
+        latitude: null,
+        longitude: null,
+        device_id: null,
     });
+
+    // Get device ID (could be a browser fingerprint or device identifier)
+    useEffect(() => {
+        // Simple device ID based on browser and screen properties
+        const generateDeviceId = () => {
+            const nav = window.navigator;
+            const screen = window.screen;
+            const deviceIdParts = [
+                nav.userAgent,
+                screen.height,
+                screen.width,
+                screen.colorDepth,
+                new Date().getTimezoneOffset()
+            ];
+            return btoa(deviceIdParts.join('|')).substring(0, 32);
+        };
+
+        setData('device_id', generateDeviceId());
+    }, []);
+
+    // Get geolocation when component mounts
+    useEffect(() => {
+        if (navigator.geolocation) {
+            setLocationStatus('loading');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setData(data => ({
+                        ...data,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }));
+                    setLocationStatus('success');
+                },
+                (error) => {
+                    console.error("Error getting location:", error.message);
+                    setLocationStatus('error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+            setLocationStatus('error');
+        }
+    }, []);
 
     const submit = (e) => {
         e.preventDefault();
+        
+        // Prepare IP location data (city/country based on IP)
+        // This would typically come from a service, but we'll leave it empty for now
+        const formData = {
+            ...data,
+            ip_location: null, // This would normally be filled server-side
+            gps_location: data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : null
+        };
+        
         post(route('login'), {
             onSuccess: () => {
                 window.location.href = '/admin/dashboard';
@@ -79,6 +140,14 @@ export default function Login() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Location indicator */}
+                    {/* <div className="flex items-center text-sm">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {locationStatus === 'loading' && <span className="text-gray-500">Detecting location...</span>}
+                        {locationStatus === 'success' && <span className="text-green-600">Location detected</span>}
+                        {locationStatus === 'error' && <span className="text-yellow-600">Location unavailable</span>}
+                    </div> */}
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Phone, Banknote, AlertCircle, CheckCircle, Code, Mail } from 'lucide-react';
+import { Phone, Banknote, AlertCircle, CheckCircle, Code, Mail, Send, MapPin, Calendar, Home, Hash } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const Transaction = ({ transactionData }) => {
@@ -25,6 +25,29 @@ const Transaction = ({ transactionData }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({
+            ...prev,
+            lat: latitude.toString(),
+            long: longitude.toString()
+          }));
+        },
+        (err) => {
+          console.log("Failed to fetch location: " + err.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    }
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError("");
@@ -33,6 +56,7 @@ const Transaction = ({ transactionData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // console.log("Form data:", formData);
     setLoading(true);
     setError("");
     setSuccess("");
@@ -53,8 +77,8 @@ const Transaction = ({ transactionData }) => {
           bene_id: '',
           otp: '',
           stateresp: '',
-          lat: '28.7041',
-          long: '77.1025',
+          lat: formData.lat,
+          long: formData.long,
         });
       },
       onError: (errors) => {
@@ -66,7 +90,7 @@ const Transaction = ({ transactionData }) => {
 
   const handleSendOtp = () => {
     console.log('Sending OTP for bene_id:', formData.bene_id);
-    // Implement OTP sending logic here
+    // Add logic here to hit Transaction send OTP API and update otp and stateresp
   };
 
   return (
@@ -92,7 +116,58 @@ const Transaction = ({ transactionData }) => {
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
                   required
-                  placeholder="Enter Mobile Number"
+                  placeholder="Enter Remitter Mobile Number"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="referenceid" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Hash size={20} className="mr-2 text-orange-500" />
+                  Reference ID
+                </label>
+                <input
+                  id="referenceid"
+                  type="text"
+                  name="referenceid"
+                  value={formData.referenceid}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter Partner Reference Number"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="pincode" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <MapPin size={20} className="mr-2 text-red-500" />
+                  Pincode
+                </label>
+                <input
+                  id="pincode"
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter Pincode"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="address" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Home size={20} className="mr-2 text-teal-500" />
+                  Address
+                </label>
+                <input
+                  id="address"
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter Remitter Address"
                 />
               </div>
 
@@ -103,14 +178,65 @@ const Transaction = ({ transactionData }) => {
                 </label>
                 <input
                   id="amount"
-                  type="number"
+                  type="text"
                   name="amount"
                   value={formData.amount}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
                   required
-                  min="1"
-                  placeholder="Enter Amount"
+                  placeholder="Enter Transaction Amount"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="txntype" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Send size={20} className="mr-2 text-indigo-500" />
+                  Transaction Type
+                </label>
+                <select
+                  id="txntype"
+                  name="txntype"
+                  value={formData.txntype}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                >
+                  <option value="imps">IMPS</option>
+                  <option value="neft">NEFT</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="dob" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Calendar size={20} className="mr-2 text-pink-500" />
+                  Date of Birth
+                </label>
+                <input
+                  id="dob"
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="DD-MM-YYYY"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="gst_state" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <MapPin size={20} className="mr-2 text-cyan-500" />
+                  GST State
+                </label>
+                <input
+                  id="gst_state"
+                  type="text"
+                  name="gst_state"
+                  value={formData.gst_state}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter GST State"
                 />
               </div>
 
@@ -119,22 +245,18 @@ const Transaction = ({ transactionData }) => {
                   <Mail size={20} className="mr-2 text-green-500" />
                   Beneficiary ID
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    id="bene_id"
-                    type="text"
-                    name="bene_id"
-                    value={formData.bene_id}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="Enter Beneficiary ID"
-                  />
-              
-                </div>
+                <input
+                  id="bene_id"
+                  type="text"
+                  name="bene_id"
+                  value={formData.bene_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter Beneficiary ID"
+                />
               </div>
 
-              {/* Add other fields as needed with similar styling */}
               <div>
                 <label htmlFor="otp" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                   <Code size={20} className="mr-2 text-purple-500" />
@@ -147,7 +269,25 @@ const Transaction = ({ transactionData }) => {
                   value={formData.otp}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                  placeholder="Enter OTP"
+                  required
+                  placeholder="Enter OTP from Send OTP API"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="stateresp" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                  <Code size={20} className="mr-2 text-gray-500" />
+                  State Response
+                </label>
+                <input
+                  id="stateresp"
+                  type="text"
+                  name="stateresp"
+                  value={formData.stateresp}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter State Response from Send OTP API"
                 />
               </div>
             </div>
@@ -169,7 +309,6 @@ const Transaction = ({ transactionData }) => {
             </button>
           </form>
 
-          {/* Response and error handling */}
           <div className="px-6 pb-6">
             {error && (
               <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg">

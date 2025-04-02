@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\FundRequest;
+use App\Models\Transaction;
 
 class AdminController extends Controller {
     public function dashboard(Request $request)
@@ -12,23 +13,29 @@ class AdminController extends Controller {
         return Inertia::render('Admin/Dashboard');
     }
 
-    // New method to fetch wallet balance
+    // to fetch debit and credit balance based of status 
     public function getWalletBalance(Request $request)
     {
-        // Get the authenticated user
         $user = $request->user();
-        // 0=pending = credit , 1=active = debit
+        
         $pendingAmount = FundRequest::where('user_id', $user->id)
             ->where('status', 0)
             ->sum('amount');
-
-        $approvedAmount = FundRequest::where('user_id', $user->id)
-            ->where('status', 1)
+        
+        $approvedAmount = FundRequest::getAvailableBalance($user->id);
+        
+        $spentAmount = Transaction::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('type', 'debit')
             ->sum('amount');
+        
+        $remainingBalance = max(0, $approvedAmount - $spentAmount);
 
         return response()->json([
             'credit' => $pendingAmount,
-            'debit' => $approvedAmount
+            'debit' => $remainingBalance, // Show remaining balance as debit
+            'spent' => $spentAmount,
+            'total_approved' => $approvedAmount
         ]);
     }
 }

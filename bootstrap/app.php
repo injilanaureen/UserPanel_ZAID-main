@@ -16,9 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
-
-        $middleware->alias([
-            "LocationCapture" => App\Http\Middleware\LocationCapture::class
+        // Adding CheckUserBalance to API middleware group (optional)
+        $middleware->api(append: [
+            \App\Http\Middleware\CheckUserBalance::class,
+            \App\Http\Middleware\CheckIpWhitelist::class,
+        ]);
+            $middleware->alias([
+            "LocationCapture" => App\Http\Middleware\LocationCapture::class,
+            "check.balance" => \App\Http\Middleware\CheckUserBalance::class,
+            'ip.whitelist' => \App\Http\Middleware\CheckIpWhitelist::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

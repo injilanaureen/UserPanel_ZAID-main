@@ -266,6 +266,11 @@
             "href": "/admin/Municipality/MunicipalityStatus"
           }
         ]
+      },
+      {
+        "title": "IP WhiteList",
+        "icon": "Home",
+        "href": "/admin/ipwhitelist/ipwhitelist"
       }
     
     

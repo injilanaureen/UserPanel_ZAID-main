@@ -245,6 +245,7 @@ const OperatorList = () => {
                                   <p><span className="font-medium">Regex:</span> {operator.ad3_regex || 'N/A'}</p>
                                 </div>
                               </div>
+                              
                             </TableCell>
                           </TableRow>
                         )}

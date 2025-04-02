@@ -1,15 +1,12 @@
 import React, { useState, useRef } from "react";
 import { usePage, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
+import { Banknote, FileText, Calendar, CreditCard, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
 
 const FundRequestPage = () => {
-    // Destructure props from Inertia page
     const { bankAccounts, errors: serverErrors } = usePage().props;
-
-    // Ref for file input to allow resetting
     const fileInputRef = useRef(null);
 
-    // Form state with initial empty values
     const [formData, setFormData] = useState({
         transactionType: "",
         amount: "",
@@ -19,115 +16,81 @@ const FundRequestPage = () => {
         image: null
     });
 
-    // Local validation errors state
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [clientErrors, setClientErrors] = useState({});
 
-    // Validation for image file
+    const transactionTypes = [
+        { label: "NEFT", value: "NEFT" },
+        { label: "RTGS", value: "RTGS" },
+        { label: "IMPS", value: "IMPS" }
+    ];
+
     const validateImageFile = (file) => {
         const errors = {};
-
-        // Check file exists
         if (!file) return errors;
 
-        // Allowed image types
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-        
-        // Max file size (5MB)
         const maxSize = 5 * 1024 * 1024;
 
-        // Validate file type
         if (!allowedTypes.includes(file.type)) {
             errors.image = "Only JPEG, JPG, and PNG images are allowed";
         }
-
-        // Validate file size
         if (file.size > maxSize) {
             errors.image = "Image size should not exceed 5MB";
         }
-
         return errors;
     };
 
-    // Handle form input changes
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         
-        // Handle file input separately
         if (name === 'image') {
             const file = files[0];
             const imageValidationErrors = validateImageFile(file);
             
-            setFormData(prev => ({
-                ...prev,
-                image: file
-            }));
-
-            // Update client errors for image
-            setClientErrors(prev => ({
-                ...prev,
-                ...imageValidationErrors
-            }));
+            setFormData(prev => ({ ...prev, image: file }));
+            setClientErrors(prev => ({ ...prev, ...imageValidationErrors }));
         } else {
-            // Regular input handling
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
 
-        // Clear specific field error when user starts typing/selecting
-        if (clientErrors[name]) {
+        if (clientErrors[name] || error || success) {
             setClientErrors(prev => ({ ...prev, [name]: null }));
+            setError("");
+            setSuccess("");
         }
     };
 
-    // Validate form before submission
     const validateForm = () => {
         const newErrors = {};
-
-        // Required field validations
-        if (!formData.transactionType) 
-            newErrors.transactionType = "Transaction Type is required";
-        
-        if (!formData.amount) 
-            newErrors.amount = "Amount is required";
-        else if (parseFloat(formData.amount) <= 0) 
-            newErrors.amount = "Amount must be greater than zero";
-        
-        if (!formData.transactionId) 
-            newErrors.transactionId = "Transaction ID is required";
-        
-        if (!formData.depositedDate) 
-            newErrors.depositedDate = "Deposited Date is required";
-        
-        if (!formData.bankId) 
-            newErrors.bankId = "Bank selection is required";
-
-        // Image validation (if uploaded)
+        if (!formData.transactionType) newErrors.transactionType = "Transaction Type is required";
+        if (!formData.amount) newErrors.amount = "Amount is required";
+        else if (parseFloat(formData.amount) <= 0) newErrors.amount = "Amount must be greater than zero";
+        if (!formData.transactionId) newErrors.transactionId = "Transaction ID is required";
+        if (!formData.depositedDate) newErrors.depositedDate = "Deposited Date is required";
+        if (!formData.bankId) newErrors.bankId = "Bank selection is required";
         if (formData.image) {
             const imageErrors = validateImageFile(formData.image);
-            if (imageErrors.image) {
-                newErrors.image = imageErrors.image;
-            }
+            if (imageErrors.image) newErrors.image = imageErrors.image;
         }
-
         return newErrors;
     };
 
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError("");
+        setSuccess("");
 
-        // Validate form
         const validationErrors = validateForm();
-        
-        // If there are validation errors, set them and stop submission
         if (Object.keys(validationErrors).length > 0) {
             setClientErrors(validationErrors);
+            setLoading(false);
             return;
         }
 
-        // Prepare form data for submission
         const submissionData = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
             if (value !== null && value !== "") {
@@ -135,13 +98,12 @@ const FundRequestPage = () => {
             }
         });
 
-        // Submit form using Inertia router
         router.post('/fundrequest/store', submissionData, {
             forceFormData: true,
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
-                // Reset form after successful submission
+                setSuccess("Fund request submitted successfully!");
                 setFormData({
                     transactionType: "",
                     amount: "",
@@ -150,180 +112,212 @@ const FundRequestPage = () => {
                     bankId: "",
                     image: null
                 });
-                
-                // Clear errors
                 setClientErrors({});
-                
-                // Reset file input
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
                 }
             },
             onError: (errors) => {
-                // Handle server-side errors
+                setError("Failed to submit fund request");
                 setClientErrors(errors);
+            },
+            onFinish: () => {
+                setLoading(false);
             }
         });
     };
 
-    // Combine client and server errors
     const displayErrors = { ...clientErrors, ...serverErrors };
 
     return (
         <AdminLayout>
-            <div className="min-h-screen bg-gray-100 p-6">
-                <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-xl font-semibold mb-6 text-gray-800">Fund Request</h2>
-                    
-                    <form onSubmit={handleSubmit} encType="multipart/form-data">
-                        {/* Transaction Type */}
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Transaction Type
-                            </label>
-                            <select
-                                name="transactionType"
-                                value={formData.transactionType}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    displayErrors.transactionType ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                            >
-                                <option value="">-- Select Type --</option>
-                                <option value="NEFT">NEFT</option>
-                                <option value="RTGS">RTGS</option>
-                                <option value="IMPS">IMPS</option>
-                            </select>
-                            {displayErrors.transactionType && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.transactionType}
-                                </span>
-                            )}
+            <div className="max-w-full">
+                <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                    <div className="bg-gradient-to-tr from-gray-400 to-black py-4 px-6">
+                        <h2 className="text-3xl font-semibold text-white">Fund Request</h2>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-6" encType="multipart/form-data">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {/* Transaction Type */}
+                            <div>
+                                <label htmlFor="transactionType" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <CreditCard size={20} className="mr-2 text-green-500" />
+                                    Transaction Type
+                                </label>
+                                <select
+                                    id="transactionType"
+                                    name="transactionType"
+                                    value={formData.transactionType}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.transactionType ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                >
+                                    <option value="">Select Type</option>
+                                    {transactionTypes.map((type) => (
+                                        <option key={type.value} value={type.value}>{type.label}</option>
+                                    ))}
+                                </select>
+                                {displayErrors.transactionType && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.transactionType}</p>
+                                )}
+                            </div>
+
+                            {/* Amount */}
+                            <div>
+                                <label htmlFor="amount" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <Banknote size={20} className="mr-2 text-blue-500" />
+                                    Amount
+                                </label>
+                                <input
+                                    id="amount"
+                                    name="amount"
+                                    type="number"
+                                    value={formData.amount}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.amount ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                    placeholder="Enter Amount"
+                                    min="1"
+                                    step="0.01"
+                                />
+                                {displayErrors.amount && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.amount}</p>
+                                )}
+                            </div>
+
+                            {/* Transaction ID */}
+                            <div>
+                                <label htmlFor="transactionId" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <FileText size={20} className="mr-2 text-yellow-500" />
+                                    Transaction ID
+                                </label>
+                                <input
+                                    id="transactionId"
+                                    name="transactionId"
+                                    type="text"
+                                    value={formData.transactionId}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.transactionId ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                    placeholder="Enter Transaction ID"
+                                />
+                                {displayErrors.transactionId && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.transactionId}</p>
+                                )}
+                            </div>
+
+                            {/* Deposited Date */}
+                            <div>
+                                <label htmlFor="depositedDate" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <Calendar size={20} className="mr-2 text-purple-500" />
+                                    Deposited Date
+                                </label>
+                                <input
+                                    id="depositedDate"
+                                    name="depositedDate"
+                                    type="date"
+                                    value={formData.depositedDate}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.depositedDate ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                                {displayErrors.depositedDate && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.depositedDate}</p>
+                                )}
+                            </div>
+
+                            {/* Bank Account */}
+                            <div>
+                                <label htmlFor="bankId" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <CreditCard size={20} className="mr-2 text-indigo-500" />
+                                    Bank Account
+                                </label>
+                                <select
+                                    id="bankId"
+                                    name="bankId"
+                                    value={formData.bankId}
+                                    onChange={handleChange}
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.bankId ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                >
+                                    <option value="">Select Bank Account</option>
+                                    {bankAccounts.map((account) => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.bank} - {account.account_name} (****{account.account_number.slice(-4)})
+                                        </option>
+                                    ))}
+                                </select>
+                                {displayErrors.bankId && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.bankId}</p>
+                                )}
+                            </div>
+
+                            {/* Image Upload */}
+                            <div>
+                                <label htmlFor="image" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                    <ImageIcon size={20} className="mr-2 text-orange-500" />
+                                    Upload Proof
+                                </label>
+                                <input
+                                    ref={fileInputRef}
+                                    id="image"
+                                    name="image"
+                                    type="file"
+                                    onChange={handleChange}
+                                    accept="image/jpeg,image/png,image/jpg"
+                                    className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all ${
+                                        displayErrors.image ? 'border-red-500' : 'border-gray-200'
+                                    }`}
+                                />
+                                {displayErrors.image && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.image}</p>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Amount */}
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Amount
-                            </label>
-                            <input
-                                name="amount"
-                                type="number"
-                                value={formData.amount}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    displayErrors.amount ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Enter Amount"
-                                min="1"
-                                step="0.01"
-                            />
-                            {displayErrors.amount && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.amount}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Transaction ID */}
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Transaction ID
-                            </label>
-                            <input
-                                name="transactionId"
-                                type="text"
-                                value={formData.transactionId}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    displayErrors.transactionId ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Enter Transaction ID"
-                            />
-                            {displayErrors.transactionId && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.transactionId}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Deposited Date */}
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Deposited Date
-                            </label>
-                            <input
-                                name="depositedDate"
-                                type="date"
-                                value={formData.depositedDate}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    displayErrors.depositedDate ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                max={new Date().toISOString().split('T')[0]}
-                            />
-                            {displayErrors.depositedDate && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.depositedDate}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Bank Account */}
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Bank Account
-                            </label>
-                            <select
-                                name="bankId"
-                                value={formData.bankId}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    displayErrors.bankId ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                            >
-                                <option value="">-- Select Bank Account --</option>
-                                {bankAccounts.map((account) => (
-                                    <option key={account.id} value={account.id}>
-                                        {account.bank} - {account.account_name} (****{account.account_number.slice(-4)})
-                                    </option>
-                                ))}
-                            </select>
-                            {displayErrors.bankId && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.bankId}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Image Upload */}
-                        <div className="mb-6">
-                            <label className="block text-gray-700 font-medium mb-1">
-                                Upload Proof (Image only)
-                            </label>
-                            <input
-                                ref={fileInputRef}
-                                name="image"
-                                type="file"
-                                onChange={handleChange}
-                                accept="image/jpeg,image/png,image/jpg"
-                                className="w-full p-2 border border-gray-300 rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-                            />
-                            {displayErrors.image && (
-                                <span className="text-red-500 text-sm mt-1">
-                                    {displayErrors.image}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+                            disabled={loading}
+                            className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                         >
-                            Submit Request
+                            {loading ? (
+                                <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                </span>
+                            ) : "Submit Request"}
                         </button>
                     </form>
+
+                    {/* Response and error handling */}
+                    <div className="px-6 pb-6">
+                        {error && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg">
+                                <p className="text-red-600 text-sm flex items-center">
+                                    <AlertCircle size={16} className="mr-2" />
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+                        {success && (
+                            <div className="mt-4 p-4 bg-green-50 border border-green-100 rounded-lg">
+                                <p className="text-green-600 text-sm flex items-center">
+                                    <CheckCircle size={16} className="mr-2" />
+                                    {success}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </AdminLayout>

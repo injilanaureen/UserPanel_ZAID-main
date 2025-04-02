@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { router } from '@inertiajs/react';
 import { User, Hash, CreditCard, AlertCircle, CheckCircle, Code, MapPin, Calendar, File, ArrowRight } from 'lucide-react';
@@ -23,6 +23,7 @@ const TransactionSentOtp = ({ response }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Map field names to icons
   const fieldIcons = {
@@ -35,6 +36,38 @@ const TransactionSentOtp = ({ response }) => {
     address: <MapPin size={20} className="mr-2 text-orange-500" />,
     gst_state: <MapPin size={20} className="mr-2 text-teal-500" />,
     dob: <Calendar size={20} className="mr-2 text-pink-500" />,
+  };
+
+  // Fetch geolocation
+  const fetchLocation = () => {
+    if (navigator.geolocation) {
+      setLocationLoading(true);
+      setError(null);
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({
+            ...prev,
+            lat: latitude.toString(),
+            long: longitude.toString()
+          }));
+          setLocationLoading(false);
+          setSuccess("Location fetched successfully!");
+        },
+        (err) => {
+          setLocationLoading(false);
+          setError("Failed to fetch location: " + err.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by your browser");
+    }
   };
 
   // Handle input change
@@ -62,10 +95,9 @@ const TransactionSentOtp = ({ response }) => {
     setSuccess("");
     setApiResponse(null);
 
-    // Create a copy of the form data to modify the date format
     const submissionData = {
       ...formData,
-      dob: formatDate(formData.dob) // Format date to DD-MM-YYYY
+      dob: formatDate(formData.dob)
     };
 
     router.post('/transaction-sent-otp', submissionData, {
@@ -136,6 +168,52 @@ const TransactionSentOtp = ({ response }) => {
               ))}
             </div>
 
+            {/* Geolocation Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center text-sm font-medium text-gray-600">
+                  <MapPin size={20} className="mr-2 text-purple-500" />
+                  Location Coordinates
+                </label>
+                <button
+                  type="button"
+                  onClick={fetchLocation}
+                  disabled={locationLoading}
+                  className="bg-black text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {locationLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Fetching...
+                    </span>
+                  ) : "Get Current Location"}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <label className="text-sm text-gray-600">Latitude</label>
+                  <input
+                    type="text"
+                    value={formData.lat}
+                    readOnly
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Longitude</label>
+                  <input
+                    type="text"
+                    value={formData.long}
+                    readOnly
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -181,7 +259,7 @@ const TransactionSentOtp = ({ response }) => {
                 </h3>
                 <div className="border border-gray-200 rounded-lg shadow-md overflow-hidden">
                   <Table className="w-full border-collapse">
-                    <TableHeader className="bg-sky-500 text-white">
+                    <TableHeader className="bg-gray-100 text-white">
                       <TableRow>
                         <TableHead className="px-4 py-2 text-left">Key</TableHead>
                         <TableHead className="px-4 py-2 text-left">Value</TableHead>

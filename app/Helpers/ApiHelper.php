@@ -4,6 +4,11 @@ namespace App\Helpers;
 
 use App\Models\ApiManagement;
 use App\Http\Controllers\Jwt;
+use App\Models\FundRequest;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class ApiHelper
 {
@@ -87,4 +92,44 @@ class ApiHelper
 
         return $apiDetails->api_url;
     }
+    public static function calculations($userId, $amount, $referenceId)
+    {
+        try {
+            return DB::transaction(function () use ($userId, $amount, $referenceId) {
+                // Find the latest approved fund request for the user
+                $latestFundRequest = FundRequest::where('user_id', $userId)
+                    ->where('status', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if (!$latestFundRequest) {
+                    throw new \Exception('No approved fund request found');
+                }
+
+                // Calculate new balance
+                $currentBalance = $latestFundRequest->amount;
+                $newBalance = max(0, $currentBalance - $amount);
+
+                // Update the fund request
+                $latestFundRequest->update([
+                    'amount' => $newBalance
+                ]);
+
+                // Create a transaction record
+                Transaction::create([
+                    'user_id' => $userId,
+                    'amount' => $amount,
+                    'type' => 'debit',
+                    'status' => 'completed',
+                    'description' => 'Recharge transaction - ' . $referenceId
+                ]);
+
+                return true;
+            });
+        } catch (\Exception $e) {
+            Log::error('Wallet calculation failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+   
 }
