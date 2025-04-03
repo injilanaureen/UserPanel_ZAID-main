@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import axios from "axios";
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Bus, MapPin, User, CreditCard, Ticket, AlertCircle, CheckCircle, Search } from 'lucide-react';
+import { Bus, MapPin, User, CreditCard, Ticket, AlertCircle, CheckCircle } from 'lucide-react';
 
 const INPUT_CLASS = "w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all";
 
@@ -57,18 +57,11 @@ const BlockTicket = () => {
     selectedBoardingAddress: '', 
     selectedDroppingAddress: '',
     success: '', 
-    sourceCities: [], 
-    destinationCities: [],
-    sourceSearch: '', 
-    destSearch: '',
-    showSourceDropdown: false, 
-    showDestDropdown: false,
     availableSeats: []
   });
 
   useEffect(() => {
     if (formData.availableTripId) fetchTripDetails();
-    fetchCities();
   }, [formData.availableTripId]);
 
   const fetchTripDetails = async () => {
@@ -84,7 +77,6 @@ const BlockTicket = () => {
         }}
       );
       if (data.status && data.data) {
-        // Extract seat details from the response
         const seats = data.data.seats || [];
         const formattedSeats = seats.map(seat => ({
           seatName: seat.name,
@@ -100,8 +92,6 @@ const BlockTicket = () => {
           droppingPoints: data.data.droppingTimes || [],
           availableSeats: formattedSeats
         }));
-
-        // Update the first inventory item with the first available seat (if any)
         if (formattedSeats.length > 0) {
           setFormData(prev => ({
             ...prev,
@@ -121,25 +111,6 @@ const BlockTicket = () => {
       setState(prev => ({ ...prev, errors: { tripDetails: 'Failed to load trip details' } }));
     } finally {
       setState(prev => ({ ...prev, pointsLoading: false }));
-    }
-  };
-
-  const fetchCities = async () => {
-    try {
-      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch('/admin/busTicket/fetchSourceCities', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': token 
-        }
-      });
-      const data = await response.json();
-      if (data.status && data.data.cities) {
-        setState(prev => ({ ...prev, sourceCities: data.data.cities, destinationCities: data.data.cities }));
-      }
-    } catch (err) {
-      setState(prev => ({ ...prev, errors: { cities: err.message } }));
     }
   };
 
@@ -180,14 +151,6 @@ const BlockTicket = () => {
     if (point) setFormData(prev => ({ ...prev, [type + 'PointId']: point.bpId }));
   };
 
-  const handleCitySelect = (type, city) => {
-    setFormData(prev => ({ ...prev, [type]: city.id }));
-    setState(prev => ({ ...prev, 
-      [type === 'source' ? 'sourceSearch' : 'destSearch']: city.name,
-      [type === 'source' ? 'showSourceDropdown' : 'showDestDropdown']: false
-    }));
-  };
-
   const handleSeatChange = (e, index = 0) => {
     const selectedSeatName = e.target.value;
     const selectedSeat = state.availableSeats.find(seat => seat.seatName === selectedSeatName);
@@ -210,16 +173,18 @@ const BlockTicket = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.source || !formData.destination) {
+      setState(prev => ({ ...prev, errors: { source: 'Please enter both source and destination' } }));
+      return;
+    }
     setState(prev => ({ ...prev, loading: true, errors: {}, success: '' }));
-    console.log('Form Data Submitted:', JSON.stringify(formData, null, 2));
+    console.log('Form Data Submitted:', JSON.stringify(formData, null, 2)); // Debug log
     router.post('/admin/bus-ticket/block/api', formData, {
       onSuccess: () => {
         setState(prev => ({ ...prev, loading: false, success: 'Ticket blocked successfully!' }));
         setFormData(initialFormData);
         setState(prev => ({ 
           ...prev, 
-          sourceSearch: '', 
-          destSearch: '',
           selectedBoardingAddress: '',
           selectedDroppingAddress: ''
         }));
@@ -227,18 +192,6 @@ const BlockTicket = () => {
       onError: (err) => setState(prev => ({ ...prev, loading: false, errors: err }))
     });
   };
-
-  const handleClickOutside = (e, dropdownType) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setState(prev => ({ 
-        ...prev, 
-        [dropdownType === 'source' ? 'showSourceDropdown' : 'showDestDropdown']: false 
-      }));
-    }
-  };
-
-  const filteredCities = (cities, search) => 
-    cities.filter(city => city.name.toLowerCase().includes(search.toLowerCase())).slice(0, 10);
 
   return (
     <AdminLayout>
@@ -312,72 +265,34 @@ const BlockTicket = () => {
                 </select>
               </FormField>
               <FormField 
-                label="Source City" 
+                label="Source" 
                 icon={<MapPin size={20} className="mr-2 text-blue-500" />}
                 error={state.errors.source}
               >
-                <div 
-                  className="relative" 
-                  onBlur={(e) => handleClickOutside(e, 'source')}
-                >
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    value={state.sourceSearch} 
-                    onChange={e => setState(prev => ({ ...prev, sourceSearch: e.target.value, showSourceDropdown: true }))} 
-                    onFocus={() => setState(prev => ({ ...prev, showSourceDropdown: true }))}
-                    className={`${INPUT_CLASS} pl-10`} 
-                    placeholder="Search source city..."
-                    required 
-                  />
-                  {state.showSourceDropdown && filteredCities(state.sourceCities, state.sourceSearch).length > 0 && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg">
-                      {filteredCities(state.sourceCities, state.sourceSearch).map(city => (
-                        <li 
-                          key={city.id} 
-                          onClick={() => handleCitySelect('source', city)} 
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {city.name}, {city.state} (ID: {city.id})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <input 
+                  type="text" 
+                  name="source" 
+                  value={formData.source} 
+                  onChange={handleChange} 
+                  className={INPUT_CLASS} 
+                  placeholder="Enter source" 
+                  required 
+                />
               </FormField>
               <FormField 
-                label="Destination City" 
+                label="Destination" 
                 icon={<MapPin size={20} className="mr-2 text-purple-500" />}
                 error={state.errors.destination}
               >
-                <div 
-                  className="relative"
-                  onBlur={(e) => handleClickOutside(e, 'destination')}
-                >
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    value={state.destSearch} 
-                    onChange={e => setState(prev => ({ ...prev, destSearch: e.target.value, showDestDropdown: true }))} 
-                    onFocus={() => setState(prev => ({ ...prev, showDestDropdown: true }))}
-                    className={`${INPUT_CLASS} pl-10`} 
-                    placeholder="Search destination city..."
-                    required 
-                  />
-                  {state.showDestDropdown && filteredCities(state.destinationCities, state.destSearch).length > 0 && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg">
-                      {filteredCities(state.destinationCities, state.destSearch).map(city => (
-                        <li 
-                          key={city.id} 
-                          onClick={() => handleCitySelect('destination', city)} 
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {city.name}, {city.state} (ID: {city.id})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <input 
+                  type="text" 
+                  name="destination" 
+                  value={formData.destination} 
+                  onChange={handleChange} 
+                  className={INPUT_CLASS} 
+                  placeholder="Enter destination" 
+                  required 
+                />
               </FormField>
               <FormField 
                 label="Booking Type" 
@@ -392,7 +307,9 @@ const BlockTicket = () => {
               </FormField>
               <FormField 
                 label="Service Charge" 
-                icon={<CreditCard size={20} className="mr-2 text-teal-500" />}
+                icon={<CreditCard size={20} className="mr-2 text-teal- /
+
+500" />}
                 error={state.errors.serviceCharge}
               >
                 <input 
@@ -511,46 +428,46 @@ const BlockTicket = () => {
                   </select>
                 </FormField>
                 {Object.entries(formData.inventoryItems[0].passenger).map(([subKey, subValue]) => (
-                 <FormField 
-                 key={subKey} 
-                 label={subKey.charAt(0).toUpperCase() + subKey.slice(1)}
-                 icon={<User size={20} className="mr-2 text-gray-600" />}
-                 error={state.errors[`inventoryItems.0.passenger.${subKey}`]}
-               >
-                 {subKey === 'idType' ? (
-                   <select 
-                     name={`inventoryItems.0.passenger.${subKey}`} 
-                     value={subValue} 
-                     onChange={handleChange} 
-                     className={INPUT_CLASS}
-                     required
-                   >
-                     <option value="Pancard">Pancard</option>
-                     <option value="Aadhaar Card">Aadhaar Card</option>
-                   </select>
-                 ) : ['title', 'gender', 'primary'].includes(subKey) ? (
-                   <select 
-                     name={`inventoryItems.0.passenger.${subKey}`} 
-                     value={subValue} 
-                     onChange={handleChange} 
-                     className={INPUT_CLASS}
-                   >
-                     {subKey === 'title' && ['Mr', 'Ms', 'Mrs'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                     {subKey === 'gender' && ['MALE', 'FEMALE'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                     {subKey === 'primary' && ['0', '1'].map(opt => <option key={opt} value={opt}>{opt === '0' ? 'No' : 'Yes'}</option>)}
-                   </select>
-                 ) : (
-                   <input 
-                     type={subKey === 'email' ? 'email' : subKey === 'age' || subKey === 'mobile' ? 'number' : 'text'} 
-                     name={`inventoryItems.0.passenger.${subKey}`} 
-                     value={subValue} 
-                     onChange={handleChange} 
-                     className={INPUT_CLASS} 
-                     {...(subKey === 'age' ? { min: 1 } : {})} 
-                     required={['name', 'mobile', 'age'].includes(subKey)} 
-                   />
-                 )}
-               </FormField>
+                  <FormField 
+                    key={subKey} 
+                    label={subKey.charAt(0).toUpperCase() + subKey.slice(1)}
+                    icon={<User size={20} className="mr-2 text-gray-600" />}
+                    error={state.errors[`inventoryItems.0.passenger.${subKey}`]}
+                  >
+                    {subKey === 'idType' ? (
+                      <select 
+                        name={`inventoryItems.0.passenger.${subKey}`} 
+                        value={subValue} 
+                        onChange={handleChange} 
+                        className={INPUT_CLASS}
+                        required
+                      >
+                        <option value="PANCARD">Pancard</option>
+                        <option value="AADHAAR">Aadhaar Card</option>
+                      </select>
+                    ) : ['title', 'gender', 'primary'].includes(subKey) ? (
+                      <select 
+                        name={`inventoryItems.0.passenger.${subKey}`} 
+                        value={subValue} 
+                        onChange={handleChange} 
+                        className={INPUT_CLASS}
+                      >
+                        {subKey === 'title' && ['Mr', 'Ms', 'Mrs'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {subKey === 'gender' && ['MALE', 'FEMALE'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {subKey === 'primary' && ['0', '1'].map(opt => <option key={opt} value={opt}>{opt === '0' ? 'No' : 'Yes'}</option>)}
+                      </select>
+                    ) : (
+                      <input 
+                        type={subKey === 'email' ? 'email' : subKey === 'age' || subKey === 'mobile' ? 'number' : 'text'} 
+                        name={`inventoryItems.0.passenger.${subKey}`} 
+                        value={subValue} 
+                        onChange={handleChange} 
+                        className={INPUT_CLASS} 
+                        {...(subKey === 'age' ? { min: 1 } : {})} 
+                        required={['name', 'mobile', 'age'].includes(subKey)} 
+                      />
+                    )}
+                  </FormField>
                 ))}
               </div>
             </div>

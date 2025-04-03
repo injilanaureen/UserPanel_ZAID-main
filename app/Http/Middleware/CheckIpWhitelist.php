@@ -25,7 +25,7 @@ class CheckIpWhitelist
         if (!$whitelistEntry || $whitelistEntry->status == 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Access denied: Your IP is not whitelisted.',
+                'message' => 'Access denied: Your IPa is not whitelisted.',
                 'ip' => $currentIp
             ], 403);
         }

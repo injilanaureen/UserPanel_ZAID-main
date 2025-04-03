@@ -32,7 +32,7 @@
     Route::get('/', function () {
         return redirect()->route('login'); 
     })->name('root');
-
+    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
             
         // Admin Routes protected by IP Whitelist
         Route::prefix('admin')->middleware('ip.whitelist')->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        // Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/admin/profile', [MyProfileController::class, 'show'])->name('admin.profile');        
                 
             // Recharge Routes
@@ -240,20 +240,21 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('/api/fetchConsumerDetails', [FastagRechargeController::class, 'getConsumerDetails'])->name('FastagRecharge.getConsumerDetails');
     //LPG
-    Route::prefix('admin')->group(function () {
-    Route::get('LPG/LPGOperator', [LPGController::class, 'LPGOperator'])->name('LPG.LPGOperator');
-    });
-    Route::post('api/fetch-lpg-operator', [LPGController::class, 'fetchLPGOperator']);
+    Route::prefix('admin/LPG')->middleware('ip.whitelist')->group(function () {
+    Route::get('/LPGOperator', [LPGController::class, 'LPGOperator'])->name('LPG.LPGOperator');
     //fetch lpg details
-    Route::get('/admin/LPG/LPGDetails',[LPGController::class,'FetchLPGDetails'])->name('LPG.FetchLPGDetails');
+    Route::get('/LPGDetails',[LPGController::class,'FetchLPGDetails'])->name('LPG.FetchLPGDetails');
     Route::match(['get', 'post'], '/admin/LPG/FetchLPGDetails', [LPGController::class, 'FetchLPGDetails'])->name('LPG.FetchLPGDetails');
+    Route::get('/LPGBill',[LPGController::class,'LPGBill'])->name('LPG.LPGBill');
+    Route::get('/LPGStatus', [LPGController::class, 'LPGStatus'])->name('LPG.LPGStatus');
+    });
+   
     //lpg
-    Route::get('/admin/LPG/LPGBill',[LPGController::class,'LPGBill'])->name('LPG.LPGBill');
     Route::post('/pay-lpg-bill', [LPGController::class, 'payLpgBill']);
     Route::get('/lpg-bill-history', [LPGController::class, 'getLpgBillHistory']);
-
+    Route::post('api/fetch-lpg-operator', [LPGController::class, 'fetchLPGOperator']);
     //status
-    Route::get('/admin/LPG/LPGStatus', [LPGController::class, 'LPGStatus'])->name('LPG.LPGStatus');
+
     Route::post('/lpg-status', [LPGController::class, 'getLPGStatus']);
     //Municipality
     //operator
