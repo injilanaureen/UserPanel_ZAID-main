@@ -12,6 +12,7 @@ use Inertia\Response;
 use App\Models\LastLogin;
 use App\Models\LogSession;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
 
 use Carbon\Carbon;
 
@@ -29,19 +30,19 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    public function store(LoginRequest $request): RedirectResponse|Response
+    public function store(Request $request): RedirectResponse
     {
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             
-            // Set application timezone to ensure consistency
+            // Ensure timezone consistency
             config(['app.timezone' => 'Asia/Kolkata']);
-            
 
+            // Store login session details
             DB::table('login_sessions')->insert([
                 'user_id'      => Auth::id(),
                 'ip_address'   => $request->ip(),
-                'user_agent'   => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                'user_agent'   => $request->header('User-Agent', ''),
                 'gps_location' => $request->gps_location ?? null,
                 'ip_location'  => $request->ip_location ?? null,
                 'device_id'    => $request->device_id ?? null,
@@ -49,11 +50,14 @@ class AuthenticatedSessionController extends Controller
                 'created_at'   => Carbon::now('Asia/Kolkata'),
                 'updated_at'   => Carbon::now('Asia/Kolkata')
             ]);
-            
-            return redirect()->intended(route('dashboard', absolute: false));
-        } else {
-            return response()->json(['status' => 'Something went wrong, please contact administrator'], 400);
-        }
+
+          return redirect()->intended(route('dashboard', absolute: false));
+        } 
+        
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Invalid credentials',
+        ], 401);
     }
 
     /**
