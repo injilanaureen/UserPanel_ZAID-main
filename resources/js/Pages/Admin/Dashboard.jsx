@@ -174,7 +174,7 @@ const Dashboard = () => {
           {/* Top Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             {[
-              { title: "Total Revenue", value: "$45,231", change: "+20.1%", changeType: "positive", icon: "💰" },
+              { title: "Total Revenue", value: "$48,231", change: "+20.1%", changeType: "positive", icon: "💰" },
               { title: "Active Users", value: "3,891", change: "+10.6%", changeType: "positive", icon: "👥" },
               { title: "New Customers", value: "1,124", change: "-0.4%", changeType: "negative", icon: "🔔" },
               { title: "Pending Orders", value: "159", change: "+4.3%", changeType: "positive", icon: "📦" },
