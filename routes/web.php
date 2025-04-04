@@ -25,6 +25,7 @@
     use App\Http\Controllers\FundController;
     use App\Http\Controllers\DashboardController;
     use App\Http\Controllers\IPWhitelist;
+    use App\Http\Controllers\HLRController;
     use App\Http\Controllers\Auth\AuthenticatedSessionController;
     use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
@@ -306,3 +307,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry']);
 
     Route::get('/admin/ipwhitelist/ipwhitelist',[IPWhitelist::class,'IPWhitelist']);   
+
+Route::get('/admin/hlr/hlrcheck',[HLRController::class,'hlrcheck']);    
+Route::get('/hlrcheck', [HLRController::class, 'hlrcheck']);
+Route::post('/hlrcheck', [HLRController::class, 'hlrcheck']);
+Route::match(['get', 'post'], '/admin/hlr/hlrbrowseplan', [HLRController::class, 'hlrbrowseplan'])->name('hlrbrowseplan');

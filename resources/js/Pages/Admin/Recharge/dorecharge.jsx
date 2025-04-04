@@ -47,7 +47,21 @@ const DoRechargeForm = () => {
     setError("");
     setSuccess("");
     setApiResponse(null);
-
+    // try {
+    //   const token = localStorage.getItem('auth_token');
+    //   const response2 = await rechargeprocess(formData, token)
+    //   const response = await axios.post('/admin/recharge/process', {
+    //     operator: parseInt(formData.operator),
+    //     canumber: formData.canumber,
+    //     amount: parseInt(formData.amount),
+    //   }, {
+    //     headers: {
+    //       'Authorization': `Bearer ${token}`,
+    //       'Content-Type': 'application/json',
+    //       'Accept': 'application/json',
+    //     },
+    //   });
+    //   console.log("Response2",response2);
     try {
       const token = localStorage.getItem('auth_token');
       const response = await axios.post('/admin/recharge/process', {

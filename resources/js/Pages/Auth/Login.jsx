@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, AlertCircle, Loader2, MapPin } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -9,14 +9,12 @@ export default function Login() {
         email: '',
         password: '',
         remember: false,
-        latitude: null,
-        longitude: null,
+        gps_location: null,
         device_id: null,
     });
 
-    // Get device ID (could be a browser fingerprint or device identifier)
+    // Generate device ID
     useEffect(() => {
-        // Simple device ID based on browser and screen properties
         const generateDeviceId = () => {
             const nav = window.navigator;
             const screen = window.screen;
@@ -33,17 +31,14 @@ export default function Login() {
         setData('device_id', generateDeviceId());
     }, []);
 
-    // Get geolocation when component mounts
+    // Get geolocation
     useEffect(() => {
         if (navigator.geolocation) {
             setLocationStatus('loading');
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setData(data => ({
-                        ...data,
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    }));
+                    const gpsLocation = `${position.coords.latitude},${position.coords.longitude}`;
+                    setData('gps_location', gpsLocation);
                     setLocationStatus('success');
                 },
                 (error) => {
@@ -64,14 +59,6 @@ export default function Login() {
 
     const submit = (e) => {
         e.preventDefault();
-        
-        // Prepare IP location data (city/country based on IP)
-        // This would typically come from a service, but we'll leave it empty for now
-        const formData = {
-            ...data,
-            ip_location: null, // This would normally be filled server-side
-            gps_location: data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : null
-        };
         
         post(route('login'), {
             onSuccess: () => {
@@ -141,9 +128,7 @@ export default function Login() {
                         </div>
                     </div>
 
-                    {/* Location indicator */}
                     {/* <div className="flex items-center text-sm">
-                        <MapPin className="h-4 w-4 mr-1" />
                         {locationStatus === 'loading' && <span className="text-gray-500">Detecting location...</span>}
                         {locationStatus === 'success' && <span className="text-green-600">Location detected</span>}
                         {locationStatus === 'error' && <span className="text-yellow-600">Location unavailable</span>}
@@ -162,11 +147,6 @@ export default function Login() {
                                 Remember me
                             </label>
                         </div>
-                        {route().has('password.request') && (
-                            <a href={route('password.request')} className="text-sm text-indigo-600 hover:text-indigo-500">
-                                Forgot your password?
-                            </a>
-                        )}
                     </div>
 
                     <div>
@@ -181,12 +161,6 @@ export default function Login() {
                                 'Sign in'
                             )}
                         </button>
-                    </div>
-
-                    <div className="text-center">
-                        <a href={route('register')} className="text-sm text-indigo-600 hover:text-indigo-500">
-                            Don't have an account? Sign up
-                        </a>
                     </div>
                 </form>
             </div>

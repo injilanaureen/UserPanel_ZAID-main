@@ -13,7 +13,7 @@ const FundRequestPage = () => {
         transactionId: "",
         depositedDate: "",
         bankId: "",
-        image: null
+        image_path: null
     });
 
     const [loading, setLoading] = useState(false);
@@ -35,10 +35,10 @@ const FundRequestPage = () => {
         const maxSize = 5 * 1024 * 1024;
 
         if (!allowedTypes.includes(file.type)) {
-            errors.image = "Only JPEG, JPG, and PNG images are allowed";
+            errors.image_path = "Only JPEG, JPG, and PNG images are allowed";
         }
         if (file.size > maxSize) {
-            errors.image = "Image size should not exceed 5MB";
+            errors.image_path = "Image size should not exceed 5MB";
         }
         return errors;
     };
@@ -46,11 +46,11 @@ const FundRequestPage = () => {
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         
-        if (name === 'image') {
+        if (name === 'image_path') {
             const file = files[0];
             const imageValidationErrors = validateImageFile(file);
             
-            setFormData(prev => ({ ...prev, image: file }));
+            setFormData(prev => ({ ...prev, image_path: file }));
             setClientErrors(prev => ({ ...prev, ...imageValidationErrors }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -71,9 +71,9 @@ const FundRequestPage = () => {
         if (!formData.transactionId) newErrors.transactionId = "Transaction ID is required";
         if (!formData.depositedDate) newErrors.depositedDate = "Deposited Date is required";
         if (!formData.bankId) newErrors.bankId = "Bank selection is required";
-        if (formData.image) {
-            const imageErrors = validateImageFile(formData.image);
-            if (imageErrors.image) newErrors.image = imageErrors.image;
+        if (formData.image_path) {
+            const imageErrors = validateImageFile(formData.image_path);
+            if (imageErrors.image_path) newErrors.image = imageErrors.image_path;
         }
         return newErrors;
     };
@@ -261,14 +261,14 @@ const FundRequestPage = () => {
 
                             {/* Image Upload */}
                             <div>
-                                <label htmlFor="image" className="flex items-center text-sm font-medium text-gray-600 mb-1">
+                                <label htmlFor="image_path" className="flex items-center text-sm font-medium text-gray-600 mb-1">
                                     <ImageIcon size={20} className="mr-2 text-orange-500" />
                                     Upload Proof
                                 </label>
                                 <input
                                     ref={fileInputRef}
-                                    id="image"
-                                    name="image"
+                                    id="image_path"
+                                    name="image_path"
                                     type="file"
                                     onChange={handleChange}
                                     accept="image/jpeg,image/png,image/jpg"
@@ -276,8 +276,8 @@ const FundRequestPage = () => {
                                         displayErrors.image ? 'border-red-500' : 'border-gray-200'
                                     }`}
                                 />
-                                {displayErrors.image && (
-                                    <p className="text-red-500 text-xs mt-1">{displayErrors.image}</p>
+                                {displayErrors.image_path && (
+                                    <p className="text-red-500 text-xs mt-1">{displayErrors.image_path}</p>
                                 )}
                             </div>
                         </div>

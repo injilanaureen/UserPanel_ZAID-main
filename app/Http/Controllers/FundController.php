@@ -31,14 +31,14 @@ class FundController extends Controller
                 'amount' => 'required|numeric|min:1',
                 'transactionId' => 'required|string|unique:fund_requests,transaction_id',
                 'depositedDate' => 'required|date',
-                'bankId' => 'required|exists:addaccount,id', // Fixed table name
-                'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'bankId' => 'required|exists:addaccount,id', 
+                'image_path' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             ]);
 
             // Handle file upload
             $filePath = null;
-            if ($request->hasFile('file')) {
-                $filePath = $request->file('file')->store('fund_requests', 'public');
+            if ($request->hasFile('image_path')) {
+                $filePath = $request->file('image_path')->store('fund_requests', 'public');
             }
 
             // Create fund request
@@ -48,7 +48,8 @@ class FundController extends Controller
                 'transaction_id' => $validatedData['transactionId'],
                 'deposited_date' => $validatedData['depositedDate'],
                 'bank_id' => $validatedData['bankId'],
-                'file_path' => $filePath,
+                // 'file_path' => $filePath,
+                'image_path' => $filePath,  
                 'status' => 'pending',
                 'user_id' => auth()->id() ?? 1,
             ]);

@@ -143,13 +143,13 @@ const IPWhitelist = () => {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button 
+                      {/* <button 
                         className="text-blue-500 hover:text-blue-700 transition"
                         onClick={() => toggleStatus(index)}
                         disabled={loading}
                       >
                         {ip.status === 1 ? 'Set Pending' : 'Approve'}
-                      </button>
+                      </button> */}
                       <button 
                         className="text-red-500 hover:text-red-700 transition" 
                         onClick={() => deleteIp(ip.address)}

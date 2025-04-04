@@ -6,7 +6,7 @@
     },
     {
       "title": "Fund Request",
-      "icon": "Home",
+      "icon": "Landmark",
       "href": "/admin/fundrequest/fundrequest"
     },
     {
@@ -188,6 +188,7 @@
       },
       {
         "title": "Insurance Payment",
+        "icon": "UmbrellaOff",
         "subMenu": [
           {
             "title": "Fetch Insurance Bill Details",
@@ -271,8 +272,25 @@
         "title": "IP WhiteList",
         "icon": "Home",
         "href": "/admin/ipwhitelist/ipwhitelist"
+      },
+      {
+        "title": " HLR",
+        "subMenu": [
+          {
+            "title": "HLR Check",
+            "href": "/admin/hlr/hlrcheck"
+          },
+          {
+            "title": "DTH INFO",
+            "href": "/admin/hlr/dthinfo"
+          },
+          {
+            "title": "Blowse Plan",
+            "href": "/admin/hlr/hlrbrowseplan"
+          }
+          
+        ]
       }
-    
     
     
   
