@@ -66,7 +66,7 @@ class RechargeController extends Controller
     }
     
 
-    //uat api
+    
     public function processRecharge(Request $request)
 {
     try {
@@ -171,105 +171,8 @@ class RechargeController extends Controller
         ], 500);
     }
 }
-// public function processRecharge(Request $request) (live+middlwware)
-// {
-//     try {
-//         // Validate the incoming request
-//         $validator = Validator::make($request->all(), [
-//             'operator' => 'required|numeric',
-//             'canumber' => 'required|string',
-//             'amount' => 'required|numeric|min:1'
-//         ]);
 
-//         if ($validator->fails()) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'Validation failed',
-//                 'errors' => $validator->errors()
-//             ], 422);
-//         }
-
-//         $user = $request->user();
-//         $amount = $request->input('amount');
-//         $referenceId = ApiHelper::generateReferenceId();
-
-//         // Calculate available balance
-//         $totalApproved = FundRequest::getAvailableBalance($user->id);
-//         $spentAmount = Transaction::where('user_id', $user->id)
-//             ->where('status', 'completed')
-//             ->where('type', 'debit')
-//             ->sum('amount');
-//         $remainingBalance = $totalApproved - $spentAmount;
-
-//         if ($amount > $remainingBalance) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'Insufficient funds'
-//             ], 403);
-//         }
-
-//         // Prepare the payload for the API
-//         $payload = [
-//             'operator' => (int)$request->operator,
-//             'canumber' => $request->canumber,
-//             'amount' => (int)$amount,
-//             'referenceid' => $referenceId
-//         ];
-
-//         // Fetch the API details from the ApiManagement table
-//         $apiDetails = \App\Models\ApiManagement::where('api_name', 'DoRecharge')->first();
-
-//         if (!$apiDetails) {
-//             throw new \Exception('API configuration for DoRecharge not found in the database');
-//         }
-
-//         // Call the dynamic API method
-//         $responseData = $this->callDynamicApi($apiDetails->api_name, $payload);
-
-//         // Check if the API call failed or returned invalid data
-//         if (!is_array($responseData) || (isset($responseData['status']) && $responseData['status'] === false)) {
-//             $errorMessage = $responseData['message'] ?? 'Unknown error from API';
-//             throw new \Exception($errorMessage);
-//         }
-
-//         // Ensure responseData has a status field, default to false if not present
-//         $apiStatus = $responseData['status'] ?? false;
-
-//         // Store the recharge transaction regardless of status
-//         $rechargeTransaction = RechargeTransaction::create([
-//             'operator' => $request->operator,
-//             'canumber' => $request->canumber,
-//             'amount' => $amount,
-//             'referenceid' => $referenceId,
-//             'status' => $apiStatus ? 'success' : 'failed',
-//             'response_code' => $responseData['response_code'] ?? '',
-//             'operatorid' => $responseData['operatorid'] ?? '',
-//             'ackno' => $responseData['ackno'] ?? '',
-//             'message' => $responseData['message'] ?? ''
-//         ]);
-
-//         if ($apiStatus === true) {
-//             // Record the debit transaction only if recharge is successful
-//             Transaction::create([
-//                 'user_id' => $user->id,
-//                 'amount' => $amount,
-//                 'type' => 'debit',
-//                 'status' => 'completed'
-//             ]);
-//         }
-
-//         return response()->json($responseData);
-
-//     } catch (\Exception $e) {
-//         Log::error('Recharge processing failed: ' . $e->getMessage());
-//         return response()->json([
-//             'status' => false,
-//             'message' => 'Failed to process recharge: ' . $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-// public function processRecharge(Request $request) (simple live no middleware)
+// public function processRecharge(Request $request)
 // {
 //     try {
 //         // Validate the request

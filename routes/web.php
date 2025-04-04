@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
         });
             
         // Admin Routes protected by IP Whitelist
-        Route::prefix('admin')->middleware('ip.whitelist')->group(function () {
+        Route::prefix('admin')->group(function () {
         // Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/admin/profile', [MyProfileController::class, 'show'])->name('admin.profile');        
                 
@@ -80,7 +80,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/recharge/update', [RechargeController::class, 'updateTransaction']);
 
     // Recharge Operator Routes
-    Route::group(['prefix' => 'recharge', 'middleware' => 'ip.whitelist'], function () {
+    Route::group(['prefix' => 'recharge'], function () {
         Route::get('/operators', [RechargeController::class, 'operators'])->name('recharge.operators');
         Route::get('/operators/list', [RechargeController::class, 'listRechargeOperators']);
         Route::post('/operators', [RechargeController::class, 'storeRechargeOperator']);
@@ -92,7 +92,7 @@ Route::middleware('auth')->group(function () {
 
 
     //Bus Ticket
-    Route::group(['prefix' => 'admin/busTicket','middleware' => 'ip.whitelist'], function () {
+    Route::group(['prefix' => 'admin/busTicket'], function () {
         //source city
         Route::get('/getSourceCity', [BusTicketController::class, 'getSourceCity'])->name('busTicket.getSourceCity');
         Route::post('/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('busTicket.fetchSourceCities');
@@ -130,7 +130,7 @@ Route::middleware('auth')->group(function () {
         ->name('admin.bus-ticket.block.api');
 
     //DMT Bank 2 Remitter
-    Route::prefix('/admin')->middleware(['auth','middleware' => 'ip.whitelist'])->group(function () {
+    Route::prefix('/admin')->middleware(['auth'])->group(function () {
     Route::get('/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query');
     Route::post('/remitter2/queryRemitter', [Remitter2Controller::class, 'queryRemitter'])->name('remitter.query.post');
     Route::get('/remitter2/queryRemitter', [Remitter2Controller::class, 'showQueryForm'])->name('remitter.query');
@@ -187,7 +187,7 @@ Route::middleware('auth')->group(function () {
     Route::match(['get', 'post'], '/admin/transaction2/pennyDrop', [Transaction2Controller::class, 'pennyDrop'])->name('transaction2.pennyDrop');
     Route::match(['get', 'post'], '/transaction-sent-otp', [Transaction2Controller::class, 'transactionSentOtp'])->name('transaction.sent.otp');
     //Refund
-    Route::prefix('/admin/refund2')->middleware('ip.whitelist')->group(function () {
+    Route::prefix('/admin/refund2')->group(function () {
 
     Route::get('/refundOtp', [Refund2Controller::class, 'refundOtp'])->name('transaction2.refundOtp');
     Route::match(['get', 'post'], '/refundOtp', [Refund2Controller::class, 'refundOtp'])->name('refund2.refundOtp');
@@ -203,7 +203,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/get-operators', [UtilitybillPaymentController::class, 'fetchOperators']) ->name('admin.get-operators');
 
     //Fetch Bill Details
-    Route::prefix('/admin/utility-bill-payment')->middleware('ip.whitelist')->group(function () {
+    Route::prefix('/admin/utility-bill-payment')->group(function () {
 
     Route::get('/fetch-bill-details', [UtilitybillPaymentController::class, 'fetchBillDetails'])->name('utilitybillPayment.fetchBillDetails');
     Route::match(['get', 'post'], '/fetch-bill-details', [UtilitybillPaymentController::class, 'fetchBillDetails'])->name('utilitybillPayment.fetchBillDetails');
@@ -215,7 +215,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/fetch-utility-status', [UtilitybillPaymentController::class, 'fetchUtilityStatus'])->name('fetchUtilityStatus');
     });
     //Insurance Premium Payment
-    Route::prefix('/admin/InsurancePremiumPayment')->middleware('ip.whitelist')->group(function () {
+    Route::prefix('/admin/InsurancePremiumPayment')->group(function () {
     Route::get('/FetchInsuranceBillDetails', [InsurancePremiumPaymentController::class, 'fetchInsuranceBillDetails'])->name('InsurancePremiumPayment.FetchInsuranceBillDetails'); 
     Route::get('/PayInsuranceBill', [InsurancePremiumPaymentController::class, 'payInsuranceBill'])->name('InsurancePremiumPayment.PayInsuranceBill'); 
 
@@ -229,7 +229,7 @@ Route::middleware('auth')->group(function () {
     Route::match(['get', 'post'], '/pay-insurance-bill', [InsurancePremiumPaymentController::class, 'payInsuranceBill']);
     //Fastag Recharge
     //operator
-    Route::prefix('/admin')->middleware('ip.whitelist')->group(function () {
+    Route::prefix('/admin')->group(function () {
     Route::get('/FastagRecharge/FastagOperatorList',[FastagRechargeController::class,'fastagRechargeOperatorList'])->name('FastagRecharge.FastagOperatorList');
     Route::get('/fastag-operators', [FastagController::class, 'fastagRechargeOperatorList'])->name('admin.fastag-operators');
     //consumer details 
@@ -241,7 +241,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('/api/fetchConsumerDetails', [FastagRechargeController::class, 'getConsumerDetails'])->name('FastagRecharge.getConsumerDetails');
     //LPG
-    Route::prefix('admin/LPG')->middleware('ip.whitelist')->group(function () {
+    Route::prefix('admin/LPG')->group(function () {
     Route::get('/LPGOperator', [LPGController::class, 'LPGOperator'])->name('LPG.LPGOperator');
     //fetch lpg details
     Route::get('/LPGDetails',[LPGController::class,'FetchLPGDetails'])->name('LPG.FetchLPGDetails');
@@ -282,7 +282,7 @@ Route::middleware('auth')->group(function () {
     });
 
     //cms airtel 
-    Route::prefix('/admin')->middleware(['ip.whitelist'])->group(function () {
+    Route::prefix('/admin')->group(function () {
     Route::get('/cmsairtel/GenerateUrl',[CMSAirtelController::class,'generateUrl']);
     Route::get('/cmsairtel/AirtelTransactionEnquiry',[CMSAirtelController::class,'AirtelTransactionEnquiry']);
     Route::get('/airtel-transaction-enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('admin.airtel.transaction.enquiry');
@@ -291,7 +291,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/add-account', [AccountController::class, 'create'])->name('account.create');
     Route::post('/add-account', [AccountController::class, 'store'])->name('account.store');
 
-    Route::middleware(['web', 'auth', 'LocationCapture','ip.whitelist'])->group(function () {
+    Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/cms/airtel/generate', [CMSAirtelController::class, 'generateUrl'])->name('cms.airtel.generate');
     Route::get('/cms/airtel/enquiry', [CMSAirtelController::class, 'airtelTransactionEnquiry'])->name('cms.airtel.enquiry');
     });
