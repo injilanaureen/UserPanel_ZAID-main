@@ -51,7 +51,11 @@ class AuthenticatedSessionController extends Controller
                 'updated_at'   => Carbon::now('Asia/Kolkata')
             ]);
 
-          return redirect()->intended(route('dashboard', absolute: false));
+            return response()->json([
+                'status'  => 200,
+                'message' => 'success',
+            ], 401);
+        //   return redirect()->intended(route('dashboard', absolute: false));
         } 
         
         return response()->json([

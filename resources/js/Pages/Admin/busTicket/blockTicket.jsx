@@ -57,12 +57,42 @@ const BlockTicket = () => {
     selectedBoardingAddress: '', 
     selectedDroppingAddress: '',
     success: '', 
-    availableSeats: []
+    availableSeats: [],
+    sourceCities: [],
+    citiesLoading: false
   });
+
+  useEffect(() => {
+    fetchSourceCities();
+  }, []);
 
   useEffect(() => {
     if (formData.availableTripId) fetchTripDetails();
   }, [formData.availableTripId]);
+
+  const fetchSourceCities = async () => {
+    setState(prev => ({ ...prev, citiesLoading: true }));
+    try {
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const response = await axios.get('/admin/busTicket/fetchSourceCities', {
+        headers: { 
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token 
+        }
+      });
+      console.log('Source Cities Response:', response.data); // Debug log
+      if (response.data.status && response.data.data.cities) {
+        setState(prev => ({ ...prev, sourceCities: response.data.data.cities }));
+      } else {
+        throw new Error('Invalid response structure');
+      }
+    } catch (err) {
+      console.error('Fetch Source Cities Error:', err.response || err.message);
+      setState(prev => ({ ...prev, errors: { cities: 'Failed to load source cities: ' + (err.response?.data?.message || err.message) } }));
+    } finally {
+      setState(prev => ({ ...prev, citiesLoading: false }));
+    }
+  };
 
   const fetchTripDetails = async () => {
     setState(prev => ({ ...prev, pointsLoading: true }));
@@ -174,7 +204,7 @@ const BlockTicket = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.source || !formData.destination) {
-      setState(prev => ({ ...prev, errors: { source: 'Please enter both source and destination' } }));
+      setState(prev => ({ ...prev, errors: { source: 'Please select both source and destination' } }));
       return;
     }
     setState(prev => ({ ...prev, loading: true, errors: {}, success: '' }));
@@ -269,30 +299,54 @@ const BlockTicket = () => {
                 icon={<MapPin size={20} className="mr-2 text-blue-500" />}
                 error={state.errors.source}
               >
-                <input 
-                  type="text" 
+                <select 
                   name="source" 
                   value={formData.source} 
                   onChange={handleChange} 
                   className={INPUT_CLASS} 
-                  placeholder="Enter source" 
-                  required 
-                />
+                  disabled={state.citiesLoading} 
+                  required
+                >
+                  <option value="">Select source city</option>
+                  {state.citiesLoading ? (
+                    <option>Loading cities...</option>
+                  ) : state.sourceCities.length === 0 ? (
+                    <option>No cities available</option>
+                  ) : (
+                    state.sourceCities.map((city) => (
+                      <option key={city.id} value={city.id.toString()}>
+                        {city.name}, {city.state}
+                      </option>
+                    ))
+                  )}
+                </select>
               </FormField>
               <FormField 
                 label="Destination" 
                 icon={<MapPin size={20} className="mr-2 text-purple-500" />}
                 error={state.errors.destination}
               >
-                <input 
-                  type="text" 
+                <select 
                   name="destination" 
                   value={formData.destination} 
                   onChange={handleChange} 
                   className={INPUT_CLASS} 
-                  placeholder="Enter destination" 
-                  required 
-                />
+                  disabled={state.citiesLoading} 
+                  required
+                >
+                  <option value="">Select destination city</option>
+                  {state.citiesLoading ? (
+                    <option>Loading cities...</option>
+                  ) : state.sourceCities.length === 0 ? (
+                    <option>No cities available</option>
+                  ) : (
+                    state.sourceCities.map((city) => (
+                      <option key={city.id} value={city.id.toString()}>
+                        {city.name}, {city.state}
+                      </option>
+                    ))
+                  )}
+                </select>
               </FormField>
               <FormField 
                 label="Booking Type" 
@@ -307,9 +361,7 @@ const BlockTicket = () => {
               </FormField>
               <FormField 
                 label="Service Charge" 
-                icon={<CreditCard size={20} className="mr-2 text-teal- /
-
-500" />}
+                icon={<CreditCard size={20} className="mr-2 text-teal-500" />}
                 error={state.errors.serviceCharge}
               >
                 <input 
@@ -474,7 +526,7 @@ const BlockTicket = () => {
 
             <button 
               type="submit" 
-              disabled={state.loading || state.pointsLoading} 
+              disabled={state.loading || state.pointsLoading || state.citiesLoading} 
               className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {state.loading ? (
