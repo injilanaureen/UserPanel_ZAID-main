@@ -47,12 +47,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.post');
         //IP Whitelist Management Route (accesible without check )
-        Route::middleware(['auth'])->group(function () {
+        // Route::middleware(['auth'])->group(function () {
             Route::get('/ip-whitelist', [IPWhitelist::class, 'IPWhitelist'])->name('ip.whitelist');
             Route::post('/check-ip', [IPWhitelist::class, 'checkAndWhitelistIP']);
             Route::post('/update-whitelist', [IPWhitelist::class, 'updateWhitelist']);
             Route::delete('/whitelist/ip', [IPWhitelist::class, 'deleteIp']);
-        });
+        // });
             
         // Admin Routes protected by IP Whitelist
         Route::prefix('admin')->group(function () {
