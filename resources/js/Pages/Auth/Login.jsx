@@ -6,8 +6,15 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, loading, success, error
     const token = document.head.querySelector('meta[name="csrf-token"]');
+    if (token) {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+    } else {
+        console.error('CSRF token not found!');
+    }
+    
+    
     const { data, setData, post, processing, errors } = useForm({
-        _token: token,
+        _token: token.content,
         email: '',
         password: '',
         remember: false,
