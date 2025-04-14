@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // Adding CheckUserBalance to API middleware group (optional)
         $middleware->api(append: [
-            \App\Http\Middleware\CheckUserBalance::class,
+            // \App\Http\Middleware\CheckUserBalance::class,
             \App\Http\Middleware\CheckIpWhitelist::class,
         ]);
             $middleware->alias([

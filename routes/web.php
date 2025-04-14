@@ -33,8 +33,6 @@
     Route::get('/', function () {
         return redirect()->route('login'); 
     })->name('root');
-    // Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-
 // Authentication Routes
 // Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -45,7 +43,6 @@
 // });
 
 Route::middleware('auth')->group(function () {
-    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.post');
         //IP Whitelist Management Route (accesible without check )
@@ -58,7 +55,7 @@ Route::middleware('auth')->group(function () {
             
         // Admin Routes protected by IP Whitelist
         Route::prefix('admin')->group(function () {
-        // Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/admin/profile', [MyProfileController::class, 'show'])->name('admin.profile');        
                 
             // Recharge Routes

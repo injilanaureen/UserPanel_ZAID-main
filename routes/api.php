@@ -9,12 +9,18 @@ use App\Http\Controllers\BusTicketController;
 use App\Http\Controllers\CMSAirtelController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Http;
 use Firebase\JWT\JWT;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
+
 
 Route::get('/test-api', [ApiController::class, 'index']);
 

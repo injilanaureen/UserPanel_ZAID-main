@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -13,9 +14,7 @@ use App\Models\LastLogin;
 use App\Models\LogSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
-
 use Carbon\Carbon;
-
 
 class AuthenticatedSessionController extends Controller
 {
@@ -37,7 +36,7 @@ class AuthenticatedSessionController extends Controller
             
             // Ensure timezone consistency
             config(['app.timezone' => 'Asia/Kolkata']);
-
+            
             // Store login session details
             DB::table('login_sessions')->insert([
                 'user_id'      => Auth::id(),
@@ -50,10 +49,11 @@ class AuthenticatedSessionController extends Controller
                 'created_at'   => Carbon::now('Asia/Kolkata'),
                 'updated_at'   => Carbon::now('Asia/Kolkata')
             ]);
-
-              return redirect()->intended(route('dashboard', absolute: false));
-        } 
-      
+            
+         
+            return redirect()->intended('/admin/dashboard');
+        }
+        
         return response()->json([
             'status'  => 'error',
             'message' => 'Invalid credentials',

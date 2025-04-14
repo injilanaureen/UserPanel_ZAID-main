@@ -60,11 +60,11 @@ export default function Login() {
     const submit = (e) => {
         e.preventDefault();
         
-        // Update this to use the correct route name
-        post(route('login.store'), {
+        // Fix: Use the correct route name
+        post(route('login'), {
             onSuccess: () => {
-                // Let Inertia handle the redirect instead of manual window location
-                // The server will return a redirect response to /admin/dashboard
+                // Wait for the redirect to happen automatically
+                // The controller will handle the redirect
             },
         });
     };
@@ -128,12 +128,6 @@ export default function Login() {
                                 </button>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center text-sm">
-                        {locationStatus === 'loading' && <span className="text-gray-500">Detecting location...</span>}
-                        {locationStatus === 'success' && <span className="text-green-600">Location detected</span>}
-                        {locationStatus === 'error' && <span className="text-yellow-600">Location unavailable</span>}
                     </div>
 
                     <div className="flex items-center justify-between">
