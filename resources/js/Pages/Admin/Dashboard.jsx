@@ -210,7 +210,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
-                    <span className="text-xs text-gray-600">Expense</span>
+                    <span className="text-xs text-gray-600">Expenses</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
