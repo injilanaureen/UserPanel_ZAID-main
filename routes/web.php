@@ -35,13 +35,13 @@
     })->name('root');
     Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 // Authentication Routes
-Route::middleware('guest')->group(function () {
+// Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
     
     Route::get('/register', [AuthenticatedSessionController::class, 'register'])->name('register');
     Route::post('/register', [AuthenticatedSessionController::class, 'storeRegister'])->name('register.store');
-});
+// });
 
 Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
