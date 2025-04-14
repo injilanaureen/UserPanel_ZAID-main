@@ -60,9 +60,11 @@ export default function Login() {
     const submit = (e) => {
         e.preventDefault();
         
-        post(route('login'), {
+        // Update this to use the correct route name
+        post(route('login.store'), {
             onSuccess: () => {
-                window.location.href = '/admin/dashboard';
+                // Let Inertia handle the redirect instead of manual window location
+                // The server will return a redirect response to /admin/dashboard
             },
         });
     };
@@ -128,11 +130,11 @@ export default function Login() {
                         </div>
                     </div>
 
-                    {/* <div className="flex items-center text-sm">
+                    <div className="flex items-center text-sm">
                         {locationStatus === 'loading' && <span className="text-gray-500">Detecting location...</span>}
                         {locationStatus === 'success' && <span className="text-green-600">Location detected</span>}
                         {locationStatus === 'error' && <span className="text-yellow-600">Location unavailable</span>}
-                    </div> */}
+                    </div>
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">

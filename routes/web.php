@@ -33,7 +33,8 @@
     Route::get('/', function () {
         return redirect()->route('login'); 
     })->name('root');
-    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    // Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
 // Authentication Routes
 // Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -44,6 +45,7 @@
 // });
 
 Route::middleware('auth')->group(function () {
+    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.post');
         //IP Whitelist Management Route (accesible without check )
@@ -231,7 +233,7 @@ Route::middleware('auth')->group(function () {
     //operator
     Route::prefix('/admin')->group(function () {
     Route::get('/FastagRecharge/FastagOperatorList',[FastagRechargeController::class,'fastagRechargeOperatorList'])->name('FastagRecharge.FastagOperatorList');
-    Route::get('/fastag-operators', [FastagController::class, 'fastagRechargeOperatorList'])->name('admin.fastag-operators');
+    Route::get('/fastag-operators', [FastagRechargeController::class, 'fastagRechargeOperatorList'])->name('admin.fastag-operators');
     //consumer details 
     Route::get('/FastagRecharge/fetchConsumerDetails',[FastagRechargeController::class,'fetchConsumerDetails'])->name('FastagRecharge.FastagFetchConsumerDetails');
     //recharge

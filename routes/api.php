@@ -7,6 +7,8 @@ use App\Http\Controllers\RechargeController;
 use App\Http\Controllers\PaysprintCallbackController;
 use App\Http\Controllers\BusTicketController;
 use App\Http\Controllers\CMSAirtelController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Http;
 use Firebase\JWT\JWT;
 
@@ -29,3 +31,11 @@ Route::post('/bus/block-ticket', [BusTicketController::class, 'blockTicketApi'])
 
 Route::post('/cancel-bus-ticket', [BusTicketController::class, 'cancelTicket']);
 
+
+// In api.php
+// Route::middleware('api')->group(function () {
+//     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+//     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+//     Route::get('/register', [AuthenticatedSessionController::class, 'register'])->name('register');
+//     Route::post('/register', [AuthenticatedSessionController::class, 'storeRegister'])->name('register.store');
+// });
