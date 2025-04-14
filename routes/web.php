@@ -120,7 +120,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ticketCancellation', [BusTicketController::class, 'ticketCancellation'])->name('busTicket.ticketCancellation');
         
     });
-
+    Route::get('/admin/busTicket/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('admin.busTicket.fetchSourceCities');
     Route::post('/admin/busTicket/fetchSourceCities', [BusTicketController::class, 'fetchSourceCities'])->name('admin.busTicket.fetchSourceCities');
     Route::post('/admin/busTicket/fetchDestinationCities', [BusTicketController::class, 'fetchDestinationCities'])->name('admin.busTicket.fetchDestinationCities');
 

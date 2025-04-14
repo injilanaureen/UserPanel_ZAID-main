@@ -5,13 +5,14 @@ import { Banknote, Phone, Mail, AlertCircle, CheckCircle, Code, Ticket } from 'l
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const BookTicket = () => {
+  // Initialize formData with empty values
   const [formData, setFormData] = useState({
-    refid: 3,
-    amount: 6,
-    base_fare: "5.50",
-    passenger_phone: "9876543210",
-    passenger_email: "example@email.com",
-    blockKey: "150",
+    refid: "",
+    amount: "",
+    base_fare: "",
+    passenger_phone: "",
+    passenger_email: "",
+    blockKey: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,7 @@ const BookTicket = () => {
 
       if (res.data.status) {
         setSuccess("Ticket booked successfully!");
+        // Reset form fields after successful booking
         setFormData({
           refid: "",
           amount: "",
