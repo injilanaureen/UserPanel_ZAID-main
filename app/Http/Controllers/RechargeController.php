@@ -97,7 +97,7 @@ class RechargeController extends Controller
             if ($amount > $remainingBalance) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Insufficient funds'
+                    'message' => 'Insufficient fund'
                 ], 403);
             }
     
