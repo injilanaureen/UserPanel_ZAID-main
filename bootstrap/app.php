@@ -14,15 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\VerifyCsrfToken::class, // 💥 This is CRITICAL
         ]);
-        // // Adding CheckUserBalance to API middleware group (optional)
-        // $middleware->api(append: [
-        //     \App\Http\Middleware\CheckUserBalance::class,
-        //     \App\Http\Middleware\CheckIpWhitelist::class,
-        // ]);
-            $middleware->alias([
+        $middleware->alias([
             "LocationCapture" => App\Http\Middleware\LocationCapture::class,
             "check.balance" => \App\Http\Middleware\CheckUserBalance::class,
             'ip.whitelist' => \App\Http\Middleware\CheckIpWhitelist::class,
@@ -30,8 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
             'verified'  => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'service'   => \App\Http\Middleware\ServiceStatus::class,
-            'servicepermission' => \App\Http\Middleware\ServicePermission::class,
         ]);
+    
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
