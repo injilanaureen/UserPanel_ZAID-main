@@ -65,8 +65,6 @@ class RechargeController extends Controller
         return Inertia::render('Admin/Recharge/dorecharge');
     }
     
-
-    
     public function processRecharge(Request $request)
     {
         try {
