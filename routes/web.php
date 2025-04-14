@@ -26,23 +26,16 @@
     use App\Http\Controllers\DashboardController;
     use App\Http\Controllers\IPWhitelist;
     use App\Http\Controllers\HLRController;
-    use App\Http\Controllers\Auth\AuthenticatedSessionController;
     use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
 
-    Route::get('/', function () {
-        return redirect()->route('login'); 
-    })->name('root');
-    // Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [AdminController::class, 'loginpage'])->middleware('guest')->name('mylogin');
+    Route::get('login', [AdminController::class, 'loginpage'])->middleware('guest');
 
 // Authentication Routes
-// Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
-    
-    Route::get('/register', [AuthenticatedSessionController::class, 'register'])->name('register');
-    Route::post('/register', [AuthenticatedSessionController::class, 'storeRegister'])->name('register.store');
-// });
+Route::group(['prefix' => 'auth'], function () {
+    Route::post('check', [AdminController::class, 'login'])->name('authCheck');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');

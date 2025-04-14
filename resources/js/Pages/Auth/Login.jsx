@@ -61,7 +61,7 @@ export default function Login() {
         e.preventDefault();
         
         // Update this to use the correct route name
-        post(route('login.store'), {
+        post(route('authCheck'), {
             onSuccess: () => {
                 // Let Inertia handle the redirect instead of manual window location
                 // The server will return a redirect response to /admin/dashboard

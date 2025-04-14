@@ -8,6 +8,20 @@ use App\Models\FundRequest;
 use App\Models\Transaction;
 
 class AdminController extends Controller {
+    public function loginpage() {
+        return Inertia::render('Auth/Login');
+    }
+
+    public function login(Request $post){
+        $data = $post;
+        if(!\Auth::validate(['email' => $data->email, 'password' => $data->password])){
+            return response()->json(['status' => 'ERR', 'message' => 'Username or password is incorrect']);
+        }
+        if(!\Auth::validate(['email'=>$data->email, 'password'=>$data->password, 'status'=>'active'])){
+            return response()->json(['status'=>'ERR', 'message' => 'Your account currently de-activated, please contact administrator']);
+        }
+    }
+
     public function dashboard(Request $request)
     {
         return Inertia::render('Admin/Dashboard');
