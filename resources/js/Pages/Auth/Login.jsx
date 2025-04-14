@@ -1,7 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import axios from 'axios';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +69,7 @@ export default function Login() {
     const submit = (e) => {
         e.preventDefault();
         // Update this to use the correct route name
-        axios.post(route('authCheck'), {
+        post(route('authCheck'), {
             onSuccess: () => {
                 // Let Inertia handle the redirect instead of manual window location
                 // The server will return a redirect response to /admin/dashboard
