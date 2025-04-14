@@ -5,7 +5,9 @@ import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, loading, success, error
+    const token = document.head.querySelector('meta[name="csrf-token"]');
     const { data, setData, post, processing, errors } = useForm({
+        _token: token,
         email: '',
         password: '',
         remember: false,
