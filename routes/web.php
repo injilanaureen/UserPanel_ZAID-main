@@ -25,8 +25,9 @@
     use App\Http\Controllers\FundController;                
     use App\Http\Controllers\DashboardController;                
     use App\Http\Controllers\IPWhitelist;                
-    use App\Http\Controllers\HLRController;                
-    use Illuminate\Support\Facades\Route;                
+    use App\Http\Controllers\HLRController;
+use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Route;                
     use Inertia\Inertia;
 
 
@@ -36,7 +37,7 @@
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
-    Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check');
+    Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check')->withoutMiddleware(VerifyCsrfToken::class);
 });
 
 // Authentication Routes
