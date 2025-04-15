@@ -1,23 +1,18 @@
 import { useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import axios from 'axios';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, loading, success, error
-    const [loginError, setLoginError] = useState(null);
-    
-    const { data, setData, reset, errors, setError, clearErrors } = useForm({
+
+    const { data, setData, reset, errors, post, processing } = useForm({
         email: '',
         password: '',
         remember: false,
         gps_location: null,
         device_id: null,
     });
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.content;
 
     // Generate device ID
     useEffect(() => {
@@ -29,13 +24,13 @@ export default function Login() {
                 screen.height,
                 screen.width,
                 screen.colorDepth,
-                new Date().getTimezoneOffset()
+                new Date().getTimezoneOffset(),
             ];
             return btoa(deviceIdParts.join('|')).substring(0, 32);
         };
 
         setData('device_id', generateDeviceId());
-    }, []);
+    }, [setData]);
 
     // Get geolocation
     useEffect(() => {
@@ -48,55 +43,31 @@ export default function Login() {
                     setLocationStatus('success');
                 },
                 (error) => {
-                    console.error("Error getting location:", error.message);
+                    console.error('Error getting location:', error.message);
                     setLocationStatus('error');
                 },
                 {
                     enableHighAccuracy: true,
                     timeout: 10000,
-                    maximumAge: 0
+                    maximumAge: 0,
                 }
             );
         } else {
-            console.log("Geolocation is not supported by this browser.");
+            console.log('Geolocation is not supported by this browser.');
             setLocationStatus('error');
         }
-    }, []);
+    }, [setData]);
 
-    const submit = async (e) => {
+    const submit = (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        setLoginError(null);
-        clearErrors();
-        
-        try {
-            const response = await axios.post('/api/auth/check', {
-                // _token: csrfToken, // Include the CSRF token
-                ...data
-            });
-            
-            if (response.data.status === 'OK') {
-                // Redirect to dashboard
-                window.location.href = response.data.redirect;
-            }
-        } catch (error) {
-            console.error('Error during login:', error);
-            if (error.response) {
-                if (error.response.data.errors) {
-                    // Validation errors
-                    Object.keys(error.response.data.errors).forEach(key => {
-                        setError(key, error.response.data.errors[key][0]);
-                    });
-                } else if (error.response.data.message) {
-                    // Authentication error
-                    setLoginError(error.response.data.message);
-                }
-            } else {
-                setLoginError('Network error. Please try again.');
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
+        post('/login', {
+            onError: (err) => {
+                console.error('Error during login:', err);
+            },
+            onSuccess: () => {
+                reset('password'); // Clear password field after success
+            },
+        });
     };
 
     return (
@@ -111,20 +82,29 @@ export default function Login() {
                     </p>
                 </div>
 
-                {loginError && (
+                {errors.message && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                         <div className="flex items-center">
                             <AlertCircle className="h-5 w-5 mr-2" />
-                            <span className="block sm:inline">{loginError}</span>
+                            <span className="block sm:inline">{errors.message}</span>
                         </div>
                     </div>
                 )}
 
-                {Object.keys(errors).length > 0 && (
+                {errors.email && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                         <div className="flex items-center">
                             <AlertCircle className="h-5 w-5 mr-2" />
-                            <span className="block sm:inline">{errors.email || errors.password || 'Please correct the errors below'}</span>
+                            <span className="block sm:inline">{errors.email}</span>
+                        </div>
+                    </div>
+                )}
+
+                {errors.password && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                        <div className="flex items-center">
+                            <AlertCircle className="h-5 w-5 mr-2" />
+                            <span className="block sm:inline">{errors.password}</span>
                         </div>
                     </div>
                 )}
@@ -141,7 +121,7 @@ export default function Login() {
                                 required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 value={data.email}
-                                onChange={e => setData('email', e.target.value)}
+                                onChange={(e) => setData('email', e.target.value)}
                             />
                         </div>
 
@@ -156,14 +136,18 @@ export default function Login() {
                                     required
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                     value={data.password}
-                                    onChange={e => setData('password', e.target.value)}
+                                    onChange={(e) => setData('password', e.target.value)}
                                 />
                                 <button
                                     type="button"
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400" />
+                                    ) : (
+                                        <Eye className="h-5 w-5 text-gray-400" />
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -176,7 +160,7 @@ export default function Login() {
                                 type="checkbox"
                                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                 checked={data.remember}
-                                onChange={e => setData('remember', e.target.checked)}
+                                onChange={(e) => setData('remember', e.target.checked)}
                             />
                             <label htmlFor="remember" className="ml-2 block text-sm text-gray-900">
                                 Remember me
@@ -194,10 +178,10 @@ export default function Login() {
                     <div>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={processing}
                             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                         >
-                            {isSubmitting ? (
+                            {processing ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
                                 'Sign in'

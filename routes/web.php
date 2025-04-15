@@ -35,6 +35,14 @@ use Illuminate\Support\Facades\Route;
         return redirect()->route('login'); 
     })->name('root');
 
+    Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
+Route::post('/login', [AdminController::class, 'login'])->name('login.post');
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+    Route::get('/wallet/balance', [AdminController::class, 'getWalletBalance'])->name('wallet.balance');
+});
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
     Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check')->withoutMiddleware(VerifyCsrfToken::class);
