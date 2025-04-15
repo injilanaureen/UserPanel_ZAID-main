@@ -34,25 +34,26 @@
         return redirect()->route('login'); 
     })->name('root');
 
-    Route::get('/', [AdminController::class, 'loginpage'])->middleware('guest')->name('mylogin');
-    Route::get('login', [AdminController::class, 'loginpage'])->middleware('guest');
-
-// Authentication Routes
-Route::group(['prefix' => 'auth'], function () {
-    Route::post('check', [AdminController::class, 'login'])->name('authCheck');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
+    Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check');
 });
 
+// Authentication Routes
 Route::middleware('auth')->group(function () {
-    Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout.post');
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+
+Route::middleware('auth')->group(function () {
+ 
         //IP Whitelist Management Route (accesible without check )
-        Route::middleware(['auth'])->group(function () {
-            Route::get('/ip-whitelist', [IPWhitelist::class, 'IPWhitelist'])->name('ip.whitelist');
-            Route::post('/check-ip', [IPWhitelist::class, 'checkAndWhitelistIP']);
+        Route::prefix('ip')->group(function () {
+            Route::get('/whitelist', [IPWhitelist::class, 'IPWhitelist'])->name('ip.whitelist');
+            Route::post('/check', [IPWhitelist::class, 'checkAndWhitelistIP']);
             Route::post('/update-whitelist', [IPWhitelist::class, 'updateWhitelist']);
             Route::delete('/whitelist/ip', [IPWhitelist::class, 'deleteIp']);
         });
-            
+    });
         // Admin Routes protected by IP Whitelist
         Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
