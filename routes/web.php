@@ -6,28 +6,27 @@
     use App\Http\Controllers\OnboardingController;
     use App\Http\Controllers\BusTicketController;
     use App\Http\Controllers\Remitter2Controller;
-    use App\Http\Controllers\InsurancePremiumPaymentController;                
-    use App\Http\Controllers\DMTBank1Controller;                
-    use App\Http\Controllers\Beneficiary2Controller;                
-    use App\Http\Controllers\Transaction2Controller;                
-    use App\Http\Controllers\LPGController;                
-    use App\Http\Controllers\Refund2Controller;                
-    use App\Http\Controllers\UtilitybillPaymentController;                
-    use App\Http\Controllers\FastagRechargeController;                
-    use App\Http\Controllers\MunicipalityController;                
-    use App\Http\Controllers\AirtelController;                
-    use App\Http\Controllers\BillController;                
-    use App\Http\Controllers\BillPaymentController;                
-    use App\Http\Controllers\LICEnquiryController;                
-    use App\Http\Controllers\CMSAirtelController;                
-    use App\Http\Controllers\MyProfileController;                
-    use App\Http\Controllers\AccountController;                
-    use App\Http\Controllers\FundController;                
-    use App\Http\Controllers\DashboardController;                
-    use App\Http\Controllers\IPWhitelist;                
+    use App\Http\Controllers\InsurancePremiumPaymentController;
+    use App\Http\Controllers\DMTBank1Controller;
+    use App\Http\Controllers\Beneficiary2Controller;
+    use App\Http\Controllers\Transaction2Controller;
+    use App\Http\Controllers\LPGController;
+    use App\Http\Controllers\Refund2Controller;
+    use App\Http\Controllers\UtilitybillPaymentController;
+    use App\Http\Controllers\FastagRechargeController;
+    use App\Http\Controllers\MunicipalityController;
+    use App\Http\Controllers\AirtelController;
+    use App\Http\Controllers\BillController;
+    use App\Http\Controllers\BillPaymentController;
+    use App\Http\Controllers\LICEnquiryController;
+    use App\Http\Controllers\CMSAirtelController;
+    use App\Http\Controllers\MyProfileController;
+    use App\Http\Controllers\AccountController;
+    use App\Http\Controllers\FundController;
+    use App\Http\Controllers\DashboardController;
+    use App\Http\Controllers\IPWhitelist;
     use App\Http\Controllers\HLRController;
-use App\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Support\Facades\Route;                
+    use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
 
 
@@ -35,17 +34,9 @@ use Illuminate\Support\Facades\Route;
         return redirect()->route('login'); 
     })->name('root');
 
-    Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
-Route::post('/login', [AdminController::class, 'login'])->name('login.post');
-Route::middleware('auth')->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
-    Route::get('/wallet/balance', [AdminController::class, 'getWalletBalance'])->name('wallet.balance');
-});
-
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AdminController::class, 'loginpage'])->name('login');
-    Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check')->withoutMiddleware(VerifyCsrfToken::class);
+    Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check');
 });
 
 // Authentication Routes

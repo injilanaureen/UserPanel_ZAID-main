@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\Authenticate;
-use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,19 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web()->remove(VerifyCsrfToken::class);
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
         // Adding CheckUserBalance to API middleware group (optional)
         $middleware->api(append: [
-            // \App\Http\Middleware\CheckUserBalance::class,
+            \App\Http\Middleware\CheckUserBalance::class,
             \App\Http\Middleware\CheckIpWhitelist::class,
         ]);
             $middleware->alias([
             "LocationCapture" => App\Http\Middleware\LocationCapture::class,
-            // "check.balance" => \App\Http\Middleware\CheckUserBalance::class,
+            "check.balance" => \App\Http\Middleware\CheckUserBalance::class,
             'ip.whitelist' => \App\Http\Middleware\CheckIpWhitelist::class,
             "auth" => Authenticate::class,
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
