@@ -29,41 +29,38 @@ class AdminController extends Controller {
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
+            return Inertia::render('Auth/Login', [
+                'errors' => $validator->errors(),
                 'status' => 'ERR',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Validation failed'
+            ])->withViewData(['status' => 'ERR']);
         }
 
         // Check credentials
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            return response()->json([
-                'status' => 'ERR', 
+            return Inertia::render('Auth/Login', [
+                'status' => 'ERR',
                 'message' => 'Email or password is incorrect'
-            ], 401);
+            ])->withViewData(['status' => 'ERR']);
         }
 
         $user = Auth::user();
-        
+
         // Log the session
         $this->logUserSession($request, $user->id);
 
-        // Generate session
+        // Regenerate session to prevent session fixation
         $request->session()->regenerate();
 
-        return response()->json([
-            'status' => 'OK',
-            'message' => 'Login successful',
-            'redirect' => route('admin.dashboard')
-        ]);
+        // Instead of JSON, redirect for Inertia
+        return Inertia::location(route('admin.dashboard'));
     }
 
     private function logUserSession(Request $request, $userId)
     {
-        // Get IP location using IP-API (optional - can be implemented)
+        // Get IP location using IP-API (optional)
         $ipLocation = null;
-        
+
         try {
             $ipData = Http::get("http://ip-api.com/json/" . $request->ip())->json();
             if (isset($ipData['lat']) && isset($ipData['lon'])) {
@@ -94,7 +91,7 @@ class AdminController extends Controller {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('login');
     }
 
