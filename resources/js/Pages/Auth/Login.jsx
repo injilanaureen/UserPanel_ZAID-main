@@ -99,7 +99,7 @@ export default function Login() {
             <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
                 <div>
                     <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-                        Welcome 
+                        Welcome to User Panel
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Please sign in to your account
