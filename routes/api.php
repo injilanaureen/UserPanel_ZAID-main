@@ -20,6 +20,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/auth/check', [AdminController::class, 'login'])->name('auth.check')->withoutMiddleware(VerifyCsrfToken::class);
 
 
 Route::get('/test-api', [ApiController::class, 'index']);

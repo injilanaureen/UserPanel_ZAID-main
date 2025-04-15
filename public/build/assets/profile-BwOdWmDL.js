@@ -1,1 +1,0 @@
-import{j as r}from"./app-3K-Dplk5.js";import e from"./profilesidebar-DGyi_01N.js";import i from"./profilecontent-DZGTXPmQ.js";import"./log-out-CPZjDcMS.js";import"./createLucideIcon-8NaSl7cU.js";function a(){return r.jsxs("main",{className:"flex min-h-screen",children:[r.jsx(e,{}),r.jsx("div",{className:"flex-1 bg-gray-100",children:r.jsx(i,{})})]})}export{a as default};

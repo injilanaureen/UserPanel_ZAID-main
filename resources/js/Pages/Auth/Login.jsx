@@ -70,7 +70,7 @@ export default function Login() {
         clearErrors();
         
         try {
-            const response = await axios.post('/auth/check', {
+            const response = await axios.post('/api/auth/check', {
                 // _token: csrfToken, // Include the CSRF token
                 ...data
             });

@@ -1,0 +1,1 @@
+import{j as r}from"./app-BioXEUcn.js";import e from"./profilesidebar-Ddgh0khJ.js";import i from"./profilecontent-JRyV5O7o.js";import"./log-out-C-ATL0f1.js";import"./createLucideIcon-M0Y1IT9i.js";function a(){return r.jsxs("main",{className:"flex min-h-screen",children:[r.jsx(e,{}),r.jsx("div",{className:"flex-1 bg-gray-100",children:r.jsx(i,{})})]})}export{a as default};
