@@ -54,7 +54,7 @@ class AdminController extends Controller {
 
         return response()->json([
             'status' => 'OK',
-            'message' => 'Login successful',
+            'message' => 'Login successfull',
             'redirect' => route('admin.dashboard')
         ]);
     }
