@@ -17,7 +17,6 @@ export default function Login() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.content;
 
     // Generate device ID
     useEffect(() => {
@@ -70,18 +69,13 @@ export default function Login() {
         clearErrors();
         
         try {
-            // Fixed the endpoint to match your routes.php configuration
-            const response = await axios.post('/auth/check', {
-                _token: csrfToken, // Include the CSRF token
-                ...data
-            });
+            const response = await axios.post(route('auth.check'), data);
             
             if (response.data.status === 'OK') {
                 // Redirect to dashboard
                 window.location.href = response.data.redirect;
             }
         } catch (error) {
-            console.error('Error during login:', error);
             if (error.response) {
                 if (error.response.data.errors) {
                     // Validation errors
